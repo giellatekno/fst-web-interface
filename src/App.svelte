@@ -1,5 +1,7 @@
 <script>
-  import language from "./assets/language.svg";
+  import languageIcon from "./assets/language.svg";
+  import { t, locale } from "svelte-intl-precompile";
+  import { ui_langs } from "./lib/config.js";
   import Index from "./Index.svelte";
   import Tools from "./Tools.svelte";
 
@@ -24,11 +26,11 @@
 
 <main>
   <div>
-    <img alt="Innholdspråk" on:click={select_langauge} src={language} height="16" />
+    <img alt="Innholdspråk" on:click={select_langauge} src={languageIcon} height="16" />
     {#if selecting_language}
-	    <select>
+	    <select bind:value={$locale}>
 	      {#each ui_langs as lang}
-		<option>{lang}</option>
+		<option value={lang}>{lang}</option>
 	      {/each}
 	    </select>
 	    {/if}
