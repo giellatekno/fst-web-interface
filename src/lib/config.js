@@ -2,6 +2,14 @@ export const ui_langs = [
    "nob", "eng", "fin", "rus", "sme"
 ];
 
+export const ui_langs_long = {
+    nob: "Norsk Bokmål",
+    eng: "English",
+    sme: "Davvisámegillii",
+    fin: "Suomeksi",
+    rus: "Русский"
+};
+
 export const tool_langs = [
 "sme",
 "fin",

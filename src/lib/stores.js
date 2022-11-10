@@ -5,7 +5,7 @@ import {
 } from "svelte/store";
 
 // The user interface language
-export const ui_lang = writable("nob");
+export const ui_lang = make_ui_lang();
 
 // The language the user is exploring
 export const target_lang = make_target_lang();
@@ -53,6 +53,27 @@ function make_target_lang() {
             null,
             "",
             `/${uilang}/${value}`,
+        );
+    }
+
+    return {
+        subscribe: inner.subscribe,
+        set,
+    };
+}
+
+function make_ui_lang() {
+    const inner = writable("");
+
+    function set(value) {
+        inner.set(value);
+        const uilang = get(ui_lang);
+        const tlang = get(target_lang);
+        console.log("replacestate now");
+        window.history.replaceState(
+            null,
+            "",
+            `/${uilang}/${tlang}`
         );
     }
 
