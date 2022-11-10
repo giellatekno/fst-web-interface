@@ -1,12 +1,41 @@
 <script>
-  import languageIcon from "./assets/language.svg";
   import { t, locale } from "svelte-intl-precompile";
   import { ui_langs } from "./lib/config.js";
+  import UILangSelector from "./UILangSelector.svelte";
   import Index from "./Index.svelte";
   import Tools from "./Tools.svelte";
 
-  let page = "index";
-  let target_lang = "";
+  import {
+      ui_lang,
+      target_lang,
+      selected_tool,
+  } from "./lib/stores.js";
+
+  // React to any changes in ui_lang,
+  // target_lang, or tool, and update the
+  // currenly showing component
+  $: current_component = determine_component(
+      $ui_lang,
+      $target_lang,
+      $selected_tool,
+  );
+
+  function determine_component(
+      ui_lang,
+      target_lang,
+      tool,
+  ) {
+      const m = "App.svelte::determine_component()";
+      console.debug(m);
+      if (!ui_lang) ui_lang = "sme";
+      if (!target_lang) {
+          console.debug(m + ": show Index");
+          return Index;
+      } else {
+          console.debug(m + ": show Tools");
+          return Tools;
+      }
+  }
 
   let selecting_language = false;
   let more_languages = false;
@@ -17,30 +46,14 @@
   function show_more_languages() {
     num_langs_shown = langs.length;
   }
-
-  function on_pagechange(ev) {
-    page = "tools";
-    target_lang = ev.detail;
-  }
 </script>
 
 <main>
-  <div>
-    <img alt="Innholdspråk" on:click={select_langauge} src={languageIcon} height="16" />
-    {#if selecting_language}
-	    <select bind:value={$locale}>
-	      {#each ui_langs as lang}
-		<option value={lang}>{lang}</option>
-	      {/each}
-	    </select>
-	    {/if}
-  </div>
+    <UILangSelector />
 
-  {#if page === "index"}
-    <Index on:changepage={on_pagechange} />
-  {:else if page === "tools"}
-    <Tools lang={target_lang} />
-  {/if}
+    <svelte:component
+        this={current_component}
+    />
 </main>
 
 
@@ -63,7 +76,7 @@
   */
 
   span.link {
-  cursor: pointer;
+    cursor: pointer;
     text-decoration: underline;
     color: blue;
   }
@@ -71,8 +84,8 @@
     margin-left: 18px;
     font-size: 18px;
     }
-  div.small {
-    margin-left: 18px;
+    div.small {
+        margin-left: 18px;
     font-size: 14px;
     }
 </style>

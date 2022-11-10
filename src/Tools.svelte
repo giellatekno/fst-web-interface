@@ -1,24 +1,13 @@
 <script>
-  import {
-    addMessages,
-    init,
-    getLocaleFromNavigator,
-    /* register, */
-  } from 'svelte-intl-precompile';
-
-  import nob from "../locales/nob.json";
-  import eng from "../locales/eng.json";
   import { t } from "svelte-intl-precompile";
-  addMessages('nob', nob);
-  addMessages('eng', eng);
+  import {
+      target_lang,
+      selected_tool,
+  } from "./lib/stores.js";
 
-  init({
-    fallbackLocale: 'nob',
-    initialLocale: 'nob', /*getLocaleFromNavigator()*/
-  });
-  export let lang;
-
-  function tools_for(lang) {
+  // Which tools are available for the
+  // target language?
+  function tools_for(target_lang) {
     return [
       "generate",
       "analyze",
@@ -34,19 +23,26 @@
   }
 </script>
 
-<p>Tilgjengelige verktøy for {lang}</p>
+<p>Tilgjengelige verktøy for {$target_lang}</p>
 <div>
-{#each tools_for(lang) as tool}
-  <div class="tool">
-    <span class="title">{$t(tool)}</span><br/>
-    <span class="desc">{@html $t(tool + ".description")}</span>
-  </div>
-{/each}
-............
+    {#each tools_for($target_lang) as tool}
+        <div class="tool">
+            <span
+                class="title"
+                on:click={() => $selected_tool = tool}
+            >
+                {$t(tool)}
+            </span>
+            <br/>
+            <span class="desc">
+                {@html $t(tool + ".description")}
+            </span>
+        </div>
+    {/each}
 </div>
 
 <p>
-Andre ressurser for {lang}
+Andre ressurser for {$target_lang}
 </p>
 
 <a href="#">Direktelenke for denne siden</a>

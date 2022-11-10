@@ -1,13 +1,14 @@
 {
-  "generate": "Generate",
-  "analyze": {
+    "language tools": "Language tools",
+    "generate": "Generate",
+    "analyze": {
     "default": "analyze",
-    "smi": "specific analyze",
-    "sme": "specific analyze"
-  },
-  "analyze.description": "Analyze a single word",
-  "disambiguate": "Disambiguate",
-  "dependency": "Dependency structure",
-  "hyphenation": "Hyphenation",
-  "transcription": "IPA Transcription"
+        "smi": "specific analyze",
+        "sme": "specific analyze"
+    },
+    "analyze.description": "Analyze a single word",
+    "disambiguate": "Disambiguate",
+    "dependency": "Dependency structure",
+    "hyphenation": "Hyphenation",
+    "transcription": "IPA Transcription"
 }

@@ -1,10 +1,11 @@
 {
-  "generate": "Generer",
-  "generate.description": "gelaijglaij<span style=\"color: red;\">hei</span>",
-  "analyze": "Analyser",
-  "analyze.description": "Analyser enkeltord",
-  "disambiguate": "Disambiguer",
-  "dependency": "Dependensstruktur",
-  "hyphenation": "Orddeling",
-  "transcription": "Transkripsjon til IPA"
+    "language tools": "Språkverktøy",
+    "generate": "Generer",
+    "generate.description": "gelaijglaij<span style=\"color: red;\">hei</span>",
+    "analyze": "Analyser",
+    "analyze.description": "Analyser enkeltord",
+    "disambiguate": "Disambiguer",
+    "dependency": "Dependensstruktur",
+    "hyphenation": "Orddeling",
+    "transcription": "Transkripsjon til IPA"
 }
