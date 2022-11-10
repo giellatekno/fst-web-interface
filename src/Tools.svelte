@@ -24,7 +24,7 @@
 </script>
 
 <p>Tilgjengelige verktøy for {$target_lang}</p>
-<div>
+<main>
     {#each tools_for($target_lang) as tool}
         <div class="tool">
             <span
@@ -39,7 +39,7 @@
             </span>
         </div>
     {/each}
-</div>
+</main>
 
 <p>
 Andre ressurser for {$target_lang}
@@ -48,19 +48,21 @@ Andre ressurser for {$target_lang}
 <a href="#">Direktelenke for denne siden</a>
 
 <style>
-  div.tool { 
-    margin: 12px;
-  }
-  div.tool > span.title {
-    display: inline-block;
-    text-decoration: underline;
-    color: blue;
-    cursor: pointer;
-    font-size: 1.1em;
-    margin-bottom: 6px;
-  }
-  div.tool > span.desc {
-    font-style: italic;
-    margin-left: 3em;
-  }
+    div.tool { 
+        margin: 12px;
+    }
+
+    div.tool > span.title {
+        display: inline-block;
+        text-decoration: underline;
+        color: blue;
+        cursor: pointer;
+        font-size: 1.1em;
+        margin-bottom: 6px;
+    }
+
+    div.tool > span.desc {
+        font-style: italic;
+        margin-left: 3em;
+    }
 </style>
