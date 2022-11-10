@@ -63,13 +63,17 @@ function make_target_lang() {
 }
 
 function make_ui_lang() {
-    const inner = writable("");
+    const path = window.location.pathname;
+    let initial = "";
+    if (path.length > 1) {
+        initial = path.slice(1, 4);
+    }
+    const inner = writable(initial);
 
     function set(value) {
         inner.set(value);
         const uilang = get(ui_lang);
         const tlang = get(target_lang);
-        console.log("replacestate now");
         window.history.replaceState(
             null,
             "",

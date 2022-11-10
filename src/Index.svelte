@@ -7,6 +7,7 @@
     import {
       target_lang,
     } from "./lib/stores.js";
+    import Search from "./components/Search.svelte";
 
     let visible_langs = tool_langs;
     let num_langs_shown = 5;
@@ -30,7 +31,7 @@
 <h1>{$t("language tools")}</h1>
 <div>
     <span>Vis verktøy for ...</span>
-    <input bind:value={search} placeholder="søk..."/>
+    <Search bind:value={search} />
     <br>
     {#each visible_langs.slice(0, num_langs_shown) as lang}
         <span

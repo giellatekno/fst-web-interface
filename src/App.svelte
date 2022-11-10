@@ -26,7 +26,6 @@
       tool,
   ) {
       const m = "App.svelte::determine_component()";
-      console.debug(m);
       if (!ui_lang) ui_lang = "sme";
       if (!target_lang) {
           console.debug(m + ": show Index");

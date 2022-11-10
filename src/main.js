@@ -7,6 +7,7 @@ import {
 } from 'svelte-intl-precompile';
 import nob from "../locales/nob.json";
 import eng from "../locales/eng.json";
+
 addMessages('nob', nob);
 addMessages('eng', eng);
 
@@ -18,14 +19,11 @@ import {
 
 const app = new App({
     target: document.getElementById('app'),
-    props: {
-        page: "/"
-    }
 });
 
 init({
     fallbackLocale: 'nob',
-    initialLocale: 'nob',
+    initialLocale: get_initial_locale(),
 });
 
 window.addEventListener("click", function(ev) {
@@ -44,5 +42,14 @@ window.addEventListener("popstate", function(ev) {
     target_lang.set(b);
     selected_tool.set(c);
 });
+
+function get_initial_locale() {
+    const path = window.location.pathname;
+    let initial = "";
+    if (path.length > 1) {
+        initial = path.slice(1, 4);
+    }
+    return initial;
+}
 
 export default app;

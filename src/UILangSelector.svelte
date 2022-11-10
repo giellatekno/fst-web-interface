@@ -13,13 +13,12 @@
     const toggle = () => open = !open;
     const set_lang = lang => () => {
         $locale = lang;
-        console.log("change $ui_lang now");
         $ui_lang = lang;
         open = false;
     }
 </script>
 
-<div>
+<main>
     <header>
     <img
         alt="Innholdspråk"
@@ -40,11 +39,13 @@
             <h1>Velg grensesnittspråk...</h1>
 
             {#each ui_langs as lang}
-                <div class="lang" on:click={set_lang(lang)}>{lang}</div>
+                <div class="lang"
+                     on:click={set_lang(lang)}
+                     >{ui_langs_long[lang]}</div>
             {/each}
         </div>
     {/if}
-</div>
+</main>
 
 <style>
     header {
