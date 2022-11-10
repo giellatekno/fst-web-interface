@@ -37,7 +37,7 @@ window.addEventListener("click", function(ev) {
 window.addEventListener("popstate", function(ev) {
     const path = window.location.pathname;
     console.debug("popstate event. path= ", path);
-    const [_, a, b, c] = page.split("/");
+    const [_, a, b, c] = path.split("/");
     ui_lang.set(a);
     target_lang.set(b);
     selected_tool.set(c);

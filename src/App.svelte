@@ -4,6 +4,7 @@
   import UILangSelector from "./UILangSelector.svelte";
   import Index from "./Index.svelte";
   import Tools from "./Tools.svelte";
+  import AnalyzeWord from "./AnalyzeWord.svelte";
 
   import {
       ui_lang,
@@ -28,22 +29,15 @@
       const m = "App.svelte::determine_component()";
       if (!ui_lang) ui_lang = "sme";
       if (!target_lang) {
-          console.debug(m + ": show Index");
+          console.log("zzz");
           return Index;
       } else {
-          console.debug(m + ": show Tools");
-          return Tools;
+          if (!tool) {
+              return Tools;
+          } else {
+              return AnalyzeWord;
+          }
       }
-  }
-
-  let selecting_language = false;
-  let more_languages = false;
-  function select_langauge() {
-    selecting_language = !selecting_language;
-  }
-
-  function show_more_languages() {
-    num_langs_shown = langs.length;
   }
 </script>
 
