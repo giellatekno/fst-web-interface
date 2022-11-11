@@ -17,15 +17,15 @@
 
 <main>
     <header>
-    <img
-        alt="Innholdspråk"
-        on:click={() => open = !open}
-        src={languageIcon}
-        height="22"
-    />
-    <span class="lang-text">
-        {locales_in_locale[$locale]}
-    </span>
+        <img
+            alt="Innholdspråk"
+            on:click={() => open = !open}
+            src={languageIcon}
+            height="22"
+        />
+        <span class="lang-text">
+            {locales_in_locale[$locale]}
+        </span>
     </header>
 
     {#if open}
@@ -45,10 +45,11 @@
 </main>
 
 <style>
+    main {
+        display: inline;
+    }
     header {
-        margin-top: 6px;
-        margin-left: 6px;
-        display: flex;
+        display: inline-flex;
         align-items: center;
     }
     header > span {

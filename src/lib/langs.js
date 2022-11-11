@@ -1,5 +1,9 @@
 import { locales } from "./locales.js";
 
+// an object of objects, where the idea is that you
+// can find out
+//   "how do I say 'northern sami' in 'norwegian'"
+// by looking for `language_names["nob"]["sme"]`
 export const language_names = {};
 
 export const langs = [

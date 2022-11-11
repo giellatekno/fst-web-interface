@@ -1,6 +1,7 @@
 <script>
   import { locale, locales } from "./lib/locales.js";
-  import UILangSelector from "./components/UILangSelector.svelte";
+  import LocaleSelector from "./components/LocaleSelector.svelte";
+  import LangSelector from "./components/LangSelector.svelte";
   import Index from "./routes/Index.svelte";
   import Tools from "./routes/Tools.svelte";
   import AnalyzeWord from "./routes/AnalyzeWord.svelte";
@@ -30,7 +31,11 @@
 </script>
 
 <main>
-    <UILangSelector />
+    <header>
+        <LocaleSelector />
+        <span class="separator">&#xB7;</span>
+        <LangSelector />
+    </header>
 
     <div>
         <svelte:component
@@ -41,6 +46,17 @@
 
 
 <style>
+    header {
+        display: flex;
+        align-items: center;
+        margin-top: 6px;
+        margin-left: 6px;
+    }
+    header > span.separator {
+        margin-left: 6px;
+        margin-right: 6px;
+    }
+
     div {
         margin-left: 34px;
     }
