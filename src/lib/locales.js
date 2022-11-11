@@ -37,7 +37,11 @@ function wrap_precompile_locale() {
     function set(value) {
         inner.set(value);
 
-        console.debug("todo: locale store changed, update url accordingly");
+        const path = new URL(window.location).pathname;
+        const old_locale = path.slice(1, 4);
+        const rest = path.slice(4);
+        const new_path = "/" + value + rest;
+        window.history.replaceState(null, "", new_path);
     }
 
     return {

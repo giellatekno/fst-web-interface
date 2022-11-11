@@ -2,8 +2,8 @@
     import languageIcon from "../assets/language.svg";
     import { fly } from "svelte/transition";
     import { quintOut } from "svelte/easing";
-    import { locale } from "svelte-intl-precompile";
     import {
+        locale,
         locales,
         locales_in_locale,
     } from "../lib/locales.js";
