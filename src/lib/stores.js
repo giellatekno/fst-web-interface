@@ -4,39 +4,24 @@ import {
     get,
 } from "svelte/store";
 
-// The user interface language
-export const ui_lang = make_ui_lang();
+import { locale } from "svelte-intl-precompile";
 
 // The language the user is exploring
-export const target_lang = make_target_lang();
+export const lang = make_lang();
 
 // The tool the user is exploring
-export const selected_tool = make_selected_tool();
+export const tool = make_selected_tool();
 
 // Manually keeping track of and updating
 // the pathname of the page url.
 export const page_pathname = derived(
-    [ui_lang, target_lang, selected_tool],
-    ([$ui_lang, $target_lang, $tool]) => {
-        if (!$ui_lang) {
-            // no ui_lang, we must be at root
-            return "/";
-        }
-
-        if (!$target_lang) {
-            // no target_lang
-            return `/${$ui_lang}`;
-        }
-
-        return `/${$ui_lang}/${$tool}`;
+    [locale, lang, tool],
+    ([$locale, $lang, $tool]) => {
+        if (!$lang) return `/${locale}`;
+        if (!$tool) return `/${locale}/${$lang}`;
+        return `/${$locale}/${$lang}/${tool}`;
     }
 );
-
-derived(page_pathname, path => {
-    console.log("in derived");
-    //window.location
-});
-
 
 // factory functions that makes new stores.
 // doing this to be able to override the
@@ -48,18 +33,24 @@ function make_ui_lang() {
     const path = window.location.pathname;
     let initial = "sme";
     if (path.length > 1) {
-        initial = path.slice(1, 4);
+        const from_url = path.slice(1, 4);
+        if (locales.includes(from_url)) {
+            initial = from_url;
+        } else {
+            // silently ignore and choose
+            // sme as default
+        }
     }
     const inner = writable(initial);
 
     function set(value) {
         inner.set(value);
-        const uilang = get(ui_lang);
-        const tlang = get(target_lang);
+        const loc = get(locale);
+        const tlang = get(lang);
         window.history.replaceState(
             null,
             "",
-            `/${uilang}/${tlang}`
+            `/${loc}/${tlang}`
         );
     }
 
@@ -69,16 +60,16 @@ function make_ui_lang() {
     };
 }
 
-function make_target_lang() {
+function make_lang() {
     const inner = writable("");
 
     function set(value) {
-        const uilang = get(ui_lang);
+        const loc = get(locale);
         inner.set(value);
         window.history.pushState(
             null,
             "",
-            `/${uilang}/${value}`,
+            `/${loc}/${value}`,
         );
     }
 
@@ -95,12 +86,12 @@ function make_selected_tool() {
 
     function set(value) {
         inner.set(value);
-        const uilang = get(ui_lang);
-        const tlang = get(target_lang);
+        const loc = get(locale);
+        const tlang = get(lang);
         window.history.pushState(
             null,
             "",
-            `/${uilang}/${tlang}/${value}`
+            `/${loc}/${tlang}/${value}`
         );
     }
 

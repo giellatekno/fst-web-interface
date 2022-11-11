@@ -1,0 +1,12 @@
+{
+    "search": "[sme] Søk",
+    "language tools": "[sme] Språkverktøy",
+    "generate": "[sme] Generer",
+    "generate.description": "[sme] gelaijglaij<span style=\"color: red;\">hei</span>",
+    "analyze": "[sme] Analyser",
+    "analyze.description": "[sme] Analyser enkeltord",
+    "disambiguate": "[sme] Disambiguer",
+    "dependency": "[sme] Dependensstruktur",
+    "hyphenation": "[sme] Orddeling",
+    "transcription": "[sme] Transkripsjon til IPA"
+}

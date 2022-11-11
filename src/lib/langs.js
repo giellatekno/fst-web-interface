@@ -1,70 +1,73 @@
-export const ui_langs = [
-   "nob", "eng", "fin", "rus", "sme"
+import { locales } from "./locales.js";
+
+export const language_names = {};
+
+export const langs = [
+    "sme",
+    "fin",
+    "sms",
+    "sma",
+    "mdf",
+    "bxr",
+    "chr",
+    "ciw",
+    "cor",
+    "crk",
+    "deu",
+    "est",
+    "evn",
+    "fao",
+    "fit",
+    "fkv",
+    "gle",
+    "hdn",
+    "hun",
+    "ipk",
+    "izh",
+    "kal",
+    "kca",
+    "koi",
+    "kom",
+    "kpv",
+    "lav",
+    "liv",
+    "lut",
+    "mhr",
+    "mns",
+    "mrj",
+    "myv",
+    "nio",
+    "nno",
+    "nob",
+    "olo",
+    "rmf",
+    "rup",
+    "rus",
+    "sjd",
+    "sje",
+    "smj",
+    "smn",
+    "som",
+    "swe",
+    "udm",
+    "vep",
+    "vot",
+    "vro",
+    "yrk",
 ];
 
-export const ui_langs_long = {
-    nob: "Norsk Bokmål",
-    eng: "English",
-    sme: "Davvisámegillii",
-    fin: "Suomeksi",
-    rus: "Русский"
-};
+for (const locale of locales) {
+    language_names[locale] = {};
 
-export const tool_langs = [
-"sme",
-"fin",
-"sms",
-"sma",
-"mdf",
-"bxr",
-"chr",
-"ciw",
-"cor",
-"crk",
-"deu",
-"est",
-"evn",
-"fao",
-"fit",
-"fkv",
-"gle",
-"hdn",
-"hun",
-"ipk",
-"izh",
-"kal",
-"kca",
-"koi",
-"kom",
-"kpv",
-"lav",
-"liv",
-"lut",
-"mhr",
-"mns",
-"mrj",
-"myv",
-"nio",
-"nno",
-"nob",
-"olo",
-"rmf",
-"rup",
-"rus",
-"sjd",
-"sje",
-"smj",
-"smn",
-"som",
-"swe",
-"udm",
-"vep",
-"vot",
-"vro",
-"yrk",
-];
+    const lang_in = new Intl.DisplayNames(
+        locale, { type: "language" });
 
-export const tool_lang_star = {
+    for (const lang of langs) {
+        language_names[locale][lang] = lang_in.of(lang);
+    }
+}
+
+export const lang_star = {
     "sme": "gold",
     "fin": "gold",
     "sms": "gold",

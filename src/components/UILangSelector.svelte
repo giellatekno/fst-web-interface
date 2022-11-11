@@ -1,19 +1,16 @@
 <script>
-    import languageIcon from "./assets/language.svg";
+    import languageIcon from "../assets/language.svg";
     import { fly } from "svelte/transition";
     import { quintOut } from "svelte/easing";
     import { locale } from "svelte-intl-precompile";
     import {
-        ui_langs,
-        ui_langs_long,
-    } from "./lib/config.js";
-    import { ui_lang } from "./lib/stores";
+        locales,
+        locales_in_locale,
+    } from "../lib/locales.js";
 
     let open = false;
-    const toggle = () => open = !open;
-    const set_lang = lang => () => {
-        $locale = lang;
-        $ui_lang = lang;
+    const set_locale = loc => () => {
+        $locale = loc;
         open = false;
     }
 </script>
@@ -22,12 +19,12 @@
     <header>
     <img
         alt="Innholdspråk"
-        on:click={toggle}
+        on:click={() => open = !open}
         src={languageIcon}
         height="22"
     />
     <span class="lang-text">
-        {ui_langs_long[$locale]}
+        {locales_in_locale[$locale]}
     </span>
     </header>
 
@@ -38,10 +35,10 @@
             class="fullscreen">
             <h1>Velg grensesnittspråk...</h1>
 
-            {#each ui_langs as lang}
+            {#each locales as loc}
                 <div class="lang"
-                     on:click={set_lang(lang)}
-                     >{ui_langs_long[lang]}</div>
+                     on:click={set_locale(loc)}
+                     >{locales_in_locale[loc]}</div>
             {/each}
         </div>
     {/if}

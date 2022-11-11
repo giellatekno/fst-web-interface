@@ -1,7 +1,7 @@
 <script>
     // TODO correct api call
-    import { spell } from "./lib/api.js";
-    import { target_lang } from "./lib/stores.js";
+    import { spell } from "../lib/api.js";
+    import { lang } from "../lib/stores.js";
 
     let search = "";
     let results = "";
@@ -11,7 +11,7 @@
         debounce(search, 1000)
         .then(search_term => {
             return spell(
-                $target_lang,
+                $lang,
                 search_term
             );
         });

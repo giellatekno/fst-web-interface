@@ -1,30 +1,24 @@
 <script>
     import { t } from "svelte-intl-precompile";
+    import { locale } from "../lib/locales.js";
     import {
-        tool_langs,
-        ui_langs,
-        tool_lang_star,
-    } from "./lib/config.js";
-    import {
-        ui_lang,
-        target_lang,
-    } from "./lib/stores.js";
-    import { language_names } from "./lib/natlang.js";
-    import Search from "./components/Search.svelte";
+        langs,
+        language_names,
+        lang_star,
+    } from "../lib/langs.js";
+    import { lang } from "../lib/stores.js";
+    import Search from "../components/Search.svelte";
 
-    let visible_langs = tool_langs;
+    let visible_langs = langs;
     let search = "";
 
     $: filter_langs(search);
-    $: num_langs_shown = search === "" ? 12 : 100;
 
     function filter_langs(search) {
         if (search === "") {
-            visible_langs = tool_langs
-                .slice(0, 12);
+            visible_langs = langs.slice(0, 12);
         } else {
-            visible_langs = tool_langs
-                .filter(lang =>
+            visible_langs = langs.filter(lang =>
                     lang.includes(search));
         }
     }
@@ -37,18 +31,18 @@
     <Search bind:value={search} />
 
     <blockquote>
-        Gullstjerne er våre beste språk, sølv er også ok, for bronsespråkene er verktøyene våre mindre utviklet.
+        [l6e] Gullstjerne er våre beste språk, sølv er også ok, for bronsespråkene er verktøyene våre mindre utviklet.
     </blockquote>
 
     <main>
-        {#each visible_langs.slice(0, num_langs_shown) as lang}
+        {#each visible_langs as lng}
             <span class="language"
-                on:click={() => $target_lang = lang}>
+                on:click={() => $lang = lng}>
                 <span class="inner">
-                    {language_names[$ui_lang][lang]}
+                    {language_names[$locale][lng]}
                 </span>
                 <span
-                    class="star {tool_lang_star[lang]}"
+                    class="star {lang_star[lng]}"
                 >
                     ★
                 </span>

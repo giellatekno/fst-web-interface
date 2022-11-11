@@ -1,9 +1,11 @@
 <script>
   import { t } from "svelte-intl-precompile";
+  import { locale } from "../lib/locales.js";
   import {
-      target_lang,
-      selected_tool,
-  } from "./lib/stores.js";
+      lang,
+      tool,
+  } from "../lib/stores.js";
+  import { language_names } from "../lib/langs.js";
 
   // Which tools are available for the
   // target language?
@@ -21,28 +23,29 @@
       //"stedsnavnsordbok",
     ];
   }
+  const x = language_names[$locale][$lang];
 </script>
 
-<p>Tilgjengelige verktøy for {$target_lang}</p>
+<p>Tilgjengelige verktøy for {x}</p>
 <main>
-    {#each tools_for($target_lang) as tool}
+    {#each tools_for($lang) as _tool}
         <div class="tool">
             <span
                 class="title"
-                on:click={() => $selected_tool = tool}
+                on:click={() => $tool = _tool}
             >
-                {$t(tool)}
+                {$t(_tool)}
             </span>
             <br/>
             <span class="desc">
-                {@html $t(tool + ".description")}
+                {@html $t(_tool + ".description")}
             </span>
         </div>
     {/each}
 </main>
 
 <p>
-Andre ressurser for {$target_lang}
+Andre ressurser for {x}
 </p>
 
 <a href="#">Direktelenke for denne siden</a>
