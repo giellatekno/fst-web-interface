@@ -1,27 +1,37 @@
 import './app.css';
 import App from './App.svelte';
-import { lang, tool } from "./lib/stores.js";
-import { locale } from "./lib/locales.js";
+import {
+    page_pathname,
+    lang as current_lang,
+    tool as current_tool,
+} from "./lib/stores.js";
 
 const app = new App({
     target: document.getElementById('app'),
 });
 
 window.addEventListener("click", function(ev) {
-    if (ev.target.nodeName !== "A") return;
+    // first find <a> tag that was clicked,
+    // by walking up towards the root, looking for the first <a> tag we see
+    let target = ev.target;
+    for (;
+         target && target.nodeName !== "A";
+         target = target.parentNode);
+
+    // we did not click an <a>, so return
+    if (!target) return;
+
+    // we did click an <a>, prevent default,
+    // and update state of url
     ev.preventDefault();
-    const href = new URL(ev.target.href).pathname;
-    const url = `${get(locale)}/${href}`;
-    window.history.pushState(null, "", url);
+    const href = new URL(target.href).pathname;
+    window.history.pushState(null, "", href);
+    page_pathname.set(href);
 });
 
 window.addEventListener("popstate", function(ev) {
     const path = window.location.pathname;
-    console.debug("popstate event. path= ", path);
-    const [_, a, b, c] = path.split("/");
-    locale.set(a);
-    lang.set(b);
-    selected_tool.set(c);
+    page_pathname.set(path);
 });
 
 export default app;

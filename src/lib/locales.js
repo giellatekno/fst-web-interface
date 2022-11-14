@@ -36,12 +36,7 @@ function wrap_precompile_locale() {
 
     function set(value) {
         inner.set(value);
-
-        const path = new URL(window.location).pathname;
-        const old_locale = path.slice(1, 4);
-        const rest = path.slice(4);
-        const new_path = "/" + value + rest;
-        window.history.replaceState(null, "", new_path);
+        window.localStorage.setItem("locale", value);
     }
 
     return {
@@ -51,17 +46,8 @@ function wrap_precompile_locale() {
 }
 
 function get_initial_locale() {
-    const path = window.location.pathname;
-    let initial = DEFAULT_LOCALE;
-    if (path.length > 1) {
-        const from_url = path.slice(1, 4);
-        if (locales.includes(from_url)) {
-            initial = from_url;
-        } else {
-            // silently ignore and choose default
-        }
-    }
-    return initial;
+    const saved_locale = window.localStorage.getItem("locale");
+    return saved_locale ?? DEFAULT_LOCALE;
 }
 
 export {

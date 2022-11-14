@@ -11,22 +11,27 @@
 
     let visible_langs = langs;
     let search = "";
+    let show_all = false;
 
-    $: filter_langs(search);
+    $: visible_langs = show_all ? langs : filter_langs(search);
 
     function filter_langs(search) {
         if (search === "") {
-            visible_langs = langs.slice(0, 12);
+            return langs.slice(0, 12);
         } else {
-            visible_langs = langs.filter(lang =>
+            return langs.filter(lang =>
                     lang.includes(search));
         }
+    }
+
+    function toggle_show_all() {
+        show_all = !show_all;
     }
 </script>
 
 <h1>{$t("language tools")}</h1>
 <div>
-    <h2>Vis verktøy for ...</h2>
+    <h2>[l6e] Vis verktøy for ...</h2>
 
     <Search bind:value={search} />
 
@@ -36,8 +41,9 @@
 
     <main>
         {#each visible_langs as lng}
-            <span class="language"
-                on:click={() => $lang = lng}>
+            <a
+                href="/{lng}"
+                class="language">
                 <span class="inner">
                     {language_names[$locale][lng]}
                 </span>
@@ -46,14 +52,19 @@
                 >
                     ★
                 </span>
-            </span>
+            </a>
             <br>
         {:else}
-            Ingen treff på søkeordet...
+            [l6e] Ingen treff på søkeordet...
         {/each}
     </main>
-    <span>Vis alle...</span>
-
+    <span on:click={toggle_show_all}>
+        {#if show_all}
+            [l6e] Vis færre
+        {:else}
+            [l6e] Vis alle...
+        {/if}
+    </span>
     <br>
 </div>
 
@@ -79,12 +90,12 @@
         font-weight: normal;
     }
 
-    span.language {
+    a.language {
         font-size: 22px;
         padding: 6px;
     }
 
-    span.language > span.inner {
+    a.language > span.inner {
         cursor: pointer;
         color: blue;
         text-decoration: underline;

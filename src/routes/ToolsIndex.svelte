@@ -23,19 +23,19 @@
       //"stedsnavnsordbok",
     ];
   }
-  const x = language_names[$locale][$lang];
+  $: x = language_names[$locale][$lang];
 </script>
 
-<p>Tilgjengelige verktøy for {x}</p>
+<h2>Tilgjengelige verktøy for {x}</h2>
 <main>
     {#each tools_for($lang) as _tool}
         <div class="tool">
-            <span
+            <a
                 class="title"
-                on:click={() => $tool = _tool}
+                href="/{$lang}/{_tool}">
             >
                 {$t(_tool)}
-            </span>
+            </a>
             <br/>
             <span class="desc">
                 {@html $t(_tool + ".description")}
@@ -55,11 +55,7 @@ Andre ressurser for {x}
         margin: 12px;
     }
 
-    div.tool > span.title {
-        display: inline-block;
-        text-decoration: underline;
-        color: blue;
-        cursor: pointer;
+    div.tool > a.title {
         font-size: 1.1em;
         margin-bottom: 6px;
     }

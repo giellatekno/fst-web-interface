@@ -4,24 +4,38 @@ import {
     get,
 } from "svelte/store";
 
-import { locale } from "svelte-intl-precompile";
+export const page_pathname = writable(
+    new URL(window.location).pathname
+);
 
 // The language the user is exploring
-export const lang = make_lang();
+export const lang = derived(
+    page_pathname,
+    $pn => $pn.split("/")[1]
+);
+
+export const tool = derived(
+    page_pathname,
+    $pn => $pn.split("/")[2] ?? ""
+);
+
+//export const lang = make_lang();
 
 // The tool the user is exploring
-export const tool = make_selected_tool();
+//export const tool = make_selected_tool();
 
 // Manually keeping track of and updating
 // the pathname of the page url.
+/*
 export const page_pathname = derived(
-    [locale, lang, tool],
-    ([$locale, $lang, $tool]) => {
-        if (!$lang) return `/${locale}`;
-        if (!$tool) return `/${locale}/${$lang}`;
-        return `/${$locale}/${$lang}/${tool}`;
+    [lang, tool],
+    ([$lang, $tool]) => {
+        if (!$lang) return `/`;
+        if (!$tool) return `/${$lang}`;
+        return `/${$lang}/${tool}`;
     }
 );
+*/
 
 // factory functions that makes new stores.
 // doing this to be able to override the
@@ -29,47 +43,15 @@ export const page_pathname = derived(
 // custom logic triggered when these stores
 // gets set
 
-function make_ui_lang() {
-    const path = window.location.pathname;
-    let initial = "sme";
-    if (path.length > 1) {
-        const from_url = path.slice(1, 4);
-        if (locales.includes(from_url)) {
-            initial = from_url;
-        } else {
-            // silently ignore and choose
-            // sme as default
-        }
-    }
-    const inner = writable(initial);
-
-    function set(value) {
-        inner.set(value);
-        const loc = get(locale);
-        const tlang = get(lang);
-        window.history.replaceState(
-            null,
-            "",
-            `/${loc}/${tlang}`
-        );
-    }
-
-    return {
-        subscribe: inner.subscribe,
-        set,
-    };
-}
-
 function make_lang() {
     const inner = writable("");
 
     function set(value) {
-        const loc = get(locale);
         inner.set(value);
         window.history.pushState(
             null,
             "",
-            `/${loc}/${value}`,
+            `/${value}`,
         );
     }
 
@@ -86,12 +68,11 @@ function make_selected_tool() {
 
     function set(value) {
         inner.set(value);
-        const loc = get(locale);
         const tlang = get(lang);
         window.history.pushState(
             null,
             "",
-            `/${loc}/${tlang}/${value}`
+            `/${tlang}/${value}`
         );
     }
 

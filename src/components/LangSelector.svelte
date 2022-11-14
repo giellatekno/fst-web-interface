@@ -11,12 +11,9 @@
 <main>
     {#if $lang}
         Du utforsker nå {current_lang}&nbsp;
-        <span
-            class="link"
-            on:click={() => $lang = ""}
-        >
+        <a href="/">
             Utforsk et annet språk
-        </span>
+        </a>
     {/if}
 </main>
 

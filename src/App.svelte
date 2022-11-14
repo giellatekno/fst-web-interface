@@ -1,31 +1,43 @@
 <script>
-  import { locale, locales } from "./lib/locales.js";
   import LocaleSelector from "./components/LocaleSelector.svelte";
   import LangSelector from "./components/LangSelector.svelte";
   import Index from "./routes/Index.svelte";
-  import Tools from "./routes/Tools.svelte";
+  import ToolsIndex from "./routes/ToolsIndex.svelte";
   import AnalyzeWord from "./routes/AnalyzeWord.svelte";
+  import Generate from "./routes/Generate.svelte";
+  import Disambiguate from "./routes/Disambiguate.svelte";
+  import Dependency from "./routes/Dependency.svelte";
+  import Hyphenation from "./routes/Hyphenation.svelte";
+  import Transcription from "./routes/Transcription.svelte";
 
   import { lang, tool } from "./lib/stores.js";
 
-  // React to any changes in locale, lang or tool,
+  // React to any changes in lang or tool,
   // and update the currenly showing component
   $: current_component = determine_component(
-      $locale,
       $lang,
       $tool,
   );
 
-  function determine_component(locale, lang, tool) {
-      if (!locale) locale = "sme";
-      if (!lang) {
-          return Index;
-      } else {
-          if (!tool) {
-              return Tools;
-          } else {
-              return AnalyzeWord;
-          }
+    function determine_component(lang, tool) {
+        if (!lang) return Index;
+
+        switch (tool) {
+            case "":
+            default:
+                return ToolsIndex;
+            case "analyze":
+                return AnalyzeWord;
+            case "generate":
+                return Generate;
+            case "disambiguate":
+                return Disambiguate;
+            case "dependency":
+                return Dependency;
+            case "hyphenation":
+                return Hyphenation;
+            case "transcription":
+                return Transcription;
       }
   }
 </script>
