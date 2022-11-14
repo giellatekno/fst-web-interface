@@ -42,9 +42,9 @@
 <input bind:value={search} />
 
 {#await results}
-  venter...
+    venter...
 {:then values}
-    {values}
+    {JSON.stringify(values)}
 {:catch err}
     {#if !err.message.startsWith("ValueError")}
         {err}

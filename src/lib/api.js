@@ -1,4 +1,4 @@
-const DIVVUN_API_ROOT = "https://divvun.github.io/divvun-api/";
+const DIVVUN_API_ROOT = "https://api-giellalt.uit.no/";
 
 const service_unavailable = new Response(null, {
     status: 503,
@@ -31,8 +31,13 @@ export async function spell(lang, word) {
         throw new Error("ValueError: word must be non-empty");
     }
 
+    if (lang === "sme") {
+        // se = swedish ?
+        lang = "se";
+    }
+
     const response = await apicall(`speller/${lang}`, {
-        json_body: { word }});
+        json_body: { text: word }});
     if (response.status !== 200) {
         console.error("speller api error");
         console.error(response.statusText);

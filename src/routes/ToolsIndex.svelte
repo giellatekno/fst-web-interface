@@ -32,7 +32,7 @@
         <div class="tool">
             <a
                 class="title"
-                href="/{$lang}/{_tool}">
+                href="/{$lang}/{_tool}"
             >
                 {$t(_tool)}
             </a>

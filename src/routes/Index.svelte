@@ -41,18 +41,16 @@
 
     <main>
         {#each visible_langs as lng}
-            <a
-                href="/{lng}"
-                class="language">
-                <span class="inner">
+            <span class="language">
+                <a href="/{lng}">
                     {language_names[$locale][lng]}
-                </span>
+                </a>
                 <span
                     class="star {lang_star[lng]}"
                 >
                     ★
                 </span>
-            </a>
+            </span>
             <br>
         {:else}
             [l6e] Ingen treff på søkeordet...
@@ -90,15 +88,9 @@
         font-weight: normal;
     }
 
-    a.language {
+    span.language {
         font-size: 22px;
         padding: 6px;
-    }
-
-    a.language > span.inner {
-        cursor: pointer;
-        color: blue;
-        text-decoration: underline;
     }
 
     span.star {
