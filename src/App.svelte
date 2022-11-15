@@ -45,7 +45,6 @@
 <main>
     <header>
         <LocaleSelector />
-        <span class="separator">&#xB7;</span>
         <LangSelector />
     </header>
 
@@ -64,11 +63,6 @@
         margin-top: 6px;
         margin-left: 6px;
     }
-    header > span.separator {
-        margin-left: 6px;
-        margin-right: 6px;
-    }
-
     div {
         margin-left: 34px;
     }

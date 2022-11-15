@@ -9,24 +9,42 @@ import json
 
 HTML_TAGS = ["a", "em", "strong"]
 
-def html_escape_tags(node):
-    """Scrape the node for "inner text" that
-    is just normal html, that we should preserve.
-    like <a> tags, etc"""
-    ## TODO
-    if len(node) == 0: return
-    for child in node.iter():
-        if node.tag in HTML_TAGS:
-            pass
+def inner_xml(node):
+    """Get all "inner xml", which includes any potential tags."""
+    text = node.text or ""
+    tail = node.tail or ""
+    s = text
+    for child in node:
+        tag = child.tag
+        attribs = " ".join(
+            f'"{k}"="{v}"'
+            for k, v in child.items()
+        )
+        inner = inner_xml(child)
+        s += f"<{tag}"
+        if attribs:
+            s += " " + attribs
+        s += f">{inner}</{tag}>"
+    s += tail
+    return s.strip()
 
-    return node
+def real_len(node):
+    """How many children does this node have, that are
+    just normal html tags that we should not recurse into."""
+    total_children = len(node)
+    ignored_children = 0
+    for child in node:
+        if child.tag in HTML_TAGS:
+            ignored_children += 1
+    return total_children - ignored_children
+
 
 def _traverse(strings, node, pre):
     section = f"{pre}.{node.tag}."
-    if len(node) == 0:
+    if real_len(node) == 0:
         # leaf
         section += ".".join(f"{k}.{v}." for k, v in node.items())
-        strings[section] = node.text
+        strings[section] = inner_xml(node)
     else:
         for child in node:
             _traverse(strings, child, section)

@@ -1,4 +1,5 @@
 <script>
+    import { t } from "svelte-intl-precompile";
     import { locale } from "../lib/locales.js";
     import {
         language_names,
@@ -10,9 +11,10 @@
 
 <main>
     {#if $lang}
-        Du utforsker nå {current_lang}&nbsp;
+        <span class="separator">&#xB7;</span>
+        {$t("nowexploring")} {current_lang}&nbsp;
         <a href="/">
-            Utforsk et annet språk
+            {$t("exploreanotherlang")}
         </a>
     {/if}
 </main>
@@ -27,5 +29,10 @@
         cursor: pointer;
         color: blue;
         text-decoration: underline;
+    }
+
+    span.separator {
+        margin-left: 6px;
+        margin-right: 6px;
     }
 </style>
