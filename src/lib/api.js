@@ -47,3 +47,25 @@ export async function spell(lang, word) {
     const json = await response.json();
     return json.results;
 }
+
+export async function hyphenate(lang, word) {
+    if (!word) {
+        throw new Error("ValueError: word must be non-empty");
+    }
+
+    if (lang === "sme") {
+        // se = swedish ?
+        //lang = "se";
+    }
+
+    const response = await apicall(`hyphenation/${lang}`, {
+        json_body: { text: word }});
+    if (response.status !== 200) {
+        console.error("hyphenation api error");
+        console.error(response.statusText);
+        throw new Error("hypenation api error");
+    }
+
+    const json = await response.json();
+    return json.results;
+}

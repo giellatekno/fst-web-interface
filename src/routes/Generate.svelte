@@ -17,5 +17,3 @@
     <button type="submit" on:click={do_query}>[l6e] Generate</button>
     <button on:click|preventDefault={() => value = ""}>[l6e] Reset</button>
 </form>
-
-Generate

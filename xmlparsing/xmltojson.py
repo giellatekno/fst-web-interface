@@ -7,7 +7,7 @@ import json
 # reading dtd, or at least doing dtd verification.
 # don't know if I need that or not
 
-HTML_TAGS = ["a", "em", "strong"]
+HTML_TAGS = ["a", "em", "strong", "code"]
 
 def inner_xml(node):
     """Get all "inner xml", which includes any potential tags."""
