@@ -5,6 +5,7 @@
   import ToolsIndex from "./routes/ToolsIndex.svelte";
   import AnalyzeWord from "./routes/AnalyzeWord.svelte";
   import Generate from "./routes/Generate.svelte";
+  import Spellcheck from "./routes/Spellcheck.svelte";
   import Disambiguate from "./routes/Disambiguate.svelte";
   import Dependency from "./routes/Dependency.svelte";
   import Hyphenation from "./routes/Hyphenation.svelte";
@@ -38,6 +39,8 @@
                 return Hyphenation;
             case "transcription":
                 return Transcription;
+            case "spellcheck":
+                return Spellcheck;
       }
   }
 </script>

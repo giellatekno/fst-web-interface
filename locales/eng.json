@@ -4,6 +4,8 @@
     "generate": "Generate",
     "analyze": "Analyze",
     "analyze.description": "Analyze a single word",
+    "spellcheck": "Spellcheck",
+    "spellcheck.description": "Run a spell check for one or multiple words",
     "disambiguate": "Disambiguate",
     "dependency": "Dependency structure",
     "hyphenation": "Hyphenation",

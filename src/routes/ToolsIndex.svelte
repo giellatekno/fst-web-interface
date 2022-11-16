@@ -13,6 +13,7 @@
     return [
       "generate",
       "analyze",
+      "spellcheck",
       "disambiguate",
       "dependency",
       "hyphenation",
