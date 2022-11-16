@@ -1,0 +1,52 @@
+<!-- =============================================================== -->
+<!-- eng canned text -->
+<!-- =============================================================== -->
+<!ENTITY gte "Giellatekno">
+<!ENTITY lteng "language tools">
+<!ENTITY aimeng "analyser is just in the making.">
+<!ENTITY ahweng "Analyse a handful of words only.">
+<!ENTITY adheng "Analyse, disambiguate and hyphenate text.">
+<!ENTITY nngeng "There is still no numeral generator for">
+<!ENTITY nwgeng "Write numbers (23, 10:15, etc.) to generate the corresponding number word or temporal expression.">
+
+<!ENTITY ateng "Analyse text.">
+
+<!ENTITY ntilde  "&#241;">
+
+<!-- lang names: concat(lang_code,local_lang_code) -->
+<!ENTITY bxreng "Buriat">
+<!ENTITY ciweng "Ojibwe">
+<!ENTITY coreng "Cornish">
+<!ENTITY crkeng "Plains Cree">
+<!ENTITY evneng "Evenki">
+<!ENTITY faoeng "Faroese">
+<!ENTITY fineng "Finnish">
+<!ENTITY fkveng "Kven">
+<!ENTITY hdneng "Northern Haida">
+<!ENTITY ipkeng "I&ntilde;upiaq">
+<!ENTITY izheng "Ingrian">
+<!ENTITY kaleng "Greenlandic">
+<!ENTITY kcaeng "Khanty">
+<!ENTITY kpveng "Komi">
+<!ENTITY liveng "Livonian">
+<!ENTITY mdfeng "Moksha">
+<!ENTITY mhreng "Meadow Mari">
+<!ENTITY mnseng "Mansi">
+<!ENTITY mrjeng "Hill Mari">
+<!ENTITY myveng "Erzya">
+<!ENTITY nioeng "Nganasan">
+<!ENTITY oloeng "Olonetsian">
+<!ENTITY ruseng "Russian">
+<!ENTITY sjdeng "Kildin Saami">
+<!ENTITY sjeeng "Pite Saami">
+<!ENTITY smaeng "South Saami">
+<!ENTITY smeeng "North Saami">
+<!ENTITY smjeng "Lule Saami">
+<!ENTITY smneng "Inari Saami">
+<!ENTITY smseng "Skolt Saami">
+<!ENTITY udmeng "Udmurt">
+<!ENTITY vepeng "Veps">
+<!ENTITY vroeng "Võro">
+<!ENTITY voteng "Votic">
+<!ENTITY yrkeng "Nenets">
+
