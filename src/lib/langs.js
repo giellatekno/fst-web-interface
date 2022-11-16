@@ -7,11 +7,6 @@ import { locales } from "./locales.js";
 export const language_names = {};
 
 export const langs = [
-    "sme",
-    "fin",
-    "sms",
-    "sma",
-    "mdf",
     "bxr",
     "chr",
     "ciw",
@@ -21,6 +16,7 @@ export const langs = [
     "est",
     "evn",
     "fao",
+    "fin",
     "fit",
     "fkv",
     "gle",
@@ -36,6 +32,7 @@ export const langs = [
     "lav",
     "liv",
     "lut",
+    "mdf",
     "mhr",
     "mns",
     "mrj",
@@ -49,8 +46,11 @@ export const langs = [
     "rus",
     "sjd",
     "sje",
+    "sma",
+    "sme",
     "smj",
     "smn",
+    "sms",
     "som",
     "swe",
     "udm",
@@ -59,6 +59,48 @@ export const langs = [
     "vro",
     "yrk",
 ];
+
+const all_langs = new Set([
+    "bxr", "ciw", "cor", "est", "evn",
+    "fao", "fin", "fit", "fkv", "gle",
+    "hdn", "ipk", "izh", "kal", "kca",
+    "koi", "kpv", "liv", "mdf", "mhr",
+    "mns", "mrj", "myv", "nio", "nob",
+    "olo", "rmf", "rus", "sjd", "sje",
+    "sma", "sme", "smj", "smn", "sms",
+    "som", "udm", "vep", "vot", "vro",
+    "yrk",
+]);
+
+export const analysis_langs = new Set(all_langs);
+
+export const paradigm_langs = new Set([
+    "bxr", "ciw", "cor", "evn", "fao",
+    "fin", "fit", "fkv", "gle", "ipk",
+    "izh", "kal", "kca", "koi", "kpv",
+    "liv", "mdf", "mhr", "mns", "mrj",
+    "myv", "nio", "nob", "olo", "rus",
+    "sjd", "sje", "sma", "sme", "smj",
+    "smn", "sms", "som", "udm", "vep",
+    "vot", "vro", "yrk",
+]);
+
+export const generation_langs = new Set([
+    "bxr", "ciw", "cor", "est", "evn",
+    "fao", "fin", "gle", "hdn", "ipk",
+    "izh", "kal", "kca", "koi", "kpv",
+    "liv", "mdf", "mhr", "mns", "mrj",
+    "myv", "nio", "nob", "olo", "rus",
+    "sjd", "sje", "sma", "sme", "smj",
+    "smn", "sms", "som", "udm", "vep",
+    "vot", "vro", "yrk",
+]);
+
+export const num_langs = new Set([
+    "fin", "hdn", "liv", "mdf", "mhr",
+    "myv", "olo", "rus", "sjd", "sma",
+    "sme", "smj", "smn", "sms", "yrk",
+]);
 
 for (const locale of locales) {
     language_names[locale] = {};
