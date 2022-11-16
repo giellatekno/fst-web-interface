@@ -1,4 +1,6 @@
 <script>
+    import example_img from "../assets/language.svg";
+    import spellcheck from "../assets/spellcheck.svg";
     import { t } from "svelte-intl-precompile";
     import { locale } from "../lib/locales.js";
     import {
@@ -42,6 +44,18 @@
         return list;
     }
 
+    const IMAGES = {
+        spellcheck: spellcheck
+    };
+
+    function get_image(tool) {
+        if (tool === "spellcheck") {
+            return spellcheck;
+        } else {
+            return example_img;
+        }
+    }
+
     $: tools = tools_for($lang);
     $: x = language_names[$locale][$lang];
 </script>
@@ -49,18 +63,13 @@
 <h2>Tilgjengelige verktøy for {x}</h2>
 <main>
     {#each tools as tool}
-        <div class="tool">
-            <a
-                class="title"
-                href="/{$lang}/{tool}"
-            >
-                {$t(tool)}
-            </a>
-            <br/>
+        <a href="/{$lang}/{tool}" class="tool">
+            <img src={get_image(tool)} alt="">
+            <span class="title">{$t(tool)}</span>
             <span class="desc">
                 {@html $t(tool + ".description")}
             </span>
-        </div>
+        </a>
     {/each}
 </main>
 
@@ -71,17 +80,47 @@ Andre ressurser for {x}
 <a href="#">Direktelenke for denne siden</a>
 
 <style>
-    div.tool { 
+    a.tool { 
+        display: grid;
+        color: black;
+        text-decoration: none;
+        grid-template-areas:
+            'img img title title title'
+            'img img desc desc desc';
+        grid-template-columns: 42px 42px repeat(3, 1fr);
+        background-color: #efedd1;
+        border-radius: 8px;
         margin: 12px;
+        height: 80px;
+        padding: 4px 12px;
+        transition:
+            background-color ease-in 0.3s;
     }
 
-    div.tool > a.title {
-        font-size: 1.1em;
+    a.tool:hover {
+        background-color: #ede8a7;
+    }
+
+    a.tool > img {
+        align-self: center;
+        grid-area: img;
+        height: 78px;
+        width: 78px;
+    }
+
+    a.tool > span.title {
+        justify-self: start;
+        align-self: end;
+        grid-area: title;
+        font-size: 1.9em;
         margin-bottom: 6px;
     }
 
-    div.tool > span.desc {
+    a.tool > span.desc {
+        justify-self: start;
+        align-self: start;
+        grid-area: desc;
         font-style: italic;
-        margin-left: 3em;
+        font-size: 1.3em;
     }
 </style>
