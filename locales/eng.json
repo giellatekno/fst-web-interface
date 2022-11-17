@@ -3,7 +3,7 @@
     "language tools": "Language tools",
     "generate": "Generate",
     "analyze": "Analyze",
-    "analyze.description": "Analyze a single word",
+    "analyze.description": "Analyze one or more words in isolation",
     "spellcheck": "Spellcheck",
     "spellcheck.description": "Run a spell check for one or multiple words",
     "disambiguate": "Disambiguate",

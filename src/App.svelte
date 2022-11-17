@@ -1,4 +1,5 @@
 <script>
+    import gt_logo from "./assets/giellatekno_logo_official.png";
   import LocaleSelector from "./components/LocaleSelector.svelte";
   import LangSelector from "./components/LangSelector.svelte";
   import Index from "./routes/Index.svelte";
@@ -47,6 +48,9 @@
 
 <main>
     <header>
+        <!--
+        <img src={gt_logo} alt="Giellatekno">
+        -->
         <LocaleSelector />
         <LangSelector />
     </header>
@@ -61,12 +65,13 @@
 
 <style>
     header {
+        /*height: 44px;*/
         display: flex;
         align-items: center;
         margin-top: 6px;
         margin-left: 6px;
     }
     div {
-        margin-left: 34px;
+        /*margin-left: 34px;*/
     }
 </style>

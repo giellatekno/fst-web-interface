@@ -31,6 +31,10 @@
 
         return _promise;
     }
+
+    function pp_result(res) {
+        return res.replaceAll("-", '<span style="color: red;"> &#8212; </span>');
+    }
 </script>
 
 <h1>[l6e] Hyphenation</h1>
@@ -44,7 +48,13 @@
 {#await results}
     venter...
 {:then values}
-    {JSON.stringify(values)}
+    {#if values.length}
+        {#each values as v}
+            {@html pp_result(v)}
+        {/each}
+    {:else}
+        Fant ingen resultater.
+    {/if}
 {:catch err}
     {#if !err.message.startsWith("ValueError")}
         {err}
@@ -52,3 +62,12 @@
         [DEBUG] search term is empty
     {/if}
 {/await}
+
+<style>
+    span.result {
+        /* TEMP */
+        margin: 34px;
+
+        font-size: 1.4em;
+    }
+</style>

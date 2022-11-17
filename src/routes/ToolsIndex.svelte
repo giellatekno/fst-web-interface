@@ -1,6 +1,7 @@
 <script>
     import example_img from "../assets/language.svg";
-    import spellcheck from "../assets/spellcheck.svg";
+    import spellcheck_img from "../assets/spellcheck.svg";
+    import hyphenation_img from "../assets/hyphenation.svg";
     import { t } from "svelte-intl-precompile";
     import { locale } from "../lib/locales.js";
     import {
@@ -44,15 +45,14 @@
         return list;
     }
 
-    const IMAGES = {
-        spellcheck: spellcheck
-    };
-
     function get_image(tool) {
-        if (tool === "spellcheck") {
-            return spellcheck;
-        } else {
-            return example_img;
+        switch (tool) {
+            case "spellcheck":
+                return spellcheck_img;
+            case "hyphenation":
+                return hyphenation_img;
+            default:
+                return example_img;
         }
     }
 
@@ -80,6 +80,20 @@ Andre ressurser for {x}
 <a href="#">Direktelenke for denne siden</a>
 
 <style>
+    main {
+        display: grid;
+        grid-template-columns: repeat(2, max-content);
+        grid-gap: 17px;
+        margin: 0 34px;
+        /*width: calc(100vw - 68px);*/
+    }
+
+    @media screen and (max-width: 768px) {
+        main {
+            grid-template-columns: 1fr;
+        }
+    }
+
     a.tool { 
         display: grid;
         color: black;
@@ -87,18 +101,22 @@ Andre ressurser for {x}
         grid-template-areas:
             'img img title title title'
             'img img desc desc desc';
-        grid-template-columns: 42px 42px repeat(3, 1fr);
-        background-color: #efedd1;
-        border-radius: 8px;
-        margin: 12px;
-        height: 80px;
+        grid-template-columns: 42px 42px repeat(3, max-content);
+        background-color: #f0eab3;
+        border-radius: 12px;
         padding: 4px 12px;
+        box-shadow: 4px 4px 12px 0px rgba(121, 121, 89, 0.44);
         transition:
-            background-color ease-in 0.3s;
+            background-color ease-out 0.25s;
+    }
+
+    @media screen and (max-width: 768px) {
+        a.tool {
+        }
     }
 
     a.tool:hover {
-        background-color: #ede8a7;
+        background-color: #ece268;
     }
 
     a.tool > img {
@@ -112,7 +130,9 @@ Andre ressurser for {x}
         justify-self: start;
         align-self: end;
         grid-area: title;
-        font-size: 1.9em;
+        font-size: 1.8em;
+        font-weight: 500;
+        font-variant: small-caps;
         margin-bottom: 6px;
     }
 

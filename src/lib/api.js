@@ -1,12 +1,19 @@
-const DIVVUN_API_ROOT = "https://api-giellalt.uit.no/";
+const API_URLS = {
+    divvun: "https://api-giellalt.uit.no/",
+    local: "http://localhost:8000/",
+};
 
 const service_unavailable = new Response(null, {
     status: 503,
     statusText: "Service Unavailable",
 });
 
-async function apicall(url, { json_body, method = "GET" } = {}) {
-    url = DIVVUN_API_ROOT + url;
+async function apicall(url, { api = "divvun", json_body, method = "GET" } = {}) {
+    if (!Object.hasOwn(API_URLS, api)) {
+        throw new Error("Internal: bad call to apicall(): no such api");
+    }
+
+    url = API_URLS[api] + url;
     const opts = { method };
 
     if (json_body) {
@@ -53,13 +60,9 @@ export async function hyphenate(lang, word) {
         throw new Error("ValueError: word must be non-empty");
     }
 
-    if (lang === "sme") {
-        // se = swedish ?
-        //lang = "se";
-    }
-
-    const response = await apicall(`hyphenation/${lang}`, {
-        json_body: { text: word }});
+    const response = await apicall(`hyphenate/${lang}/${word}`, {
+        api: "local",
+    });
     if (response.status !== 200) {
         console.error("hyphenation api error");
         console.error(response.statusText);
@@ -67,5 +70,5 @@ export async function hyphenate(lang, word) {
     }
 
     const json = await response.json();
-    return json.results;
+    return json.result;
 }
