@@ -72,3 +72,22 @@ export async function hyphenate(lang, word) {
     const json = await response.json();
     return json.result;
 }
+
+export async function transcribe(lang, word) {
+    if (!word) {
+        throw new Error("ValueError: word must be non-empty");
+    }
+
+    const response = await apicall(`transcribe/${lang}/${word}`, {
+        api: "local",
+    });
+
+    if (response.status !== 200) {
+        console.error("transcribe api error");
+        console.error(response.statusText);
+        throw new Error("transcribe api error");
+    }
+
+    const json = await response.json();
+    return json.result;
+}

@@ -1,6 +1,12 @@
 from fastapi import FastAPI
-from .routers import generate, hyphenate
 from fastapi.middleware.cors import CORSMiddleware
+
+from .config import capabilities
+from .routers import (
+    generate,
+    hyphenate,
+    transcribe,
+)
 
 origins = [
     "*",
@@ -16,5 +22,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/capabilities")
+async def handle():
+    return capabilities
+
 app.include_router(generate.router)
 app.include_router(hyphenate.router)
+app.include_router(transcribe.router)

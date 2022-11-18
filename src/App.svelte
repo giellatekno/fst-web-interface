@@ -49,7 +49,6 @@
 <main>
     <header>
         <!--
-        <img src={gt_logo} alt="Giellatekno">
         -->
         <LocaleSelector />
         <LangSelector />
@@ -60,6 +59,13 @@
             this={current_component}
         />
     </div>
+
+    <!--
+    <footer>
+        <img class="gt_logo" src={gt_logo} alt="Giellatekno">
+        <p>Giellatekno, UiT Universitet i Tromsø &mdash; Norges Arktiske Universitet</p>
+    </footer>
+    -->
 </main>
 
 
@@ -73,5 +79,24 @@
     }
     div {
         /*margin-left: 34px;*/
+    }
+
+    footer {
+        color: #ffffff;
+        padding: 12px 0 12px 34px;
+        display: flex;
+        flex-direction: column;
+        margin-top: 26px;
+        background-color: #0a2d3aee;
+        /*
+        background: linear-gradient(to bottom, #fdfdfd, 70%, #0A2D3A);
+        */
+        border-top: 1px solid #ddd;
+    }
+
+    footer > img.gt_logo {
+        height: 46px;
+        width: 136px; /* 140 */
+        filter: invert(100%) contrast(85%) drop-shadow(2px 2px 3px #222);
     }
 </style>

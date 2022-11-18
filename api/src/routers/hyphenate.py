@@ -7,14 +7,12 @@ from pydantic import BaseModel
 
 from ..config import GTLANGS, hyphenator_langs
 
-router = APIRouter(
-    prefix = "/hyphenate"
-)
+router = APIRouter(prefix = "/hyphenate")
 
 class HyphenatorLangs(str, Enum):
     pass
 
-def populate_hyphenator_langs(gl):
+def populate_langs(gl):
     # hack to dynamically update an Enum for use with FastAPI
     # https://gist.github.com/myuanz/03f3e350fb165ec3697a22b559a7eb50
     class _TempEnum(str, Enum):
@@ -25,7 +23,7 @@ def populate_hyphenator_langs(gl):
     gl._member_names_ = _temp_enum._member_names_
     gl._value2member_map_ = _temp_enum._value2member_map_
 
-populate_hyphenator_langs(HyphenatorLangs)
+populate_langs(HyphenatorLangs)
 hfstol_path = "lang-{}/tools/hyphenators/hyphenator-gt-desc.hfstol"
 hfstol_path_for = {
     k: GTLANGS + hfstol_path.format(k)
@@ -97,5 +95,4 @@ async def hyphenate(lang: HyphenatorLangs, input: str):
     else:
         out["result"] = parse_cmd_output(res.stdout)
 
-    print(out)
     return out
