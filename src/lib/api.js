@@ -91,3 +91,23 @@ export async function transcribe(lang, word) {
     const json = await response.json();
     return json.result;
 }
+
+export async function disambiguate(lang, input) {
+    if (!input) {
+        throw new Error("ValueError: Bad internal call. api::disambiguate() given input must be non-empty");
+    }
+
+    const response = await apicall(
+        `disambiguate/${lang}/${input}`,
+        { api: "local" },
+    );
+
+    if (response.status !== 200) {
+        console.error("api::disambiguate(), non 200 from api");
+        console.error(response.statusText);
+        throw new Error("api::disambiguate() error");
+    }
+
+    const json = await response.json();
+    return json.result;
+}

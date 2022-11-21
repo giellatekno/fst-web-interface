@@ -5,94 +5,66 @@ from typing import Union
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from ..config import GTLANGS, hyphenator_langs
+from ..config import GTLANGS, hyphenate_langs
+from ..util import (
+    populate_enumlangs,
+    run_cmdline,
+    progout_to_response,
+    ErrorResponse,
+)
 
 router = APIRouter(prefix = "/hyphenate")
 
-class HyphenatorLangs(str, Enum):
-    pass
+class HyphenateLangs(str, Enum): pass
+populate_enumlangs(HyphenateLangs, hyphenate_langs)
 
-def populate_langs(gl):
-    # hack to dynamically update an Enum for use with FastAPI
-    # https://gist.github.com/myuanz/03f3e350fb165ec3697a22b559a7eb50
-    class _TempEnum(str, Enum):
-        pass
-
-    _temp_enum = _TempEnum("", { k: k for k in hyphenator_langs })
-    gl._member_map_ = _temp_enum._member_map_
-    gl._member_names_ = _temp_enum._member_names_
-    gl._value2member_map_ = _temp_enum._value2member_map_
-
-populate_langs(HyphenatorLangs)
-hfstol_path = "lang-{}/tools/hyphenators/hyphenator-gt-desc.hfstol"
-hfstol_path_for = {
-    k: GTLANGS + hfstol_path.format(k)
-    for k in HyphenatorLangs.__members__
-}
+cmd_chain_for = {}
+for lang in hyphenate_langs:
+    cmd_chain_for[lang] = [
+        [
+            "hfst-lookup",
+            "-q",
+            GTLANGS / f"lang-{lang}" / "tools" / "hyphenators" / "hyphenator-gt-desc.hfstol"
+        ]
+    ]
 
 def parse_cmd_output(output):
     output = output.strip()
-    #{'input': 'konspirasjon', 'result': {'results': []}}
+    #{'input': 'konspirasjon', 'result': []}}
     out = set()
-    if "\n" in output:
-        lines = output.split("\n")
+    lines = output.split("\n")
+    for line in lines:
+        splits = line.strip().split("\t")
+        if len(splits) != 3:
+            continue
+        else:
+            given, result, weight = splits
 
-        for line in lines:
-            splits = line.strip().split("\t")
-            if len(splits) != 3:
-                print(splits)
-                continue
-                #out["error"] = output
-            else:
-                given, result, weight = splits
+            # TODO koffer står det # på noen av og til?
+            result = result.replace("#", "-")
 
-                # TODO koffer står det # på noen av og til?
-                result = result.replace("#", "-")
-
-                out.add(result)
-                #if weight == "inf":
-                    #out["not_found"] = result
-    else:
-        # får alltid stavelse, selv om input ikke er et
-        # ordentlig ord, fordi det går bare på "regler",
-        # ikke sant?
-        print("unreachable?")
+            out.add(result)
 
     return list(out)
 
-class HyphenateResponseBase(BaseModel):
+class HyphenateOkResponse(BaseModel):
     input: str
-
-class HyphenateResponseFound(HyphenateResponseBase):
-    results: list[str]
-
-class HyphenateResponseNotFound(HyphenateResponseBase):
-    not_found: str
-
-class HyphenateResponseError(HyphenateResponseBase):
-    error: str
-
-class Ok(BaseModel):
     result: list[str]
-
-class Failure(BaseModel):
-    failure: str
 
 @router.get(
     "/{lang}/{input}",
-    response_model = Union[Ok, Failure]
+    response_model = Union[
+        HyphenateOkResponse,
+        ErrorResponse,
+    ]
 )
-async def hyphenate(lang: HyphenatorLangs, input: str):
+async def hyphenate(lang: HyphenateLangs, input: str):
     """Hyphenate.
     essentially does `echo "konspirasjon" | hfst-lookup lang-xxx/tools/hyphenators/hyphenator-gt-desc.hfstol`
     """
-    out = { "input": input }
-    cmdline = ["hfst-lookup", "-q", hfstol_path_for[lang]]
-    res = subprocess.run(cmdline, input=input, text=True, capture_output=True)
+    next_input = input
+    for prog in cmd_chain_for[lang]:
+        res = run_cmdline(prog, next_input)
+        next_input = res.stdout
 
-    if res.stdout == "":
-        out["failure"] = res.stderr
-    else:
-        out["result"] = parse_cmd_output(res.stdout)
-
-    return out
+    return progout_to_response(input, res, parse_cmd_output)

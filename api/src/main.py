@@ -6,6 +6,7 @@ from .routers import (
     generate,
     hyphenate,
     transcribe,
+    disambiguate,
 )
 
 origins = [
@@ -29,3 +30,4 @@ async def handle():
 app.include_router(generate.router)
 app.include_router(hyphenate.router)
 app.include_router(transcribe.router)
+app.include_router(disambiguate.router)

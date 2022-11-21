@@ -6,31 +6,31 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from ..config import GTLANGS, transcriber_langs
+from ..util import (
+    populate_enumlangs,
+    run_cmdline,
+    progout_to_response,
+    ErrorResponse,
+)
 
 # file built with:
+# lang-xxx/src/phonetics/txt2ipa.compose.hfst
 # ./configure --enable-phonetic
-hfst_path = "lang-{}/src/phonetics/txt2ipa.compose.hfst"
 
 router = APIRouter(prefix = "/transcribe")
 
-class Langs(str, Enum):
-    pass
+class TranscribeLangs(str, Enum): pass
+populate_enumlangs(TranscribeLangs, transcriber_langs)
 
-def populate_langs(en):
-    class _TempEnum(str, Enum):
-        pass
-    _temp_enum = _TempEnum("",
-        { k: k for k in transcriber_langs }
-    )
-    en._member_map_ = _temp_enum._member_map_
-    en._member_names_ = _temp_enum._member_names_
-    en._value2member_map_ = _temp_enum._value2member_map_
-
-populate_langs(Langs)
-hfst_path_for = {
-    k: GTLANGS + hfst_path.format(k)
-    for k in Langs.__members__
-}
+cmd_chain_for = {}
+for lang in transcriber_langs:
+    cmd_chain_for[lang] = [
+        [
+            "hfst-lookup",
+            "-q",
+            GTLANGS / f"lang-{lang}" / "src" / "phonetics" / "txt2ipa.compose.hfst"
+        ],
+    ]
 
 def parse_cmd_output(output):
     lines = output.strip().split("\n")
@@ -44,28 +44,26 @@ def parse_cmd_output(output):
 
     return out
 
-class Ok(BaseModel):
+class TranscribeOkResponse(BaseModel):
     result: list[str]
-
-class Failure(BaseModel):
-    failure: str
 
 @router.get(
     "/{lang}/{input}",
-    response_model = Union[Ok, Failure]
+    response_model = Union[
+        TranscribeOkResponse,
+        ErrorResponse,
+    ]
 )
-async def transcribe(lang: Langs, input: str):
+async def transcribe(
+    lang: TranscribeLangs,
+    input: str,
+):
     """Transcribe.
     essentially `echo "word" | hfst-lookup -q src/phonetics/txt2ipa.compose.hfst`
     """
-    out = { "input": input }
-    cmdline = ["hfst-lookup", "-q", hfst_path_for[lang]]
+    next_input = input
+    for prog in cmd_chain_for[lang]:
+        res = run_cmdline(prog, next_input)
+        next_input = res.stdout
 
-    res = subprocess.run(cmdline, input=input, text=True, capture_output=True)
-
-    if res.stdout == "":
-        out["failure"] = res.stderr
-    else:
-        out["result"] = parse_cmd_output(res.stdout)
-
-    return out
+    return progout_to_response(input, res, parse_cmd_output)
