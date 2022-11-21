@@ -7,6 +7,7 @@ from .routers import (
     hyphenate,
     transcribe,
     disambiguate,
+    paradigm,
 )
 
 origins = [
@@ -31,3 +32,4 @@ app.include_router(generate.router)
 app.include_router(hyphenate.router)
 app.include_router(transcribe.router)
 app.include_router(disambiguate.router)
+app.include_router(paradigm.router)

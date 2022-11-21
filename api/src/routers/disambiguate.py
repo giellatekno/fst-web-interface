@@ -1,4 +1,3 @@
-import subprocess
 from enum import Enum
 from typing import Union
 
@@ -12,9 +11,7 @@ from ..util import (
     populate_enumlangs,
 )
 
-router = APIRouter(
-    prefix = "/disambiguate"
-)
+router = APIRouter(prefix = "/disambiguate")
 
 class DisambiguateLangs(str, Enum): pass
 populate_enumlangs(DisambiguateLangs, disamb_langs)
@@ -51,7 +48,6 @@ class ErrorResponse(BaseModel):
     error: str
 
 def disamb_out_to_response(stdout):
-    print(stdout)
     out = []
     #{ input_word, input_word_result },
     # where input_word_result = {
@@ -59,9 +55,6 @@ def disamb_out_to_response(stdout):
 
     for line in stdout.split("\n"):
         line = line.strip()
-
-        # bug in upstream tool somewhere?
-        line = line.replace("\\n", "\n")
 
         if line == "":
             continue
@@ -89,11 +82,11 @@ def disamb_out_to_response(stdout):
         "word_disambs": word_disambs,
     })
 
-    print(out)
     return out
 
 @router.get(
     "/{lang}/{input}",
+    # TODO fix response model
     #response_model = Union[
     #    DisambOkResponse,
     #    ErrorResponse,
