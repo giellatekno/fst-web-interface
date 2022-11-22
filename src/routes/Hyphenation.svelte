@@ -13,8 +13,10 @@
         { word: "farsdag", promise: Promise.resolve(["fars-dag"]) },
         { word: "bursdag", promise: Promise.resolve(["burs-dag"]) },
     ];
+
     $: usage = $t(`usage.lang.${$lang}`);
-    $: debounce(value, 1000).then(search_and_update);
+    $: debounce(value, 1000)
+        .then(search_and_update);
 
     async function search_and_update(word) {
         if (word === null) return;

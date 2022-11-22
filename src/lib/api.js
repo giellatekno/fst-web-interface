@@ -8,6 +8,12 @@ const service_unavailable = new Response(null, {
     statusText: "Service Unavailable",
 });
 
+const check_arg_nonempty = (fnname, arg, argname) => {
+    if (!arg) {
+        throw new Error(`ValueError: Bad internal call. api::${fnname}() '${argname}' must be non-empty`);
+    }
+}
+
 async function apicall(url, { api = "divvun", json_body, method = "GET" } = {}) {
     if (!Object.hasOwn(API_URLS, api)) {
         throw new Error("Internal: bad call to apicall(): no such api");
@@ -30,84 +36,58 @@ async function apicall(url, { api = "divvun", json_body, method = "GET" } = {}) 
         return service_unavailable;
     }
 
-    return response;
+    if (response.status !== 200) {
+        throw new Error(`non-200 when calling api (${url})`);
+    }
+
+    let json;
+    try {
+        json = await response.json();
+    } catch (e) {
+        throw new Error(`api response body not json (${url})`);
+    }
+
+    const results = json.result;
+    if (results === undefined) {
+        const e = json.error || json.errors || "no 'results' nor 'error' in json body";
+        throw new Error(e);
+    }
+    return results;
 }
 
 export async function spell(lang, word) {
-    if (!word) {
-        throw new Error("ValueError: word must be non-empty");
-    }
+    check_arg_nonempty("spell", lang, "lang");
 
     if (lang === "sme") {
-        // se = swedish ?
+        // on divvun api, use 2-char for the langs that have a 2-char code,
+        // else use 3-char.
+        // on local: always 3-char
         lang = "se";
     }
 
-    const response = await apicall(`speller/${lang}`, {
-        json_body: { text: word }});
-    if (response.status !== 200) {
-        console.error("speller api error");
-        console.error(response.statusText);
-        throw new Error("speller api error");
-    }
-
-    const json = await response.json();
-    return json.results;
+    return apicall(`speller/${lang}`, { json_body: { text: word }});
 }
 
 export async function hyphenate(lang, word) {
-    if (!word) {
-        throw new Error("ValueError: word must be non-empty");
-    }
+    check_arg_nonempty("hyphenate", word, "word");
 
-    const response = await apicall(`hyphenate/${lang}/${word}`, {
-        api: "local",
-    });
-    if (response.status !== 200) {
-        console.error("hyphenation api error");
-        console.error(response.statusText);
-        throw new Error("hypenation api error");
-    }
-
-    const json = await response.json();
-    return json.result;
+    return apicall(`hyphenate/${lang}/${word}`, { api: "local" });
 }
 
 export async function transcribe(lang, word) {
-    if (!word) {
-        throw new Error("ValueError: word must be non-empty");
-    }
+    check_arg_nonempty("transcribe", word, "word");
 
-    const response = await apicall(`transcribe/${lang}/${word}`, {
-        api: "local",
-    });
-
-    if (response.status !== 200) {
-        console.error("transcribe api error");
-        console.error(response.statusText);
-        throw new Error("transcribe api error");
-    }
-
-    const json = await response.json();
-    return json.result;
+    return apicall(`transcribe/${lang}/${word}`, { api: "local" });
 }
 
 export async function disambiguate(lang, input) {
-    if (!input) {
-        throw new Error("ValueError: Bad internal call. api::disambiguate() given input must be non-empty");
-    }
+    check_arg_nonempty("disambiguate", input, "input");
 
-    const response = await apicall(
-        `disambiguate/${lang}/${input}`,
-        { api: "local" },
-    );
+    return apicall(`disambiguate/${lang}/${input}`, { api: "local" });
+}
 
-    if (response.status !== 200) {
-        console.error("api::disambiguate(), non 200 from api");
-        console.error(response.statusText);
-        throw new Error("api::disambiguate() error");
-    }
+export async function paradigm(lang, input) {
+    check_arg_nonempty("paradigm", input, "input");
 
-    const json = await response.json();
-    return json.result;
+    return apicall(`paradigm/${lang}/${input}`, { api: "local" });
 }

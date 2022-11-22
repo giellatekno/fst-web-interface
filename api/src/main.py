@@ -10,18 +10,19 @@ from .routers import (
     paradigm,
 )
 
-origins = [
-    "*",
-    #"http://localhost:5173",
-]
-
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins = [
+        "*",
+        # what else... ?
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+
+    # TODO for timing request time taken
+    expose_headers=["X-Process-Time"],
 )
 
 @app.get("/capabilities")

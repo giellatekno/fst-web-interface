@@ -1,25 +1,26 @@
 <script>
     import gt_logo from "./assets/giellatekno_logo_official.png";
-  import LocaleSelector from "./components/LocaleSelector.svelte";
-  import LangSelector from "./components/LangSelector.svelte";
-  import Index from "./routes/Index.svelte";
-  import ToolsIndex from "./routes/ToolsIndex.svelte";
-  import AnalyzeWord from "./routes/AnalyzeWord.svelte";
-  import Generate from "./routes/Generate.svelte";
-  import Spellcheck from "./routes/Spellcheck.svelte";
-  import Disambiguate from "./routes/Disambiguate.svelte";
-  import Dependency from "./routes/Dependency.svelte";
-  import Hyphenation from "./routes/Hyphenation.svelte";
-  import Transcription from "./routes/Transcription.svelte";
+    import LocaleSelector from "./components/LocaleSelector.svelte";
+    import LangSelector from "./components/LangSelector.svelte";
+    import Index from "./routes/Index.svelte";
+    import ToolsIndex from "./routes/ToolsIndex.svelte";
+    import AnalyzeWord from "./routes/AnalyzeWord.svelte";
+    import Generate from "./routes/Generate.svelte";
+    import Spellcheck from "./routes/Spellcheck.svelte";
+    import Disambiguate from "./routes/Disambiguate.svelte";
+    import Dependency from "./routes/Dependency.svelte";
+    import Hyphenation from "./routes/Hyphenation.svelte";
+    import Transcription from "./routes/Transcription.svelte";
+    import Paradigm from "./routes/Paradigm.svelte";
 
-  import { lang, tool } from "./lib/stores.js";
+    import { lang, tool } from "./lib/stores.js";
 
-  // React to any changes in lang or tool,
-  // and update the currenly showing component
-  $: current_component = determine_component(
+    // React to any changes in lang or tool,
+    // and update the currenly showing component
+    $: current_component = determine_component(
       $lang,
       $tool,
-  );
+    );
 
     function determine_component(lang, tool) {
         if (!lang) return Index;
@@ -42,6 +43,8 @@
                 return Transcription;
             case "spellcheck":
                 return Spellcheck;
+            case "paradigm":
+                return Paradigm;
       }
   }
 </script>
