@@ -68,6 +68,12 @@ export async function spell(lang, word) {
     return apicall(`speller/${lang}`, { json_body: { text: word }});
 }
 
+export async function generate(lang, word) {
+    check_arg_nonempty("generate", word, "word");
+
+    return apicall(`generate/${lang}/${word}`, { api: "local" });
+}
+
 export async function hyphenate(lang, word) {
     check_arg_nonempty("hyphenate", word, "word");
 
@@ -90,4 +96,10 @@ export async function paradigm(lang, input) {
     check_arg_nonempty("paradigm", input, "input");
 
     return apicall(`paradigm/${lang}/${input}`, { api: "local" });
+}
+
+export async function dependency(lang, input) {
+    check_arg_nonempty("dependency", input, "input");
+
+    return apicall(`dependency/${lang}/${input}`, { api: "local" });
 }

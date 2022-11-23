@@ -5,46 +5,17 @@
     import { paradigm } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
 
-    let value = "";
-    let input;
-    let results = Promise.resolve(null);
+    let results = null;
 
     $: usage = $t(`usage.lang.${$lang}`);
-    $: debounce(value, 1000)
-        .then(search_and_update);
 
-    async function search_and_update(input) {
-        if (input === null) return;
-        results = paradigm($lang, input);
+    function pp_res(res) {
+        return JSON.stringify(res);
+        //return res.replaceAll("\n", "<br>");
     }
 
-    let _timer;
-    let _promise;
-    function debounce(s, ms) {
-        if (_timer) {
-            window.clearTimeout(_timer);
-            _timer = null;
-        }
-
-        if (!s) return Promise.resolve(null);
-
-        _promise = new Promise(resolve => {
-            _timer = window.setTimeout(
-                () => resolve(s), ms);
-        });
-
-        return _promise;
-    }
-
-    function empty_query() {
-        value = "";
-        input.focus();
-    }
-
-    function reset() {
-        value = "";
-        results = Promise.resolve(null);
-        input.focus();
+    function on_new_value({ detail: value }) {
+        results = paradigm($lang, value);
     }
 </script>
 
@@ -53,18 +24,29 @@
     <p>{@html usage}</p>
 
     <form>
-        <WordInput bind:this={input} bind:value />
-        <button on:click|preventDefault={empty_query}>[l6e] Nytt søk</button>
-        <button on:click|preventDefault={reset}>[l6e] Nullstill</button>
+        <WordInput
+            debounce={1000}
+            on:new-value={on_new_value}
+            on:new-input-started={() => results = null}
+            on:reset-value={() => results = null}
+        />
     </form>
 
-    {#await results}
-        ...
-    {:then res}
-        {#if res !== null}
-            {JSON.stringify(res)}
-        {/if}
-    {:catch e}
-        Feil: {e}
-    {/await}
+    {#if results}
+        {#await results}
+            <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
+        {:then res}
+            {#if res !== null}
+                {@html pp_res(res)}
+            {/if}
+        {:catch e}
+            Error: {e}
+        {/await}
+    {/if}
 </main>
+
+<style>
+    main {
+        margin-left: 34px;
+    }
+</style>

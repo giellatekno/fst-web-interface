@@ -3,30 +3,10 @@
     import { lang } from "../lib/stores.js";
     import { transcribe } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
-    let value = "";
+
+    let results = null;
 
     $: usage = $t(`usage.lang.${$lang}`);
-    $: results =
-        debounce(value, 1000)
-        .then(word => transcribe($lang, word));
-
-    let _timer;
-    let _promise;
-    function debounce(s, ms) {
-        if (_timer) {
-            window.clearTimeout(_timer);
-            _timer = null;
-        }
-
-        if (!s) return Promise.resolve(null);
-
-        _promise = new Promise(resolve => {
-            _timer = window.setTimeout(
-                () => resolve(s), ms);
-        });
-
-        return _promise;
-    }
 
     function appendkey(key) {
         return function(ev) {
@@ -35,7 +15,10 @@
             input.focus();
         }
     }
-    let input;
+
+    function on_new_value({ detail: value }) {
+        results = transcribe($lang, value);
+    }
 </script>
 
 <main>
@@ -43,7 +26,12 @@
     <p>{@html usage}</p>
 
     <form>
-        <WordInput bind:this={input} bind:value />
+        <WordInput
+            debounce={1000}
+            on:new-value={on_new_value}
+            on:new-input-started={() => results = null}
+            on:reset-value={() => results = null}
+        />
         <br>
         <button
             class="key"
@@ -62,30 +50,32 @@
         </button>
     </form>
 
-    {#await results}
-        [spinner]...
-    {:then values}
-        {#if values.length}
-            <div class="results">
-            {#each values as v}
-                {v}<br>
-            {/each}
-            </div>
-        {:else}
-            [l6e] Fant ingen resultater.
-        {/if}
-    {:catch err}
-        {#if !err.message.startsWith("ValueError")}
-            {err}
-        {:else}
-            [DEBUG] search term is empty
-        {/if}
-    {/await}
+    {#if results}
+        {#await results}
+            [spinner]...
+        {:then values}
+            {#if values.length}
+                <div class="results">
+                {#each values as v}
+                    {v}<br>
+                {/each}
+                </div>
+            {:else}
+                [l6e] Fant ingen resultater.
+            {/if}
+        {:catch err}
+            {#if !err.message.startsWith("ValueError")}
+                {err}
+            {:else}
+                [DEBUG] search term is empty
+            {/if}
+        {/await}
+    {/if}
 </main>
 
 <style>
     main {
-        margin-right: 34px;
+        margin-left: 34px;
     }
 
     button.key {

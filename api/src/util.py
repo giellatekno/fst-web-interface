@@ -1,20 +1,7 @@
-from subprocess import run
 from enum import Enum
 
 from pydantic import BaseModel
 
-def run_cmdline(cmdline, input):
-    return run(cmdline, input=input, text=True, capture_output=True)
-
-def progout_to_response(input, res, convert):
-    """Takes a subprocess.run()-result, and converts
-    it into the required result"""
-    out = { "input": input }
-    if res.stdout == "":
-        out["error"] = res.stderr
-    else:
-        out["result"] = convert(res.stdout)
-    return out
 
 def populate_enumlangs(enum, langs):
     # hack to dynamically update an Enum for use
@@ -30,3 +17,8 @@ def populate_enumlangs(enum, langs):
 class ErrorResponse(BaseModel):
     input: str
     error: str
+
+
+class PartialPath:
+    def __init__(self, p):
+        self.p = p

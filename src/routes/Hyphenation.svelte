@@ -5,9 +5,6 @@
     import { hyphenate } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
 
-    let value = "";
-    let input;
-
     let results = [
         { word: "fattig", promise: Promise.resolve(["fat-tig"]) },
         { word: "farsdag", promise: Promise.resolve(["fars-dag"]) },
@@ -15,50 +12,18 @@
     ];
 
     $: usage = $t(`usage.lang.${$lang}`);
-    $: debounce(value, 1000)
-        .then(search_and_update);
-
-    async function search_and_update(word) {
-        if (word === null) return;
-        const new_result = {
-            word: word,
-            promise: hyphenate($lang, word),
-        };
-        results.splice(0, 0, new_result);
-        results = results;
-    }
-
-    let _timer;
-    let _promise;
-    function debounce(s, ms) {
-        if (_timer) {
-            window.clearTimeout(_timer);
-            _timer = null;
-        }
-
-        if (!s) return Promise.resolve(null);
-
-        _promise = new Promise(resolve => {
-            _timer = window.setTimeout(
-                () => resolve(s), ms);
-        });
-
-        return _promise;
-    }
 
     function pp_result(res) {
         return res.replaceAll("-", '<span style="color: red;"> &#8212; </span>');
     }
 
-    function empty_query() {
-        value = "";
-        input.focus();
-    }
-
-    function reset() {
-        value = "";
-        results = [];
-        input.focus();
+    function on_new_value({ detail: value }) {
+        const new_result = {
+            word: value,
+            promise: hyphenate($lang, value),
+        };
+        results.splice(0, 0, new_result);
+        results = results;
     }
 </script>
 
@@ -67,9 +32,10 @@
     <p>{@html usage}</p>
 
     <form>
-        <WordInput bind:this={input} bind:value />
-        <button on:click|preventDefault={empty_query}>[l6e] Nytt søk</button>
-        <button on:click|preventDefault={reset}>[l6e] Nullstill</button>
+        <WordInput
+            debounce={1000}
+            on:new-value={on_new_value}
+        />
     </form>
 
     <table class="results">
@@ -90,24 +56,6 @@
                 </td>
         {/each}
     </table>
-
-    <!--
-    {#await results}
-    {:then values}
-        {#if values.length}
-            {#each values as v}
-                {@html pp_result(v)}
-            {/each}
-        {:else}
-            Fant ingen resultater.
-        {/if}
-    {:catch err}
-        {#if !err.message.startsWith("ValueError")}
-            {err}
-        {:else}
-        {/if}
-    {/await}
-    -->
 </main>
 
 <style>
@@ -115,10 +63,6 @@
         margin-left: 34px;
     }
 
-    table.results {
-        /*margin-right: 34px;*/
-    }
-    
     table.results tr:first-of-type {
         height: 3em;
         vertical-align: top;

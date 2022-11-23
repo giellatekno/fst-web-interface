@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import capabilities
+from .toolset import tools
 from .routers import (
+    dependency,
+    disambiguate,
     generate,
     hyphenate,
-    transcribe,
-    disambiguate,
     paradigm,
+    transcribe,
 )
 
 app = FastAPI()
@@ -27,10 +28,11 @@ app.add_middleware(
 
 @app.get("/capabilities")
 async def handle():
-    return capabilities
+    return tools.capabilities
 
+app.include_router(dependency.router)
+app.include_router(disambiguate.router)
 app.include_router(generate.router)
 app.include_router(hyphenate.router)
-app.include_router(transcribe.router)
-app.include_router(disambiguate.router)
 app.include_router(paradigm.router)
+app.include_router(transcribe.router)
