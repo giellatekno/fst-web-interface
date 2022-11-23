@@ -8,6 +8,7 @@ from .toolspecs import dependency as dependency_spec
 from .toolspecs import disambiguate as disambiguate_spec
 from .toolspecs import generate as generate_spec
 from .toolspecs import hyphenate as hyphenate_spec
+from .toolspecs import num as num_spec
 from .toolspecs import paradigm as paradigm_spec
 from .toolspecs import transcribe as transcribe_spec
 
@@ -158,6 +159,7 @@ dependency = tools.add(dependency_spec)
 disambiguate = tools.add(disambiguate_spec)
 generate = tools.add(generate_spec)
 hyphenate = tools.add(hyphenate_spec)
+num = tools.add(num_spec)
 paradigm = tools.add(paradigm_spec)
 transcribe = tools.add(transcribe_spec)
 

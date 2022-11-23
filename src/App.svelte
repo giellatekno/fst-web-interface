@@ -12,6 +12,7 @@
     import Hyphenation from "./routes/Hyphenation.svelte";
     import Transcription from "./routes/Transcription.svelte";
     import Paradigm from "./routes/Paradigm.svelte";
+    import Num from "./routes/Num.svelte";
 
     import { lang, tool } from "./lib/stores.js";
 
@@ -45,6 +46,8 @@
                 return Spellcheck;
             case "paradigm":
                 return Paradigm;
+            case "num":
+                return Num;
       }
   }
 </script>

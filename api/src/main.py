@@ -7,6 +7,7 @@ from .routers import (
     disambiguate,
     generate,
     hyphenate,
+    num,
     paradigm,
     transcribe,
 )
@@ -34,5 +35,6 @@ app.include_router(dependency.router)
 app.include_router(disambiguate.router)
 app.include_router(generate.router)
 app.include_router(hyphenate.router)
+app.include_router(num.router)
 app.include_router(paradigm.router)
 app.include_router(transcribe.router)

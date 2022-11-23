@@ -103,3 +103,9 @@ export async function dependency(lang, input) {
 
     return apicall(`dependency/${lang}/${input}`, { api: "local" });
 }
+
+export async function num(lang, input) {
+    check_arg_nonempty("num", input, "input");
+
+    return apicall(`num/${lang}/${input}`, { api: "local" });
+}

@@ -34,6 +34,7 @@
             //"generate",
             //"analyze",
             "spellcheck",
+            "num",
             "disambiguate",
             "dependency",
             "hyphenation",
