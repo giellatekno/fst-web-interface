@@ -2,13 +2,11 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" height="300" width="300">
     <style>
         text {
-            font: 96px sans-serif;
+            font: 104px sans-serif;
             fill: "#fff";
         }
-        tspan {
-            fill: red;
-        }
     </style>
-    <text x="8" y="160">Lor<tspan>&#x2014;</tspan>em</text>
-    <text x="18" y="280">ip<tspan>&#x2014;</tspan>sum</text>
+    <text x="8" y="160">aɪ</text>
+    <text x="90" y="240">pʰiː</text>
+    <text x="180" y="330">eɪ</text>
 </svg>

@@ -21,8 +21,13 @@ window.addEventListener("click", function(ev) {
     // we did not click an <a>, so return
     if (!target) return;
 
-    // we did click an <a>, prevent default,
-    // and update state of url
+    const is_external = target.getAttribute("rel") === "external";
+    if (is_external) {
+        // for external links, we just let the browser do it's thing
+        return;
+    }
+
+    // we did click an internal <a>, so: prevent default, and update state of url
     ev.preventDefault();
     const href = new URL(target.href).pathname;
     window.history.pushState(null, "", href);
