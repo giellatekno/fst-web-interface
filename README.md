@@ -49,6 +49,11 @@ pip install -r requirements.txt
 uvicorn src.main:app --reload
 ```
 
+Now the API is accessible at port 8000, and two different OpenAPI schema explorers are
+available at [/redoc](http://localhost:8000/redoc) and [/docs](http://localhost:8000/docs).
+In my opinon, the /redoc one is nicer, but the /docs one will let you test queries to the
+API directly on the documentation site.
+
 
 ### Development after initial setup
 
