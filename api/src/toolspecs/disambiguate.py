@@ -2,11 +2,11 @@ from ..util import PartialPath
 
 summary = "disambiguate"
 description = """
-Short description here.
+Gives the relevant morphological analysis of each word in context.
 
-Like running `echo "$INPUT" | hfst-tokenize -cg lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | vislcg3 -g lang-$LANG/src/cg3/disambiguator.cg`
+`echo "$INPUT" | hfst-tokenize -cg tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | vislcg3 -g src/cg3/disambiguator.cg`
 
-but the output structure is parsed and sent as json.
+The output structure is parsed and sent as json.
 """
 
 def pipeline_stdout_to_json(stdout):

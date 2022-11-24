@@ -2,11 +2,11 @@ from ..util import PartialPath
 
 summary = "paradigm"
 description = """
-Short description here.
+Generates the morphological paradigm from lemmas
 
-Like running `echo "$INPUT" | hfst-tokenize -q lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | hfst-lookup -q lang-$LANG/src/analyser-gt-desc.hfstol`
+`echo "$INPUT" | hfst-tokenize -q lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | hfst-lookup -q lang-$LANG/src/analyser-gt-desc.hfstol`
 
-but the output structure is parsed and sent as json.
+The output structure is parsed and sent as json.
 """
 
 def pipeline_stdout_to_json(stdout):

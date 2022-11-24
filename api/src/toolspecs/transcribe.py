@@ -2,11 +2,11 @@ from ..util import PartialPath
 
 summary = "transcribe"
 description = """
-Get the IPA (International Phonetic Alphabet) representation of a word (or several?).
+Converts orthography into IPA
 
-Like running `echo "$INPUT" | hfst-lookup lang-$LANG/src/phonetics/txt2ipa.compose.hfst`,
+`echo "$INPUT" | hfst-lookup lang-$LANG/src/phonetics/txt2ipa.compose.hfst`,
 
-but the output structure is parsed and sent as json.
+The output structure is parsed and sent as json.
 """
 
 def pipeline_stdout_to_json(stdout):

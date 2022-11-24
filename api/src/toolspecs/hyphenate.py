@@ -4,7 +4,7 @@ summary = "hyphenate"
 description = """
 Put dashes in between each syllable of a word.
 
-`echo "$INPUT" | hfst-lookup lang-$LANG/tools/hyphenators/hyphenators-gt-desc.hfstol`
+`echo "$INPUT" | hfst-lookup tools/hyphenators/hyphenators-gt-desc.hfstol`
 
 Output is structured up as json.
 """

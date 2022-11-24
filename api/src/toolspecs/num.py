@@ -1,12 +1,13 @@
 from ..util import PartialPath
 
-summary = "num"
+summary = "digit2text"
+# summary = "num"
 description = """
-Get a textual representation of how to say a number. Like 1 -> "one", 8 -> "eight", 22 -> "twenty two", ...
+Generate number words from arabic numerals, like 1 -> "one", 8 -> "eight", 22 -> "twenty two", ...
 
-Like running `echo "$INPUT" | hfst-lookup lang-$LANG/src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol`
+`echo "$INPUT" | hfst-lookup lang-$LANG/src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol`
 
-but the output structure is parsed and sent as json.
+The output structure is parsed and sent as json.
 """
 
 def pipeline_stdout_to_json(stdout):

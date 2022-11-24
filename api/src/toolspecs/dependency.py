@@ -3,11 +3,12 @@ import re
 
 summary = "dependency"
 description = """
-Short description here.
+Gives the relevant morphological analysis of each word in context, as
+well as syntactic functions and dependency structure
 
-Like running `echo "$INPUT" | hfst-tokenize -cg lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | vislcg3 -g lang-$LANG/src/cg3/disambiguator.cg3 | vislcg3 -g lang-$LANG/cg3/dependency.bin`
+`echo "$INPUT" | hfst-tokenize -cg tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | vislcg3 -g src/cg3/disambiguator.cg3 | vislcg3 -g lang-$LANG/cg3/korp.cg3 | vislcg3 -g lang-$LANG/cg3/dependency.cg3`
 
-but the output structure is parsed and sent as json.
+The output structure is parsed and sent as json.
 """
 line_re = r'"\<(?P<word>\w+)\>"'
 
@@ -62,7 +63,14 @@ pipeline = [
         "vislcg3",
         "-g",
         PartialPath(
-            "src/cg3/dependency.bin"
+            "src/cg3/korp.cg3"
+        ),
+    ],
+    [
+        "vislcg3",
+        "-g",
+        PartialPath(
+            "src/cg3/dependency.cg3"
         ),
     ],
     pipeline_stdout_to_json
