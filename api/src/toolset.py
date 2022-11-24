@@ -1,17 +1,9 @@
 import subprocess
+import inspect
 from collections import defaultdict
 
 from .config import GTLANGS
 from .util import PartialPath
-
-from .toolspecs import dependency as dependency_spec
-from .toolspecs import disambiguate as disambiguate_spec
-from .toolspecs import generate as generate_spec
-from .toolspecs import hyphenate as hyphenate_spec
-from .toolspecs import num as num_spec
-from .toolspecs import paradigm as paradigm_spec
-from .toolspecs import transcribe as transcribe_spec
-
 
 def parse_needed_files(pipeline_spec):
     """Parse out all needed files from a given pipeline spec."""
@@ -87,7 +79,12 @@ class Tool:
         # get a pipeline for a given language
         self.pipeline_for = {}
 
-        self.pipeline_stdout_to_json = spec.pipeline_stdout_to_json
+        # will be set by the Tools when loading the tool,
+        # and shown on the openapi docs
+        self.description = ""
+        self.summary = ""
+
+        #self.pipeline_stdout_to_json = spec.pipeline_stdout_to_json
 
     def run_pipeline(self, lang, input):
         final_output = { "input": input }
@@ -124,14 +121,21 @@ class Tools:
 
     def add(self, spec):
         specname = spec.__name__.split(".")[-1]
+        spec_dict = dict(inspect.getmembers(spec))
 
         self.all_wanted_files |= parse_needed_files(spec.pipeline)
 
         tool = Tool(spec)
+
+        tool.description = spec_dict.get("description", "")
+        tool.summary = spec_dict.get("summary", "")
+
         self.tools[specname] = tool
         return tool
 
-    def resolve_pipelines(self, available_files):
+    def resolve_pipelines(self):
+        available_files = gather_available_files(self.all_wanted_files)
+
         for toolname, tool in self.tools.items():
             for lang, files in available_files.items():
                 resolved_pipeline = resolve_pipeline(
@@ -152,19 +156,21 @@ class Tools:
         pass
 
 
-
 tools = Tools()
 
-dependency = tools.add(dependency_spec)
-disambiguate = tools.add(disambiguate_spec)
-generate = tools.add(generate_spec)
-hyphenate = tools.add(hyphenate_spec)
-num = tools.add(num_spec)
-paradigm = tools.add(paradigm_spec)
-transcribe = tools.add(transcribe_spec)
+from . import toolspecs
 
-available_files = gather_available_files(tools.all_wanted_files)
-tools.resolve_pipelines(available_files)
+# add all tools (modules) found in /toolspecs to the
+# global `tools` object, and also add all the newly
+# created `Tool` object to the global (module-level) namespace
+for name, spec in inspect.getmembers(toolspecs):
+    if name.startswith("__"):
+        continue
+
+    tool = tools.add(spec)
+    globals()[name] = tool
+
+tools.resolve_pipelines()
 
 tools.print_available_tools_by_language()
 # alternatively:

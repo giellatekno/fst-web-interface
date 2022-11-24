@@ -1,6 +1,14 @@
 from ..util import PartialPath
 import re
 
+summary = "dependency"
+description = """
+Short description here.
+
+Like running `echo "$INPUT" | hfst-tokenize -cg lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | vislcg3 -g lang-$LANG/src/cg3/disambiguator.cg3 | vislcg3 -g lang-$LANG/cg3/dependency.bin`
+
+but the output structure is parsed and sent as json.
+"""
 line_re = r'"\<(?P<word>\w+)\>"'
 
 def pipeline_stdout_to_json(stdout):

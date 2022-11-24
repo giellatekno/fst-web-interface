@@ -1,5 +1,14 @@
 from ..util import PartialPath
 
+summary = "num"
+description = """
+Get a textual representation of how to say a number. Like 1 -> "one", 8 -> "eight", 22 -> "twenty two", ...
+
+Like running `echo "$INPUT" | hfst-lookup lang-$LANG/src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol`
+
+but the output structure is parsed and sent as json.
+"""
+
 def pipeline_stdout_to_json(stdout):
     # "23\ttjuetre\t0,000000\n23\ttreogtjue\t0,000000\n\n"
     out = { "number": None, "answers": [] }

@@ -1,5 +1,14 @@
 from ..util import PartialPath
 
+summary = "disambiguate"
+description = """
+Short description here.
+
+Like running `echo "$INPUT" | hfst-tokenize -cg lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | vislcg3 -g lang-$LANG/src/cg3/disambiguator.cg`
+
+but the output structure is parsed and sent as json.
+"""
+
 def pipeline_stdout_to_json(stdout):
     out = []
     #{ input_word, input_word_result },
