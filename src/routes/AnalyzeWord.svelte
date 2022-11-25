@@ -1,54 +1,75 @@
 <script>
-    // TODO correct api call
-    import { spell } from "../lib/api.js";
-    import { lang } from "../lib/stores.js";
+    import { t } from "svelte-intl-precompile";
+    import { Pulse } from "svelte-loading-spinners";
+    import { lang } from "../lib/stores.js";
+    import { analyze } from "../lib/api.js";
+    import WordInput from "../components/WordInput.svelte";
 
-    let search = "";
-    let results = "";
-    let search_term = "";
+    let results = null;
 
-    $: results =
-        debounce(search, 1000)
-        .then(search_term => {
-            return spell(
-                $lang,
-                search_term
-            );
-        });
+    $: usage = $t(`usage.lang.${$lang}`);
 
-    let _timer;
-    let _promise;
-    function debounce(s, ms) {
-        if (_timer) {
-            window.clearTimeout(_timer);
-            _timer = null;
-        }
-
-        if (!s) return Promise.resolve(null);
-
-        _promise = new Promise(resolve => {
-            _timer = window.setTimeout(
-                () => resolve(s), ms);
-        });
-
-        return _promise;
+    function on_new_value({ detail: value }) {
+        results = analyze($lang, value);
     }
 </script>
 
-<h1>[l6e]Analyze word tool</h1>
+<main>
+    <h1>[l6e] Analyze</h1>
+    <p>{@html usage}</p>
 
-<p>[l6e] Skriv inn ordet du vil ha alle former av</p>
+    <form>
+        <WordInput
+            debounce={1000}
+            on:new-value={on_new_value}
+            on:new-input-started={() => results = null}
+            on:reset-value={() => results = null}
+        />
+    </form>
 
-<input bind:value={search} />
-
-{#await results}
-    venter...
-{:then values}
-    {JSON.stringify(values)}
-{:catch err}
-    {#if !err.message.startsWith("ValueError")}
-        {err}
-    {:else}
-        [DEBUG] search term is empty
+    {#if results}
+        {#await results}
+            <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
+        {:then res}
+            <table>
+                {#each res as { word, root, cls, props }}
+                    <tr>
+                        <td class="input-word">{word}</td>
+                        <td class="root-word">{root}</td>
+                        <td class="word-cls">{cls}</td>
+                        <td class="word-props">{props}</td>
+                    </tr>
+                {/each}
+            </table>
+        {:catch e}
+            Error: {e}
+        {/await}
     {/if}
-{/await}
+</main>
+
+<style>
+    main {
+        margin-left: 34px;
+    }
+
+    td.input-word {
+        width: 3em;
+        color: red;
+    }
+
+    td.root-word {
+        padding-left: 2em;
+        color: green;
+    }
+
+    td.word-cls {
+        padding-left: 1em;
+        text-align: right;
+        color: blue;
+    }
+
+    span.word-props {
+        padding-left: 1em;
+        color: black;
+    }
+</style>

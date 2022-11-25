@@ -68,6 +68,12 @@ export async function spell(lang, word) {
     return apicall(`speller/${lang}`, { json_body: { text: word }});
 }
 
+export async function analyze(lang, word) {
+    check_arg_nonempty("analyze", word, "word");
+
+    return apicall(`analyze/${lang}/${word}`, { api: "local" });
+}
+
 export async function generate(lang, word) {
     check_arg_nonempty("generate", word, "word");
 
