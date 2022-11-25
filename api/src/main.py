@@ -1,5 +1,5 @@
 from typing import Optional, Union, Any, TypeVar, Generic
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .toolset import tools
-from .util import populate_enumlangs
 
 description = """
 fst-api is the api that executes the model language applications,
@@ -38,6 +37,7 @@ app.add_middleware(
     "/capabilities",
     summary="capabilities",
     description="Which tools are available for which languages",
+    response_model=dict[str, list[str]],
 )
 async def handle():
     return tools.capabilities
@@ -59,15 +59,12 @@ class OkResponse(GenericModel, Generic[T]):
     input: str
     result: T
 
+
 for name, tool in tools.tools.items():
     def generate_route_handler(tool):
-        class Langs(str, Enum): pass
-        populate_enumlangs(Langs, tool.langs)
+        Langs = StrEnum(tool.name + "Langs", tool.langs)
 
-        # this breaks documentation, something about "can't find <enum Langs>",
-        # is there a way to get this to work?
-        #def handler(lang: Langs, input: str):
-        def handler(lang, input: str):
+        def handler(lang: Langs, input: str):
             return tool.run_pipeline(lang, input)
 
         return handler
@@ -87,4 +84,5 @@ for name, tool in tools.tools.items():
         summary = tool.summary,
         description = tool.description,
     )
+
 

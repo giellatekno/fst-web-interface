@@ -1,9 +1,10 @@
 ## Installing
 
-Requires python version >= 3.10 (possibly 3.11?)
+Requires python version >= 3.11
 
 rewriting to support older python versions should not
-be too difficult, if necessary
+be _too_ difficult, if necessary (but probably using dockerized
+production environment, so should not be a problem)
 
 ```bash
 python -m venv .venv

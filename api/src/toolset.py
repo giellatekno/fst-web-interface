@@ -90,6 +90,7 @@ class Tool:
     def __init__(self, spec):
         # spec as given in toolspecs/<file>.py
         self.spec = spec
+        self.name = spec.__name__.split(".")[-1]
 
         # list of langauges this tool supports
         self.langs = []

@@ -43,10 +43,10 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
         # CmpNP/None .. en slags tag? kan det være flere?
         if allpluses[0] == "CmpNP/None":
             cls = f"({allpluses[0]}) {allpluses[1]}"
-            props = allpluses[2:]
+            props = "+".join(allpluses[2:])
         else:
             cls = allpluses[0]
-            props = allpluses[1:]
+            props = "+".join(allpluses[1:])
 
         out.append(dict(word=word, root=root, cls=cls, props=props))
 
