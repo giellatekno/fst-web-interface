@@ -2,11 +2,11 @@ from ..util import PartialPath
 
 summary = "generate"
 description = """
-Short description here.
+Generates normative wordforms from lemma + morphological tags.
 
-Like running `echo "$INPUT" | hfst-lookup src/generator-gt-norm.hfstol`,
+`echo "$INPUT" | hfst-lookup src/generator-gt-norm.hfstol`,
 
-but the output structure is parsed and sent as json.
+The output structure is parsed and sent as json.
 """
 
 def pipeline_stdout_to_json(stdout):
