@@ -2,6 +2,7 @@ from typing import Optional, Union, Any, TypeVar, Generic
 from enum import Enum
 
 from pydantic import BaseModel
+from pydantic.generics import GenericModel
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -54,15 +55,9 @@ class ErrorResponse(BaseModel):
     error: str
 
 T = TypeVar("T")
-# I want a generic "OkResponse", with the type of its "result" property
-# generic. Further down in the code, I want to "concretise" this generic response
-# model for each endpoint, based on the return annotation type of the last element
-# of that tool's pipeline, but some part of the machinery is fighting me a bit
-# on this... (see below)
-class OkResponse(BaseModel, Generic[T]):
+class OkResponse(GenericModel, Generic[T]):
     input: str
     result: T
-
 
 for name, tool in tools.tools.items():
     def generate_route_handler(tool):
@@ -85,17 +80,6 @@ for name, tool in tools.tools.items():
     app.add_api_route(
         url,
         route_handler,
-
-        # TODO
-        # this doesn't "respect" that OkResponse should have its generic type parameter T
-        # replaced by "tool.response_model".
-        # The code runs, and documentation doesn't crash, and it lists all responses
-        # as "either the OK variant, or the Error variant", but for the OK variant
-        # it doesn't "replace" the generic type of the "result" field, it just says
-        # that all OkResponses contains a field "result" with type "any".
-        # Bug in fastapi? bug in pydantic? bug in python typing? incorrect usage?
-        # "intended-behaviour-this-is-not-how-you-do-that"?
-        # "this-is-not-how-you-do-it-what-you-do-doesn't-make-sense"? ....
         response_model = Union[
             OkResponse[tool.response_model],
             ErrorResponse,

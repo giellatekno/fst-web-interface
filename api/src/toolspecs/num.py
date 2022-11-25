@@ -2,7 +2,6 @@ from pydantic import BaseModel
 from ..util import PartialPath
 
 summary = "digit2text"
-# summary = "num"
 description = """
 Generate number words from arabic numerals, like 1 -> "one", 8 -> "eight", 22 -> "twenty two", ...
 
@@ -11,12 +10,12 @@ Generate number words from arabic numerals, like 1 -> "one", 8 -> "eight", 22 ->
 The output structure is parsed and sent as json.
 """
 
-class Response(BaseModel):
+# Cannot be named "Response" (fastapi or something gets confused)
+class ResponseOut(BaseModel):
     number: int
-    #answers: list[str]
-    mordi: bool
+    answers: list
 
-def pipeline_stdout_to_json(stdout) -> Response:
+def pipeline_stdout_to_json(stdout) -> ResponseOut:
     # "23\ttjuetre\t0,000000\n23\ttreogtjue\t0,000000\n\n"
     out = { "number": None, "answers": [] }
     for line in stdout.split("\n"):

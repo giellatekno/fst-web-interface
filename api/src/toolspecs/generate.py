@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from ..util import PartialPath
 
 summary = "generate"
@@ -9,7 +10,13 @@ Generates normative wordforms from lemma + morphological tags.
 The output structure is parsed and sent as json.
 """
 
-def pipeline_stdout_to_json(stdout):
+class Response(BaseModel):
+    input: str
+    not_found: str | None
+    found: str | None
+    error: str | None
+
+def pipeline_stdout_to_json(stdout) -> Response:
     splits = stdout.strip().split("\t")
     out = {}
     if len(splits) != 3:

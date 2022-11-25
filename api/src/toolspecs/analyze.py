@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-
 from ..util import PartialPath
 
 summary = "analyze"

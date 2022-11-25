@@ -9,7 +9,7 @@ Converts orthography into IPA
 The output structure is parsed and sent as json.
 """
 
-def pipeline_stdout_to_json(stdout):
+def pipeline_stdout_to_json(stdout) -> list[str]:
     lines = stdout.strip().split("\n")
     out = []
     for line in lines:

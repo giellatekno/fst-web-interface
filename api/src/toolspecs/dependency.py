@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from ..util import PartialPath
 import re
 
@@ -12,7 +13,12 @@ The output structure is parsed and sent as json.
 """
 line_re = r'"\<(?P<word>\w+)\>"'
 
-def pipeline_stdout_to_json(stdout):
+class ResponseLine(BaseModel):
+    word: str
+    root: str
+    dep: str
+
+def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     out = []
 
     obj = {}

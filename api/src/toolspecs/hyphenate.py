@@ -9,7 +9,7 @@ Put dashes in between each syllable of a word.
 Output is structured up as json.
 """
 
-def pipeline_stdout_to_json(stdout):
+def pipeline_stdout_to_json(stdout) -> list[str]:
     output = stdout.strip()
     #{'input': 'konspirasjon', 'result': []}}
     out = set()

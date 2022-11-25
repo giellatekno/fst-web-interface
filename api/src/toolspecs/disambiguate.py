@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from ..util import PartialPath
 
 summary = "disambiguate"
@@ -9,7 +10,15 @@ Gives the relevant morphological analysis of each word in context.
 The output structure is parsed and sent as json.
 """
 
-def pipeline_stdout_to_json(stdout):
+class WordDisamb(BaseModel):
+    root_word: str
+    classes: str
+
+class ResponseLine(BaseModel):
+    input_word: str
+    word_disambs: list[WordDisamb]
+
+def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     out = []
     #{ input_word, input_word_result },
     # where input_word_result = {
