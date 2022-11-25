@@ -1,5 +1,6 @@
 import subprocess
 import inspect
+from typing import Any
 from collections import defaultdict
 
 from .config import GTLANGS
@@ -51,6 +52,23 @@ def resolve_pipeline(pipeline_spec, available_files):
     return resolved_pipeline
 
 
+def find_response_model(pipeline_spec):
+    last_step = pipeline_spec[-1]
+
+    # the last step is a list, so we can't say more than that
+    # the response model is a string
+    if isinstance(last_step, list):
+        return str
+
+    # find signature of function
+    sig = inspect.signature(last_step)
+    return_annotation = sig.return_annotation
+    if return_annotation is inspect.Signature.empty:
+        return Any
+    else:
+        return return_annotation
+
+
 def gather_available_files(wanted_files):
     """Take a set of all wanted files as input,
     and return a mapping of which files are available for each language found
@@ -84,7 +102,8 @@ class Tool:
         self.description = ""
         self.summary = ""
 
-        #self.pipeline_stdout_to_json = spec.pipeline_stdout_to_json
+        # response model of this tool defaults to Any
+        self.response_model = Any
 
     def run_pipeline(self, lang, input):
         final_output = { "input": input }
@@ -129,6 +148,7 @@ class Tools:
 
         tool.description = spec_dict.get("description", "")
         tool.summary = spec_dict.get("summary", "")
+        tool.response_model = find_response_model(spec_dict["pipeline"])
 
         self.tools[specname] = tool
         return tool

@@ -1,3 +1,5 @@
+from pydantic import BaseModel
+
 from ..util import PartialPath
 
 summary = "analyze"
@@ -9,7 +11,13 @@ Short description here.
 The output structure is parsed and sent as json.
 """
 
-def pipeline_stdout_to_json(stdout):
+class ResponseLine(BaseModel):
+    word: str
+    root: str
+    cls: str
+    props: str
+
+def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     # "bok\tbok+CmpNP/None+N+Fem+Sg+Indef\t0,000000\nbok\tbok+N+Fem+Sg+Indef\t0,000000\n\n\t+?\tinf\n\n"
 
     # bok  \t  bok+CmpNP/None+N+Fem+Sg+Indef  \t  0,000000
