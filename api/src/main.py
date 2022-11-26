@@ -33,6 +33,8 @@ app.add_middleware(
     expose_headers=["X-Process-Time"],
 )
 
+
+
 @app.get(
     "/capabilities",
     summary="capabilities",
@@ -43,12 +45,28 @@ async def handle():
     return tools.capabilities
 
 
-# dynamically add all routes
-# this could use more love, like automatically
-# create enums for the inputs, to not just accept strings
-# see https://stackoverflow.com/questions/73291228/add-route-to-fastapi-with-custom-path-parameters
 
-# with this, I could basically delete all routes/* ...
+
+def _generate_route_handler(tool):
+    if "*" in tool.pipeline_for:
+        # This tool doesn't want any GTLANGS files, which means
+        # it doesn't run any of the fst programs.
+        async def handler(lang: str, input: str):
+            return await tool.run_pipeline(lang, input)
+    else:
+        if len(tool.pipeline_for) == 0:
+            # No languages had all required files for this tool
+            return None
+
+        Langs = StrEnum(tool.name + "Langs", tool.langs)
+
+        async def handler(lang: Langs, input: str):
+            return await tool.run_pipeline(lang, input)
+
+    return handler
+
+
+# Dynamically add routes for all tools defined in toolspecs/
 
 class ErrorResponse(BaseModel):
     input: str
@@ -59,20 +77,13 @@ class OkResponse(GenericModel, Generic[T]):
     input: str
     result: T
 
-
 for name, tool in tools.tools.items():
-    def generate_route_handler(tool):
-        Langs = StrEnum(tool.name + "Langs", tool.langs)
-
-        def handler(lang: Langs, input: str):
-            return tool.run_pipeline(lang, input)
-
-        return handler
-
     url = f"/{name}/"
     url += "{lang}/{input}"
 
-    route_handler = generate_route_handler(tool)
+    route_handler = _generate_route_handler(tool)
+    if route_handler is None:
+        continue
 
     app.add_api_route(
         url,

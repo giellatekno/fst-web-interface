@@ -1,7 +1,10 @@
+import asyncio
+from asyncio.subprocess import PIPE
 import subprocess
 import inspect
 from typing import Any
 from collections import defaultdict
+import logging
 
 from .config import GTLANGS
 from .util import PartialPath
@@ -75,6 +78,9 @@ def gather_available_files(wanted_files):
     in $GTLANGS."""
     files = defaultdict(dict)
 
+    if GTLANGS is None:
+        return files
+
     for p in GTLANGS.glob("lang-*"):
         lang = p.name[5:]
 
@@ -92,6 +98,10 @@ class Tool:
         self.spec = spec
         self.name = spec.__name__.split(".")[-1]
 
+        # which GTLANGS-dependent files does this tool
+        # want (rely on)?
+        self.wanted_files = parse_needed_files(spec.pipeline)
+
         # list of langauges this tool supports
         self.langs = []
 
@@ -106,10 +116,15 @@ class Tool:
         # response model of this tool defaults to Any
         self.response_model = Any
 
-    def run_pipeline(self, lang, input):
+    async def run_pipeline(self, lang, input):
         final_output = { "input": input }
 
-        for prog in self.pipeline_for[lang]:
+        if "*" in self.pipeline_for:
+            pipeline = self.spec.pipeline
+        else:
+            pipeline = self.pipeline_for[lang]
+
+        for prog in pipeline:
             if callable(prog):
                 try:
                     input = prog(input)
@@ -117,11 +132,14 @@ class Tool:
                     final_output["error"] = str(e)
                     return final_output
             else:
-                res = subprocess.run(prog, input=input, text=True, capture_output=True)
-                if res.stdout != "":
-                    input = res.stdout
+                subp = await asyncio.create_subprocess_exec(
+                        *prog, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = await subp.communicate(input.encode("utf-8"))
+                stdout = stdout.decode("utf-8")
+                if stdout != "":
+                    input = stdout
                 else:
-                    final_output["error"] = res.stderr
+                    final_output["error"] = stderr.decode("utf-8")
                     return final_output
 
         final_output["result"] = input
@@ -143,10 +161,9 @@ class Tools:
         specname = spec.__name__.split(".")[-1]
         spec_dict = dict(inspect.getmembers(spec))
 
-        self.all_wanted_files |= parse_needed_files(spec.pipeline)
-
         tool = Tool(spec)
 
+        self.all_wanted_files |= tool.wanted_files
         tool.description = spec_dict.get("description", "")
         tool.summary = spec_dict.get("summary", "")
         tool.response_model = find_response_model(spec_dict["pipeline"])
@@ -158,6 +175,13 @@ class Tools:
         available_files = gather_available_files(self.all_wanted_files)
 
         for toolname, tool in self.tools.items():
+            if len(tool.wanted_files) == 0:
+                logging.error(f"tool {toolname} is non-fst (no requirements on GTLANGS-specific files")
+                # This tool doesn't want any GTLANGS files, so just pass the
+                # pipeline through (it also means it's not dependant on "langs")
+                tool.pipeline_for["*"] = tool.spec.pipeline
+                continue
+
             for lang, files in available_files.items():
                 resolved_pipeline = resolve_pipeline(
                     tool.spec.pipeline, available_files[lang]
@@ -166,6 +190,8 @@ class Tools:
                     tool.langs.append(lang)
                     tool.pipeline_for[lang] = resolved_pipeline
                     self.capabilities[lang].append(toolname)
+                else:
+                    tool.pipeline_for = None
 
     def print_available_tools_by_language(self):
         """Prints a list of languages, and which tools are available for each of those."""
