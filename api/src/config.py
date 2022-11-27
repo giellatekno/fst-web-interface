@@ -3,10 +3,11 @@ from os import environ
 from pathlib import Path
 from collections import defaultdict
 import logging
+logger = logging.getLogger(__name__)
 
 try:
     GTLANGS = Path(environ.get("GTLANGS"))
 except TypeError:
-    logging.warning("Environment variable GTLANGS not found, running without any fst functionality")
+    logger.warning("Environment variable GTLANGS not found, running without any fst functionality")
     GTLANGS = None
 

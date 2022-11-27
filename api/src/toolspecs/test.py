@@ -9,19 +9,8 @@ def to_json(stdout) -> list[int]:
 
 pipeline = [
     #ls -la | tr -s " " "\t" | cut -f5
-    [
-        "ls",
-        "-al",
-    ],
-    [
-        "tr",
-        "-s",
-        '" "',
-        "\\t",
-    ],
-    [
-        "cut",
-        "-f5",
-    ],
+    [ "ls", "-al" ],
+    [ "tr", "-s", '" "', "\\t" ],
+    [ "cut", "-f5" ],
     to_json
 ]
