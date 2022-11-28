@@ -7,7 +7,19 @@
 
     let results = null;
 
-    $: usage = $t(`usage.lang.${$lang}`);
+    $: usage = get_usage($lang, $t);
+    $: instruction = $t(`instruction.tool.analyze`);
+    $: end = $t(`end.tool.analyze`);
+
+    function get_usage($lang, $t) {
+        const lang_specific = $t(`usage.lang.${lang}`);
+        if (lang_specific !== `usage.lang.${lang}`) {
+            return lang_specific;
+        } else {
+            const fallback = $t("usage");
+            return fallback;
+        }
+    }
 
     function on_new_value({ detail: value }) {
         results = analyze($lang, value);
@@ -17,6 +29,8 @@
 <main>
     <h1>[l6e] Analyze</h1>
     <p>{@html usage}</p>
+
+    <p>{@html instruction}</p>
 
     <form>
         <WordInput
@@ -45,6 +59,8 @@
             Error: {e}
         {/await}
     {/if}
+
+    <p>{@html end}</p>
 </main>
 
 <style>

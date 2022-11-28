@@ -7,7 +7,59 @@
 
     let results = null;
 
-    $: usage = $t(`usage.lang.${$lang}`);
+    $: usage = get_usage($t, $lang);
+    $: introduction = get_introduction($t, $lang);
+    $: instruction = get_instruction($t, $lang);
+    $: example = get_example($t, $lang);
+
+    function get_usage($t, $lang) {
+        const specific_key = `usage.lang.${$lang}`;
+        const specific_val = $t(specific_key);
+        if (specific_val !== specific_key) {
+            return specific_val;
+        } else {
+            const generic_key = `usage`;
+            const generic_val = $t(generic_key);
+            return generic_val !== generic_key ? generic_val : "";
+        }
+    }
+
+    function get_example($t, $lang) {
+        const specific_key = `example.tool.generate.lang.${$lang}`;
+        const specific_val = $t(specific_key);
+        if (specific_val === specific_key) {
+            // translation string equals the key if it's not found
+            const generic_key = `example.tool.generate`;
+            const generic_val = $t(generic_key);
+            return generic_key === generic_val ? "" : generic_val;
+        } else {
+            return specific_val;
+        }
+    }
+
+    function get_introduction($t, $lang) {
+        const specific_key = `introduction.tool.generate.lang.${$lang}`;
+        const specific_val = $t(specific_key);
+        if (specific_val !== specific_key) {
+            return specific_val;
+        } else {
+            const generic_key = `introduction.tool.generate`;
+            const generic_val = $t(generic_key);
+            return generic_val !== generic_key ? generic_val : "";
+        }
+    }
+
+    function get_instruction($t, $lang) {
+        const specific_key = `instruction.tool.generate.lang.${$lang}`;
+        const specific_val = $t(specific_key);
+        if (specific_val !== specific_key) {
+            return specific_val;
+        } else {
+            const generic_key = `instruction.tool.generate`;
+            const generic_val = $t(generic_key);
+            return generic_val !== generic_key ? generic_val : "";
+        }
+    }
 
     function on_new_value({ detail: value }) {
         results = generate($lang, value);
@@ -15,10 +67,11 @@
 </script>
 
 <main>
-    <h1>[l6e] Generate</h1>
-    <p>{@html usage}</p>
-    <p>{$t("introduction.tool.generate")}</p>
-    <p>{$t("instruction.tool.generate")}</p>
+    <h1>{$t("generate")}</h1>
+    {#if usage}<p>{@html usage}</p>{/if}
+    {#if introduction}<p>{@html introduction}</p>{/if}
+    {#if instruction}<p>{@html instruction}</p>{/if}
+    {#if example}<p>{@html example}</p>{/if}
 
     <form>
         <WordInput

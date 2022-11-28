@@ -87,19 +87,19 @@
 <main>
     <h1>{$t("language tools")}</h1>
     <div>
-        <h2>[l6e] Vis verktøy for ...</h2>
+        <h2>{$t("index.showtoolsfordotdotdot")}</h2>
 
         <Search on:enter={onenter} bind:value={search} />
 
         <div class="filters">
-            <span class="header">filtre:</span>
+            <span class="header">{$t("filters")}:</span>
 
             <span
                 class="label"
                 class:on={show_sami}
                 on:click={() => show_sami = !show_sami}
             >
-                <label for="sami">samiske språk</label>
+                <label for="sami">{$t("samilanguages")}</label>
                 <input name="sami" type="radio" checked={show_sami} />
             </span>
             <span
@@ -107,7 +107,7 @@
                 class:on={show_uralic}
                 on:click={() => show_uralic = !show_uralic}
             >
-                <label for="uralicnonsami">ikke-samiske uralske</label>
+                <label for="uralicnonsami">{$t("nonuralicsami")}</label>
                 <input name="uralicnonsami" type="radio" checked={show_uralic} />
             </span>
             <span
@@ -115,7 +115,7 @@
                 class:on={show_others}
                 on:click={() => show_others = !show_others}
             >
-                <label for="others">andre språk</label>
+                <label for="others">{$t("otherlanguages")}</label>
                 <input name="others" type="radio" checked={show_others} />
             </span>
         </div>
