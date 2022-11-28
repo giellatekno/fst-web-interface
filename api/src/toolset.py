@@ -1,72 +1,106 @@
+import asyncio
+from asyncio.subprocess import PIPE
 import subprocess
 import inspect
+from itertools import islice
 from typing import Any
 from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 from .config import GTLANGS
 from .util import PartialPath
 
-def parse_needed_files(pipeline_spec):
-    """Parse out all needed files from a given pipeline spec."""
+
+def dict_first_value(d):
+    """Extracts the "first" value of a dictionary. "First" being the
+    vale of the key that comes first in d.keys()."""
+    return list(islice(d.values(), 1))[0]
+
+def find_needed_files(all_pipelines):
+    """Find all needed files from a pipeline."""
     needed = set()
 
-    for prog in pipeline_spec:
-        if not isinstance(prog, list):
-            continue
-        for entry in prog:
-            if isinstance(entry, PartialPath):
-                needed.add(entry.p)
+    for _lang, pipeline in all_pipelines.items():
+        for program in pipeline:
+            if not isinstance(program, list):
+                continue
+            for entry in program:
+                if isinstance(entry, PartialPath):
+                    needed.add(entry.p)
 
     return needed
 
+def normalize_pipelines(pipelines):
+    """Turns a pipeline spec of just a single list into one with just that
+    one single list as the default (catchall) pipeline. If the pipeline already
+    is a dict, we just return it as is."""
+    if isinstance(pipelines, list):
+        return {"*": pipelines}
+    else:
+        return pipelines
 
-def resolve_pipeline(pipeline_spec, available_files):
-    """Return a new pipeline from a pipeline spec, with all
-    PartialPath's resolved to their corresponding real file paths.
-    `available_files` is a mapping from PartialPaths to actual real file paths.
-    If the spec contains any PartialPath for which there is no corresponding
-    mapping in `available_files`, return None."""
-    resolved_pipeline = []
-    for entry in pipeline_spec:
-        newprog = []
-        if callable(entry):
-            # functions are just passed through as is
-            resolved_pipeline.append(entry)
-            continue
+def resolve_pipelines(pipelines, available_files):
+    """Replace all occurences of PartialPaths in all pipelines with the
+    real file path, found in the `available_files` dictionary. If the
+    PartialPath is not available, that pipeline will be removed, as it cannot
+    run due to missing files."""
+    resolved_pipelines = {}
 
-        # otherwise, it's a list, so it's a program to run with subprocess.run(),
-        # so we must replace PartialPath's with real ones
-        for s in entry:
-            if isinstance(s, str):
-                # strings are just passed through
-                newprog.append(s)
-            elif isinstance(s, PartialPath):
-                partial_path = s.p
-                real_path = available_files.get(partial_path)
-                if real_path is None:
-                    # Found a wanted path that we do not have
-                    return None
-                newprog.append(real_path)
-        resolved_pipeline.append(newprog)
+    for lang, pipeline in pipelines.items():
+        new_pipeline = []
 
-    return resolved_pipeline
+        for program in pipeline:
+            if callable(program):
+                new_pipeline.append(program)
+            else:
+                new_program = []
+                for s in program:
+                    if new_program is None:
+                        break
+
+                    if isinstance(s, str):
+                        new_program.append(s)
+                    elif isinstance(s, PartialPath):
+                        partial_path = s.p
+                        real_path = available_files[lang].get(partial_path)
+                        if real_path is None:
+                            new_pipeline = None
+                            break
+                        else:
+                            new_program.append(real_path)
+
+                if new_pipeline is None:
+                    break
+                else:
+                    new_pipeline.append(new_program)
+
+        if new_pipeline is not None:
+            resolved_pipelines[lang] = new_pipeline
+
+    return resolved_pipelines
 
 
-def find_response_model(pipeline_spec):
-    last_step = pipeline_spec[-1]
-
-    # the last step is a list, so we can't say more than that
-    # the response model is a string
+def find_response_model(all_pipelines):
+    """Find the response model of all pipelines. All pipelines must have the
+    same response model, because the route in fastapi is defined by the
+    first one we find, and any other pipeline that does not share the
+    same response model, will fail to verify on return, and lead to a crash."""
+    last_step = dict_first_value(all_pipelines)[-1]
     if isinstance(last_step, list):
         return str
-
-    # find signature of function
-    sig = inspect.signature(last_step)
-    return_annotation = sig.return_annotation
-    if return_annotation is inspect.Signature.empty:
-        return Any
-    else:
-        return return_annotation
+    elif callable(last_step):
+        return_annotation = inspect.signature(last_step).return_annotation
+        if return_annotation is inspect.Signature.empty:
+            return Any
+        else:
+            return return_annotation
 
 
 def gather_available_files(wanted_files):
@@ -74,6 +108,9 @@ def gather_available_files(wanted_files):
     and return a mapping of which files are available for each language found
     in $GTLANGS."""
     files = defaultdict(dict)
+
+    if GTLANGS is None:
+        return files
 
     for p in GTLANGS.glob("lang-*"):
         lang = p.name[5:]
@@ -91,37 +128,35 @@ class Tool:
         # spec as given in toolspecs/<file>.py
         self.spec = spec
         self.name = spec.__name__.split(".")[-1]
+        spec_dict = dict(inspect.getmembers(spec))
+        self.description = spec_dict.get("description", "(no description given)")
+        self.summary = spec_dict.get("summary", "(no summary given)")
+        self.pipelines = normalize_pipelines(spec_dict["pipeline"])
+        self.wanted_files = find_needed_files(self.pipelines)
+        self.response_model = find_response_model(self.pipelines)
 
-        # list of langauges this tool supports
-        self.langs = []
-
-        # get a pipeline for a given language
-        self.pipeline_for = {}
-
-        # will be set by the Tools when loading the tool,
-        # and shown on the openapi docs
-        self.description = ""
-        self.summary = ""
-
-        # response model of this tool defaults to Any
-        self.response_model = Any
-
-    def run_pipeline(self, lang, input):
+    async def run_pipeline(self, lang, input):
         final_output = { "input": input }
 
-        for prog in self.pipeline_for[lang]:
+        pipeline = self.pipelines.get(lang, self.pipelines["*"])
+
+        for prog in pipeline:
             if callable(prog):
                 try:
                     input = prog(input)
                 except Exception as e:
-                    final_output["error"] = str(e)
+                    logger.exception("Exception in pipeline python step")
+                    final_output["error"] = "Python step of pipeline threw unhandled exception"
                     return final_output
             else:
-                res = subprocess.run(prog, input=input, text=True, capture_output=True)
-                if res.stdout != "":
-                    input = res.stdout
+                subp = await asyncio.create_subprocess_exec(
+                        *prog, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+                stdout, stderr = await subp.communicate(input.encode("utf-8"))
+                stdout = stdout.decode("utf-8")
+                if stdout != "":
+                    input = stdout
                 else:
-                    final_output["error"] = res.stderr
+                    final_output["error"] = stderr.decode("utf-8")
                     return final_output
 
         final_output["result"] = input
@@ -130,42 +165,31 @@ class Tool:
 
 class Tools:
     def __init__(self):
-        # keep a referece to every Tool by tool name
         self.tools = {}
-
-        # a set of all files we want
         self.all_wanted_files = set()
 
-        # mapping of tool name -> capabilities (languages)
+        # mapping of tool name -> list of langs supported
         self.capabilities = defaultdict(list)
 
     def add(self, spec):
-        specname = spec.__name__.split(".")[-1]
-        spec_dict = dict(inspect.getmembers(spec))
-
-        self.all_wanted_files |= parse_needed_files(spec.pipeline)
-
         tool = Tool(spec)
+        self.tools[tool.name] = tool
 
-        tool.description = spec_dict.get("description", "")
-        tool.summary = spec_dict.get("summary", "")
-        tool.response_model = find_response_model(spec_dict["pipeline"])
+        self.all_wanted_files |= tool.wanted_files
 
-        self.tools[specname] = tool
         return tool
 
     def resolve_pipelines(self):
         available_files = gather_available_files(self.all_wanted_files)
 
         for toolname, tool in self.tools.items():
-            for lang, files in available_files.items():
-                resolved_pipeline = resolve_pipeline(
-                    tool.spec.pipeline, available_files[lang]
-                )
-                if resolved_pipeline:
-                    tool.langs.append(lang)
-                    tool.pipeline_for[lang] = resolved_pipeline
-                    self.capabilities[lang].append(toolname)
+            if len(tool.wanted_files) == 0:
+                logger.info(f"tool %s is non-fst (no requirements on GTLANGS-specific files)", toolname)
+
+            tool.pipelines = resolve_pipelines(tool.pipelines, available_files)
+            tool.langs = list(tool.pipelines.keys())
+            for lang in tool.langs:
+                self.capabilities[lang].append(toolname)
 
     def print_available_tools_by_language(self):
         """Prints a list of languages, and which tools are available for each of those."""
@@ -180,20 +204,10 @@ class Tools:
 tools = Tools()
 
 from . import toolspecs
-
-# add all tools (modules) found in /toolspecs to the
-# global `tools` object, and also add all the newly
-# created `Tool` object to the global (module-level) namespace
 for name, spec in inspect.getmembers(toolspecs):
-    if name.startswith("__"):
-        continue
-
-    tool = tools.add(spec)
-    globals()[name] = tool
+    if not name.startswith("__"):
+        tools.add(spec)
 
 tools.resolve_pipelines()
-
 tools.print_available_tools_by_language()
-# alternatively:
-#tools.print_available_langs_by_tool()
 

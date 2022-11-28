@@ -1,10 +1,11 @@
-from typing import Optional, Union, Any, TypeVar, Generic
 from enum import Enum, StrEnum
+from time import time
+from typing import Optional, Union, Any, TypeVar, Generic
 
-from pydantic import BaseModel
-from pydantic.generics import GenericModel
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from pydantic.generics import GenericModel
 
 from .toolset import tools
 
@@ -29,9 +30,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 
-    # TODO for timing request time taken
     expose_headers=["X-Process-Time"],
 )
+
+@app.middleware("http")
+async def add_process_time_header(request, call_next):
+    t0 = time()
+    response = await call_next(request)
+    t = time() - t0
+    response.headers["X-Process-Time"] = str(time() - t0)
+    return response
+
+
 
 @app.get(
     "/capabilities",
@@ -43,12 +53,26 @@ async def handle():
     return tools.capabilities
 
 
-# dynamically add all routes
-# this could use more love, like automatically
-# create enums for the inputs, to not just accept strings
-# see https://stackoverflow.com/questions/73291228/add-route-to-fastapi-with-custom-path-parameters
 
-# with this, I could basically delete all routes/* ...
+
+def _generate_route_handler(tool):
+    if len(tool.langs) == 0:
+        return None
+    elif len(tool.langs) == 1 and tool.langs[0] == "*":
+        # This tool doesn't want any GTLANGS files, which means
+        # it doesn't run any of the fst programs.
+        async def handler(lang: str, input: str):
+            return await tool.run_pipeline(lang, input)
+    else:
+        Langs = StrEnum(tool.name + "Langs", tool.langs)
+
+        async def handler(lang: Langs, input: str):
+            return await tool.run_pipeline(lang, input)
+
+    return handler
+
+
+# Dynamically add routes for all tools defined in toolspecs/
 
 class ErrorResponse(BaseModel):
     input: str
@@ -59,20 +83,13 @@ class OkResponse(GenericModel, Generic[T]):
     input: str
     result: T
 
-
 for name, tool in tools.tools.items():
-    def generate_route_handler(tool):
-        Langs = StrEnum(tool.name + "Langs", tool.langs)
-
-        def handler(lang: Langs, input: str):
-            return tool.run_pipeline(lang, input)
-
-        return handler
-
     url = f"/{name}/"
     url += "{lang}/{input}"
 
-    route_handler = generate_route_handler(tool)
+    route_handler = _generate_route_handler(tool)
+    if route_handler is None:
+        continue
 
     app.add_api_route(
         url,
