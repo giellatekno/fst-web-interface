@@ -72,6 +72,21 @@ const all_langs = new Set([
     "yrk",
 ]);
 
+export const sami_langs = new Set([
+    "sjd", "sje", "sma", "sme", "smj", "smn", "sms",
+]);
+
+export const nonsamiuralic_langs = new Set([
+    "myv", "est", "fin", "mrj", "izh", "rmf", "kca",
+    "kpv", "koi", "fkv", "liv", "olo", "mns", "fit", "mdf",
+    "yrk", "nio", "udm", "vep", "vro", "vot", "mhr",
+]);
+
+export const other_langs = new Set([
+    "bxr", "evn", "fao", "kal", "gle", "ipk", "cor",
+    "hdn", "nno", "nob", "ciw", "crk", "rus", "som",
+]);
+
 export const analysis_langs = new Set(all_langs);
 
 export const paradigm_langs = new Set([
@@ -113,56 +128,3 @@ for (const locale of locales) {
     }
 }
 
-export const lang_star = {
-    "sme": "gold",
-    "fin": "gold",
-    "sms": "gold",
-    "sma": "gold",
-    "mdf": "gold",
-    "bxr": "gold",
-    "chr": "gold",
-    "ciw": "silver",
-    "cor": "silver",
-    "crk": "silver",
-    "deu": "silver",
-    "est": "silver",
-    "evn": "silver",
-    "fao": "silver",
-    "fit": "silver",
-    "fkv": "silver",
-    "gle": "silver",
-    "hdn": "silver",
-    "hun": "silver",
-    "ipk": "bronze",
-    "izh": "bronze",
-    "kal": "bronze",
-    "kca": "bronze",
-    "koi": "bronze",
-    "kom": "bronze",
-    "kpv": "bronze",
-    "lav": "bronze",
-    "liv": "bronze",
-    "lut": "bronze",
-    "mhr": "bronze",
-    "mns": "bronze",
-    "mrj": "bronze",
-    "myv": "bronze",
-    "nio": "bronze",
-    "nno": "bronze",
-    "nob": "bronze",
-    "olo": "bronze",
-    "rmf": "bronze",
-    "rup": "bronze",
-    "rus": "bronze",
-    "sjd": "bronze",
-    "sje": "bronze",
-    "smj": "bronze",
-    "smn": "bronze",
-    "som": "bronze",
-    "swe": "bronze",
-    "udm": "bronze",
-    "vep": "bronze",
-    "vot": "bronze",
-    "vro": "bronze",
-    "yrk": "bronze",
-}

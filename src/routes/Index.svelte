@@ -4,74 +4,202 @@
     import {
         langs,
         language_names,
-        lang_star,
+        sami_langs,
+        nonsamiuralic_langs,
+        other_langs,
     } from "../lib/langs.js";
     import { lang } from "../lib/stores.js";
     import Search from "../components/Search.svelte";
 
-    let visible_langs = langs;
     let search = "";
-    let show_all = false;
+    let show_sami = false;
+    let show_uralic = false;
+    let show_others = false;
 
-    $: visible_langs = show_all ? langs : filter_langs(search);
+    $: visible_langs = filter_langs(search, show_sami, show_uralic, show_others);
 
-    function filter_langs(search) {
+    function filter_langs(search, show_sami, show_uralic, show_others) {
+        const any_filters_on = show_sami || show_uralic || show_others;
+        let rootset = langs;
+        if (any_filters_on) {
+            rootset = [];
+            if (show_sami) rootset.push(...sami_langs);
+            if (show_uralic) rootset.push(...nonsamiuralic_langs);
+            if (show_others) rootset.push(...other_langs);
+        }
+
         if (search === "") {
-            return langs.slice(0, 12);
+            return rootset;
         } else {
-            return langs.filter(lang =>
-                    lang.includes(search));
+            // bad code quality / hard to read ahead:
+            // What: In the set of languages to be searched from, include
+            //   all language names in the locale, so that you can search for "norsk",
+            //   and it will return the codes for "norsk bokmål" and "norsk nynorsk".
+            // How: By first grabbing all locale names, not including the ones
+            //   that are filtered away. this gives an object of  locale_name => lang code
+            //   add to that also all lang_codes, so that the object also includes
+            //     lang_code => lang_code.
+            //   Take the keys of this object, and do the search filtering on it.
+            //   Then, those who matched will have to be "flipped back", i.e. to go from
+            //   an object of { code or locale => code } and back to just the code.
+            //   It is necessary because the loop that shows search results expects
+            //   only lang codes.
+
+            const flipped = {};
+            for (const [abbr, langinlocale] of Object.entries(language_names[$locale])) {
+                if (!rootset.includes(abbr)) continue;
+                flipped[langinlocale] = abbr;
+            }
+            for (const abbr of rootset) {
+                flipped[abbr] = abbr;
+            }
+
+            const search_set = Object.keys(flipped);
+            const search_hits = search_set.filter(key =>
+                search.includes(key) || key.includes(search));
+
+            const flipped_back = search_hits.map(sh => flipped[sh]);
+            // this flipped back can have a hit on both "no" in the code, and in the
+            // name of the langauge, so we make unique by converting to a set and back
+            return [...new Set(flipped_back)];
         }
     }
 
-    function toggle_show_all() {
-        show_all = !show_all;
+
+    let langs_container_el;
+    function onenter() {
+        if (visible_langs.length === 1) {
+            const lang = visible_langs[0];
+
+            // this is this "hacky" because...
+            const link_el = langs_container_el.querySelector("a");
+            link_el.click();
+
+            // ...this does a full page reload
+            //window.location = `/${lang}`;
+
+            // ...and this doesn't trigger our logic
+            //window.history.pushState(null, "", `/${lang}`);
+        }
     }
 </script>
 
-<h1>{$t("language tools")}</h1>
-<div>
-    <h2>[l6e] Vis verktøy for ...</h2>
+<main>
+    <h1>{$t("language tools")}</h1>
+    <div>
+        <h2>[l6e] Vis verktøy for ...</h2>
 
-    <Search bind:value={search} />
+        <Search on:enter={onenter} bind:value={search} />
 
-    <blockquote>
-        [l6e] Gullstjerne er våre beste språk, sølv er også ok, for bronsespråkene er verktøyene våre mindre utviklet.
-    </blockquote>
+        <div class="filters">
+            <span class="header">filtre:</span>
 
-    <main>
-        {#each visible_langs as lng}
-            <span class="language">
-                <a href="/{lng}">
-                    {language_names[$locale][lng]}
-                </a>
-                <span
-                    class="star {lang_star[lng]}"
-                >
-                    ★
-                </span>
+            <span
+                class="label"
+                class:on={show_sami}
+                on:click={() => show_sami = !show_sami}
+            >
+                <label for="sami">samiske språk</label>
+                <input name="sami" type="radio" checked={show_sami} />
             </span>
-            <br>
-        {:else}
-            [l6e] Ingen treff på søkeordet...
-        {/each}
-    </main>
-    <span on:click={toggle_show_all}>
-        {#if show_all}
-            [l6e] Vis færre
-        {:else}
-            [l6e] Vis alle...
-        {/if}
-    </span>
-    <br>
-</div>
+            <span
+                class="label"
+                class:on={show_uralic}
+                on:click={() => show_uralic = !show_uralic}
+            >
+                <label for="uralicnonsami">ikke-samiske uralske</label>
+                <input name="uralicnonsami" type="radio" checked={show_uralic} />
+            </span>
+            <span
+                class="label"
+                class:on={show_others}
+                on:click={() => show_others = !show_others}
+            >
+                <label for="others">andre språk</label>
+                <input name="others" type="radio" checked={show_others} />
+            </span>
+        </div>
 
+        <div class="langs" bind:this={langs_container_el}>
+            {#each visible_langs as lng}
+                <span class="language">
+                    <a href="/{lng}">
+                        {language_names[$locale][lng]}
+                    </a>
+                </span>
+            {:else}
+                [l6e] Ingen treff på søkeordet...
+            {/each}
+        </div>
+    </div>
+</main>
 
 <style>
     main {
+        margin-left: 34px;
+    }
+
+    main > h1 {
+        margin-top: 0.2em;
+    }
+
+    a {
+        color: blue;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    div.langs {
+        margin-top: 1em;
         display: grid;
         width: 800px;
         grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    div.filters {
+        display: flex;
+        font-variant: small-caps;
+    }
+
+    div.filters > span.header {
+        padding: 2px 8px;
+        border-radius: 5px;
+        color: #000;
+        font-weight: bold;
+    }
+
+    div.filters > form {
+        display: inline;
+    }
+
+    span.label {
+        margin-left: 16px;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background-color: #d9d9d9;
+        color: #292929;
+        font-weight: bold;
+        transition:
+            background-color 0.2s ease-out,
+            color 0.2s ease-out;
+    }
+
+    span.label:hover,
+    span.label > label:hover {
+        cursor: pointer;
+    }
+
+    span.label.on {
+        background-color: #4651ea;
+        color: white;
+    }
+
+    span.label > input {
+        appearance: none;
+        display: none;
     }
 
     blockquote {
@@ -89,23 +217,7 @@
     }
 
     span.language {
-        font-size: 22px;
+        font-size: 20px;
         padding: 6px;
-    }
-
-    span.star {
-        font-size: 1.4em;
-    }
-
-    span.star.gold {
-        color: #ffcb00;
-    }
-
-    span.star.silver {
-        color: gray;
-    }
-
-    span.star.bronze {
-        color: red;
     }
 </style>

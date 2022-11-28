@@ -1,12 +1,23 @@
 <script>
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
     import icon from "../assets/search.svg";
     import { t } from "svelte-intl-precompile";
     export let value;
+
+    function onkeydown(ev) {
+        const key = ev.key;
+        if (ev.key === "Enter") {
+            dispatch("enter");
+        } else if (ev.key === "Escape") {
+            value = "";
+        }
+    }
 </script>
 
 <div>
     <img src={icon} width="20" height="20">
-    <input bind:value placeholder="{$t("search")}...">
+    <input bind:value on:keydown={onkeydown} placeholder="{$t("search")}...">
 </div>
 
 <style>
