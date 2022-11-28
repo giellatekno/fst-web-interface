@@ -23,6 +23,7 @@ def dict_first_value(d):
     vale of the key that comes first in d.keys()."""
     return list(islice(d.values(), 1))[0]
 
+
 def find_needed_files(all_pipelines):
     """Find all needed files from a pipeline."""
     needed = set()
@@ -37,6 +38,12 @@ def find_needed_files(all_pipelines):
 
     return needed
 
+
+def resolve_pipeline(wanted_lang, pipelines, available_files):
+    """From the dictionary of available files, find a matching file for
+    partial_path, searching first for the specific lang, and otherwise
+    in the general section."""
+
 def normalize_pipelines(pipelines):
     """Turns a pipeline spec of just a single list into one with just that
     one single list as the default (catchall) pipeline. If the pipeline already
@@ -46,44 +53,50 @@ def normalize_pipelines(pipelines):
     else:
         return pipelines
 
-def resolve_pipelines(pipelines, available_files):
+
+def resolve_pipelines(pipelines: dict[str, list], available_files: dict[str, str]):
     """Replace all occurences of PartialPaths in all pipelines with the
     real file path, found in the `available_files` dictionary. If the
     PartialPath is not available, that pipeline will be removed, as it cannot
     run due to missing files."""
     resolved_pipelines = {}
 
-    for lang, pipeline in pipelines.items():
-        new_pipeline = []
+    for avail_lang, avail_files in available_files.items():
+        pipeline = pipelines.get(avail_lang)
+        if not pipeline:
+            pipeline = pipelines.get("*")
+            if not pipeline:
+                # no pipelines for this tool, for this language
+                break
 
+        new_pipeline = []
         for program in pipeline:
             if callable(program):
                 new_pipeline.append(program)
             else:
                 new_program = []
                 for s in program:
-                    if new_program is None:
-                        break
-
                     if isinstance(s, str):
                         new_program.append(s)
                     elif isinstance(s, PartialPath):
                         partial_path = s.p
-                        real_path = available_files[lang].get(partial_path)
-                        if real_path is None:
-                            new_pipeline = None
-                            break
+                        found_file = avail_files.get(partial_path)
+                        if found_file:
+                            new_program.append(found_file)
                         else:
-                            new_program.append(real_path)
+                            new_program = None
+                            break
 
-                if new_pipeline is None:
-                    break
-                else:
+                if new_program is not None:
                     new_pipeline.append(new_program)
+                else:
+                    new_pipeline = None
+                    break
 
         if new_pipeline is not None:
-            resolved_pipelines[lang] = new_pipeline
+            resolved_pipelines[avail_lang] = new_pipeline
 
+    assert "*" not in resolved_pipelines
     return resolved_pipelines
 
 
@@ -107,10 +120,10 @@ def gather_available_files(wanted_files):
     """Take a set of all wanted files as input,
     and return a mapping of which files are available for each language found
     in $GTLANGS."""
-    files = defaultdict(dict)
+    available_files = defaultdict(dict)
 
     if GTLANGS is None:
-        return files
+        return available_files
 
     for p in GTLANGS.glob("lang-*"):
         lang = p.name[5:]
@@ -118,9 +131,9 @@ def gather_available_files(wanted_files):
         for wanted_file in wanted_files:
             full_path = p / wanted_file
             if full_path.is_file():
-                files[lang][wanted_file] = full_path
+                available_files[lang][wanted_file] = full_path
 
-    return files
+    return available_files
 
 
 class Tool:
@@ -138,7 +151,7 @@ class Tool:
     async def run_pipeline(self, lang, input):
         final_output = { "input": input }
 
-        pipeline = self.pipelines.get(lang, self.pipelines["*"])
+        pipeline = self.pipelines.get(lang)
 
         for prog in pipeline:
             if callable(prog):
