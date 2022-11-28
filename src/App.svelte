@@ -54,8 +54,6 @@
 
 <main>
     <header>
-        <!--
-        -->
         <LocaleSelector />
         <LangSelector />
     </header>

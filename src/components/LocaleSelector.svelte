@@ -46,7 +46,7 @@
 
 <style>
     main {
-        display: inline;
+        display: flex;
     }
     header {
         display: inline-flex;
