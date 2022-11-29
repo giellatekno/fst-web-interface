@@ -46,6 +46,7 @@
   <lname lang="mrj">&mrjnob;</lname>
   <lname lang="myv">&myvnob;</lname>
   <lname lang="nio">&nionob;</lname>
+  <lname lang="nno">&nnonob;</lname>
   <lname lang="nob">&nobnob;</lname>
   <lname lang="olo">&olonob;</lname>
   <lname lang="rmf">&rmfnob;</lname>
@@ -57,10 +58,12 @@
   <lname lang="smj">&smjnob;</lname>
   <lname lang="smn">&smnnob;</lname>
   <lname lang="sms">&smsnob;</lname>
+  <lname lang="som">&somnob;</lname>
+  <lname lang="swe">&swenob;</lname>
   <lname lang="udm">&udmnob;</lname>
   <lname lang="vep">&vepnob;</lname>
-  <lname lang="vro">&vronob;</lname>
   <lname lang="vot">&votnob;</lname>
+  <lname lang="vro">&vronob;</lname>
   <lname lang="yrk">&yrknob;</lname>
 
   <!-- anders: conflict: men de er de samme i begge filer (her og cgi-nob.xml) -->

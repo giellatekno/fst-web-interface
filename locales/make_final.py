@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 LANGS = ["sme", "eng", "nob", "rus", "fin"]
-USAGE = "usage: ./make_final.py {sme,eng,nob,rus,fin}"
+USAGE = "usage: ./make_final.py {sme,eng,nob,rus,fin}.json"
 
 
 required_files = [
@@ -44,14 +44,17 @@ def main(lang):
 
     # merge them
     jsons = [json.loads(j) for j in jsons]
-    out = {}
+    obj = {}
+
     for j in jsons:
         for k, v in j.items():
-            if k in out:
+            if k in obj:
                 print("conflict on key", k)
                 sys.exit()
-            out[k] = v
-    print(json.dumps(out, indent=4))
+            obj[k] = v
+
+    with open(f"{lang}.json", "w") as f:
+        json.dump(obj, f)
 
 
 def parse_args():
@@ -59,7 +62,7 @@ def parse_args():
         print(USAGE)
         sys.exit()
 
-    lang = sys.argv[1]
+    lang = sys.argv[1][:-5]
 
     if lang not in LANGS:
         print(USAGE)

@@ -15,9 +15,11 @@
 
 <!-- lang names: concat(lang_code,local_lang_code) -->
 <!ENTITY bxreng "Buriat">
+<!ENTITY chreng "Cherokee">
 <!ENTITY ciweng "Ojibwe">
 <!ENTITY coreng "Cornish">
 <!ENTITY crkeng "Plains Cree">
+<!ENTITY deueng "German">
 <!ENTITY esteng "Estonian">
 <!ENTITY evneng "Evenki">
 <!ENTITY faoeng "Faroese">
@@ -26,22 +28,28 @@
 <!ENTITY fkveng "Kven">
 <!ENTITY gleeng "Irish">
 <!ENTITY hdneng "Northern Haida">
+<!ENTITY huneng "Hungarian">
 <!ENTITY ipkeng "I&ntilde;upiaq">
 <!ENTITY izheng "Ingrian">
 <!ENTITY kaleng "Greenlandic">
 <!ENTITY kcaeng "Khanty">
 <!ENTITY koieng "Komi Permyak">
+<!ENTITY komeng "Komi">
 <!ENTITY kpveng "Komi">
+<!ENTITY laveng "Latvian">
 <!ENTITY liveng "Livonian">
+<!ENTITY luteng "Lushootseed">
 <!ENTITY mdfeng "Moksha">
 <!ENTITY mhreng "Meadow Mari">
 <!ENTITY mnseng "Mansi">
 <!ENTITY mrjeng "Hill Mari">
 <!ENTITY myveng "Erzya">
 <!ENTITY nioeng "Nganasan">
-<!ENTITY nobeng "Nganasan">
+<!ENTITY nnoeng "Norwegian Nynorsk">
+<!ENTITY nobeng "Norwegian Bokmål">
 <!ENTITY oloeng "Olonetsian">
 <!ENTITY rmfeng "Finnish Kalo">
+<!ENTITY rupeng "Aromanian">
 <!ENTITY ruseng "Russian">
 <!ENTITY sjdeng "Kildin Saami">
 <!ENTITY sjeeng "Pite Saami">
@@ -51,9 +59,10 @@
 <!ENTITY smneng "Inari Saami">
 <!ENTITY smseng "Skolt Saami">
 <!ENTITY someng "Somali">
+<!ENTITY sweeng "Swedish">
 <!ENTITY udmeng "Udmurt">
 <!ENTITY vepeng "Veps">
-<!ENTITY vroeng "Võro">
 <!ENTITY voteng "Votic">
+<!ENTITY vroeng "Võro">
 <!ENTITY yrkeng "Nenets">
 

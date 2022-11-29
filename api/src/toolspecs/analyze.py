@@ -25,7 +25,6 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     #     \t  +?   \t    inf
     #
     # EOF
-    print(stdout)
     lines = stdout.split("\n")
     out = []
     for line in lines:

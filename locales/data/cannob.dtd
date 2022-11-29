@@ -32,6 +32,7 @@
 <!ENTITY mrjnob "fjellmarisk">
 <!ENTITY myvnob "ersjamordvinsk">
 <!ENTITY nionob "nganasansk">
+<!ENTITY nnonob "norsk nynorsk">
 <!ENTITY nobnob "norsk bokmål">
 <!ENTITY olonob "livvikarelsk">
 <!ENTITY rmfnob "kalo finsk romani">
@@ -43,7 +44,8 @@
 <!ENTITY smjnob "lulesamisk">
 <!ENTITY smnnob "enaresamisk">
 <!ENTITY smsnob "skoltesamisk">
-<!ENTITY smsnob "somali">
+<!ENTITY somnob "somalisk">
+<!ENTITY swenob "svensk">
 <!ENTITY udmnob "udmurtisk">
 <!ENTITY vepnob "vepsisk">
 <!ENTITY votnob "votisk">

@@ -21,32 +21,41 @@
   <!-- Title: lang + language tools -->
   <lt>&lteng;</lt>
   <lname lang="bxr">&bxreng;</lname>
+  <lname lang="chr">&chreng;</lname>
   <lname lang="ciw">&ciweng;</lname>
   <lname lang="cor">&coreng;</lname>
   <lname lang="crk">&crkeng;</lname>
+  <lname lang="deu">&deueng;</lname>
   <lname lang="est">&esteng;</lname>
+  <lname lang="evn">&evneng;</lname>
   <lname lang="fao">&faoeng;</lname>
   <lname lang="fin">&fineng;</lname>
   <lname lang="fit">&fiteng;</lname>
   <lname lang="fkv">&fkveng;</lname>
   <lname lang="gle">&gleeng;</lname>
   <lname lang="hdn">&hdneng;</lname>
+  <lname lang="hun">&huneng;</lname>
   <lname lang="ipk">&ipkeng;</lname>
   <lname lang="izh">&izheng;</lname>
   <lname lang="kal">&kaleng;</lname>
   <lname lang="kca">&kcaeng;</lname>
   <lname lang="koi">&koieng;</lname>
+  <lname lang="kom">&komeng;</lname>
   <lname lang="kpv">&kpveng;</lname>
+  <lname lang="lav">&laveng;</lname>
   <lname lang="liv">&liveng;</lname>
+  <lname lang="lut">&luteng;</lname>
   <lname lang="mdf">&mdfeng;</lname>
   <lname lang="mhr">&mhreng;</lname>
   <lname lang="mns">&mnseng;</lname>
   <lname lang="mrj">&mrjeng;</lname>
   <lname lang="myv">&myveng;</lname>
   <lname lang="nio">&nioeng;</lname>
+  <lname lang="nno">&nnoeng;</lname>
   <lname lang="nob">&nobeng;</lname>
   <lname lang="olo">&oloeng;</lname>
   <lname lang="rmf">&ruseng;</lname>
+  <lname lang="rup">&rupeng;</lname>
   <lname lang="rus">&ruseng;</lname>
   <lname lang="sjd">&sjdeng;</lname>
   <lname lang="sje">&sjeeng;</lname>
@@ -55,10 +64,12 @@
   <lname lang="smj">&smjeng;</lname>
   <lname lang="smn">&smneng;</lname>
   <lname lang="sms">&smseng;</lname>
+  <lname lang="som">&someng;</lname>
+  <lname lang="swe">&sweeng;</lname>
   <lname lang="udm">&udmeng;</lname>
   <lname lang="vep">&vepeng;</lname>
-  <lname lang="vro">&vroeng;</lname>
   <lname lang="vot">&voteng;</lname>
+  <lname lang="vro">&vroeng;</lname>
   <lname lang="yrk">&yrkeng;</lname>
 
   <!-- anders: conflict: <place> also in cgi-eng. using that one -->
