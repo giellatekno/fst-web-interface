@@ -4,6 +4,8 @@
 <!ENTITY ltfin "työkalut">
 
 <!-- lang names: concat(lang_code,local_lang_code) -->
+<!ENTITY rmffin "[fin] rmffin">
+
 <!ENTITY bxrfin "Buriatin kielen">
 <!ENTITY ciwfin "Ojibwen kielen">
 <!ENTITY corfin "Kornin kielen">

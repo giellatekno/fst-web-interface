@@ -61,7 +61,8 @@
   <lname lang="vot">&votfin;</lname>
   <lname lang="yrk">&yrkfin;</lname>
 
-  <place>Saamen logo, Tromssan yliopisto</place>
+  <!-- anders: conflict: using the one in cgi-fin.xml -->
+  <!--<place>Saamen logo, Tromssan yliopisto</place>-->
   <copyright>Copyright © Saamen kieliteknologian projekti</copyright>
 
 <!-- Introduction -->

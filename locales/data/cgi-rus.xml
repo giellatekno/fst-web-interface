@@ -131,8 +131,8 @@
 <!-- H1 -->
 
 
-
-<place>Saami, University of Tromsø</place>
+<!-- anders: conflict, using the one in index-rus.xml -->
+<!-- <place>Saami, University of Tromsø</place>-->
 
 
 <copyright lang="bxr">Copyright © Гиеллатекно и Жаргал Бадагаров</copyright>
@@ -161,7 +161,9 @@
 <copyright lang="vot">Copyright © Гиеллатекно и Джек Рютер</copyright>
 <copyright lang="yrk">Copyright © Гиеллатекно и Джек Рютер</copyright>
 
-<copyright>Copyright © Саамские языковые технологии</copyright>
+<!-- anders: conflict, using the one in index-rus.xml -->
+<!-- (I am unable to make a judgement on which translation is/fits better... -->
+<!--<copyright>Copyright © Саамские языковые технологии</copyright>-->
 
 <!-- Introduction analyze -->
 

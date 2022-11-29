@@ -1,5 +1,7 @@
-import nob from "../../locales/nob.json";
 import eng from "../../locales/eng.json";
+import fin from "../../locales/fin.json";
+import nob from "../../locales/nob.json";
+import rus from "../../locales/rus.json";
 import sme from "../../locales/sme.json";
 
 import {
@@ -14,8 +16,10 @@ const locales = [
    "nob", "eng", "fin", "rus", "sme"
 ];
 
-addMessages("nob", nob);
 addMessages("eng", eng);
+addMessages("fin", fin);
+addMessages("nob", nob);
+addMessages("rus", rus);
 addMessages("sme", sme);
 
 init({
