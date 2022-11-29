@@ -1,0 +1,49 @@
+<!-- =============================================================== -->
+<!-- sme canned text -->
+<!-- =============================================================== -->
+<!ENTITY ltsme  "reaiddut">
+
+<!-- lang names: concat(lang_code,local_lang_code) -->
+<!ENTITY bxrsme "Burjátagiela">
+<!ENTITY ciwsme "Ojibwegiela">
+<!ENTITY corsme "Kornigiela">
+<!ENTITY crksme "Plains cree">
+<!ENTITY estsme "Estteagiela">
+<!ENTITY evnsme "Evenkaagiela">
+<!ENTITY faosme "Fearagiela">
+<!ENTITY finsme "Suomagiela">
+<!ENTITY finsme "Meänkieli">
+<!ENTITY fkvsme "Kvenagiela">
+<!ENTITY glesme "Iiragiela">
+<!ENTITY hdnsme "Davvihaidagiela">
+<!ENTITY ipksme "Inupiaka">
+<!ENTITY izhsme "Inkeroisgiela">
+<!ENTITY kalsme "Ruonáeatnanlaš">
+<!ENTITY kcasme "Hantigiela">
+<!ENTITY koisme "Komiparmjakgiela">
+<!ENTITY kpvsme "Komigiela">
+<!ENTITY livsme "Liivigiela">
+<!ENTITY mdfsme "Mokšagiela">
+<!ENTITY mnssme "Mansigiela">
+<!ENTITY mhrsme "Marigiela">
+<!ENTITY mrjsme "Várremarigiela">
+<!ENTITY myvsme "Ersagiela">
+<!ENTITY niosme "Nganasanagiela">
+<!ENTITY nobsme "Dárogiela">
+<!ENTITY olosme "Aunusgárjilgiela">
+<!ENTITY rmfsme "Suoma romanigiela">
+<!ENTITY russme "Ruoššagiela">
+<!ENTITY sjdsme "Gielddasámegiela">
+<!ENTITY sjesme "Bihtánsámegiela">
+<!ENTITY smasme "Lullisámegiela">
+<!ENTITY smesme "Davvisámegiela">
+<!ENTITY smjsme "Julevsámegiela">
+<!ENTITY smnsme "Anársámegiela">
+<!ENTITY smssme "Nuortalašgiela">
+<!ENTITY somsme "Somaligiela">
+<!ENTITY udmsme "Udmurtagiela">
+<!ENTITY vepsme "Vepsagiela">
+<!ENTITY vrosme "Võrogiela">
+<!ENTITY votsme "Vatjagiela">
+<!ENTITY yrksme "Nenetsagiela">
+

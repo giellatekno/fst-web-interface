@@ -85,7 +85,7 @@
 </script>
 
 <main>
-    <h1>{$t("language tools")}</h1>
+    <h1>{$t("languagetools")}</h1>
     <div>
         <h2>{$t("index.showtoolsfordotdotdot")}</h2>
 
@@ -107,7 +107,7 @@
                 class:on={show_uralic}
                 on:click={() => show_uralic = !show_uralic}
             >
-                <label for="uralicnonsami">{$t("nonuralicsami")}</label>
+                <label for="uralicnonsami">{$t("nonsamiuralic")}</label>
                 <input name="uralicnonsami" type="radio" checked={show_uralic} />
             </span>
             <span
@@ -124,7 +124,8 @@
             {#each visible_langs as lng}
                 <span class="language">
                     <a href="/{lng}">
-                        {language_names[$locale][lng]}
+                        {$t(`lname.lang.${lng}`)}
+                        <!--{language_names[$locale][lng]}-->
                     </a>
                 </span>
             {:else}

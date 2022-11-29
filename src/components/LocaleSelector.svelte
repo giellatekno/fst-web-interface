@@ -16,10 +16,9 @@
 </script>
 
 <main>
-    <header>
+    <header on:click={() => open = !open}>
         <img
             alt="Innholdspråk"
-            on:click={() => open = !open}
             src={languageIcon}
             height="22"
         />
@@ -33,13 +32,15 @@
             in:fly={{ y: -18, duration: 170, easing: quintOut, opacity: 0.2 }}
             out:fly={{ y: -18, duration: 120, easing: quintOut, opacity: 0 }}
             class="fullscreen">
-            <h1>Velg grensesnittspråk...</h1>
+            <h1>Grensesnittspråk</h1>
 
-            {#each locales as loc}
-                <div class="lang"
-                     on:click={set_locale(loc)}
-                     >{locales_in_locale[loc]}</div>
-            {/each}
+            <div class="lang-container">
+                {#each locales as loc}
+                    <div class="lang"
+                         on:click={set_locale(loc)}
+                         >{locales_in_locale[loc]}</div>
+                {/each}
+            </div>
         </div>
     {/if}
 </main>
@@ -51,21 +52,39 @@
     header {
         display: inline-flex;
         align-items: center;
+        cursor: pointer;
     }
     header > span {
         margin-left: 0.4em;
     }
     div.fullscreen {
-        padding: 26px;
+        color: white;
+        background-color: rgba(30, 40, 40, 0.95);
+        padding: 16px;
         position: absolute;
-        background-color: rgba(240, 245, 240, 0.95);
-        left: 0; top: 28px;
-        height: calc(40% - 28px);
-        width: 100%;
+        border-radius: 8px;
+        left: 34px; top: 28px;
+        height: calc(23% - 28px);
+    }
+    div.fullscreen > h1 {
+        margin: 0;
+        font-size: 22px;
+        padding-left: 18px;
+    }
+    div.lang-container {
+        padding: 0;
+        display: inline-flex;
+        flex-direction: column;
     }
     div.lang {
+        display: inline;
         cursor: pointer;
-        margin: 18px;
-        font-size: 1.4em;
+        margin: 4px 0 0 16px;
+        font-size: 1.3em;
+        border-bottom: 3px solid transparent;
+        transition: border-bottom 0.25s ease-out;
+    }
+    div.lang:hover {
+        border-bottom: 3px solid white;
     }
 </style>

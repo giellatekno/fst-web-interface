@@ -61,8 +61,11 @@
   <lname lang="vot">&voteng;</lname>
   <lname lang="yrk">&yrkeng;</lname>
 
-  <place>Saami logo, UiT The Arctic University of Norway</place>
-  <copyright>Copyright © Saami language technology project</copyright>
+  <!-- anders: conflict: <place> also in cgi-eng. using that one -->
+  <!--<place>Saami logo, UiT The Arctic University of Norway</place>-->
+
+  <!-- anders: conflict: <copyright> also in cg-eng. using that one-->
+  <!--<copyright>Copyright © Saami language technology project</copyright>-->
 
   <!-- Introduction -->
   <introduction lang="crk">The &crkeng; tools represent work by AltLab at U of Alberta and &gte; at UiT.</introduction>

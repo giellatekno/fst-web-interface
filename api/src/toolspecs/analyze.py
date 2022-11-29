@@ -25,6 +25,7 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     #     \t  +?   \t    inf
     #
     # EOF
+    print(stdout)
     lines = stdout.split("\n")
     out = []
     for line in lines:
@@ -33,7 +34,11 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
             continue
 
         splits = line.split("\t")
-        word, res, _weight = splits
+        if len(splits) == 2:
+            continue
+            word, res = splits
+        elif len(splits) == 3:
+            word, res, _weight = splits
 
         # bok+CmpNP/None+N+Fem+Sg+Indef =>
         #  root = bok
@@ -52,7 +57,11 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
 
     return out
 
+def _print(arg):
+    print(arg)
+    return arg
 pipeline = [
+    _print,
     [
         "hfst-tokenize",
         "-q",
