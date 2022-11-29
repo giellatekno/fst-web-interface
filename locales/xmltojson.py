@@ -101,7 +101,7 @@ def merge_dicts(dicts):
         for k, v in d.items():
             if k in out:
                 print(f"key {k} already exists")
-                return None
+                sys.exit()
             out[k] = v
     return out
 

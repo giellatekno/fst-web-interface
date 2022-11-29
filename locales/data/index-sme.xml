@@ -20,33 +20,43 @@
 <content>
   <!-- Title: lang + language tools -->
   <lt>&ltsme;</lt>
+
   <lname lang="bxr">&bxrsme;</lname>
+  <lname lang="chr">&chrsme;</lname>
   <lname lang="ciw">&ciwsme;</lname>
   <lname lang="cor">&corsme;</lname>
   <lname lang="crk">&crksme;</lname>
+  <lname lang="deu">&deusme;</lname>
   <lname lang="est">&estsme;</lname>
+  <lname lang="evn">&evnsme;</lname>
   <lname lang="fao">&faosme;</lname>
   <lname lang="fin">&finsme;</lname>
   <lname lang="fit">&fitsme;</lname>
   <lname lang="fkv">&fkvsme;</lname>
   <lname lang="gle">&glesme;</lname>
   <lname lang="hdn">&hdnsme;</lname>
+  <lname lang="hun">&hunsme;</lname>
   <lname lang="ipk">&ipksme;</lname>
   <lname lang="izh">&izhsme;</lname>
   <lname lang="kal">&kalsme;</lname>
   <lname lang="kca">&kcasme;</lname>
-  <lname lang="kpv">&kpvsme;</lname>
   <lname lang="koi">&koisme;</lname>
+  <lname lang="kom">&komsme;</lname>
+  <lname lang="kpv">&kpvsme;</lname>
+  <lname lang="lav">&lavsme;</lname>
   <lname lang="liv">&livsme;</lname>
+  <lname lang="lut">&lutsme;</lname>
   <lname lang="mdf">&mdfsme;</lname>
   <lname lang="mhr">&mhrsme;</lname>
   <lname lang="mns">&mnssme;</lname>
   <lname lang="mrj">&mrjsme;</lname>
   <lname lang="myv">&myvsme;</lname>
   <lname lang="nio">&niosme;</lname>
+  <lname lang="nno">&nnosme;</lname>
   <lname lang="nob">&nobsme;</lname>
   <lname lang="olo">&olosme;</lname>
   <lname lang="rmf">&rmfsme;</lname>
+  <lname lang="rup">&rupsme;</lname>
   <lname lang="rus">&russme;</lname>
   <lname lang="sjd">&sjdsme;</lname>
   <lname lang="sje">&sjesme;</lname>
@@ -55,10 +65,12 @@
   <lname lang="smj">&smjsme;</lname>
   <lname lang="smn">&smnsme;</lname>
   <lname lang="sms">&smssme;</lname>
+  <lname lang="som">&somsme;</lname>
+  <lname lang="swe">&swesme;</lname>
   <lname lang="udm">&udmsme;</lname>
   <lname lang="vep">&vepsme;</lname>
-  <lname lang="vro">&vrosme;</lname>
   <lname lang="vot">&votsme;</lname>
+  <lname lang="vro">&vrosme;</lname>
   <lname lang="yrk">&yrksme;</lname>
 
   <!-- anders: conflict. using the ones in cgi-sme.xml -->
