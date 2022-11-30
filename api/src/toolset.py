@@ -120,7 +120,7 @@ def find_response_model(all_pipelines):
 
 def get_repo_info(path):
     env = dict(GIT_DIR = f"{path}/.git")
-    prog = shlex.split("git log -n 1 --format=format:\"%h %ci\"")
+    prog = shlex.split("git log -n 1 --format=format:\"%h %cI\"")
     try:
         res = subprocess.run(prog, capture_output=True, env=env)
     except FileNotFoundError:
