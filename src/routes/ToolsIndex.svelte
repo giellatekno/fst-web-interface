@@ -6,47 +6,31 @@
     import ipa_img from "../assets/ipa.svg";
     import { t } from "svelte-intl-precompile";
     import { locale } from "../lib/locales.js";
+    import { capabilities_for_lang } from "../lib/api.js";
     import {
         lang,
         lang_in_locale,
     } from "../lib/stores.js";
     import {
         language_names,
-        analysis_langs,
-        paradigm_langs,
-        generation_langs,
+        tools_for
     } from "../lib/langs.js";
 
-    // Which tools are available for the
-    // target language?
-    function tools_for(lang) {
-        const list = [];
-
-        if (generation_langs.has(lang)) {
-            list.push("generate");
+    function get_copyright($t, $lang) {
+        const specific_key = `copyright.lang.${$lang}`;
+        const specific_value = $t(specific_key);
+        if (specific_value !== specific_key) {
+            return specific_value;
+        } else {
+            const generic_key = `copyright`;
+            const generic_value = $t(generic_key);
+            if (generic_value !== generic_key) {
+                return generic_value;
+            } else {
+                // ??
+                return "";
+            }
         }
-        if (analysis_langs.has(lang)) {
-            list.push("analyze");
-        }
-        if (paradigm_langs.has(lang)) {
-            list.push("paradigm");
-        }
-
-        // others, static for now
-        list.push(
-            //"generate",
-            //"analyze",
-            "spellcheck",
-            "num",
-            "disambiguate",
-            "dependency",
-            "hyphenation",
-            "transcription",
-            //"ortography",
-            //"tallordsgenerator",
-            //"stedsnavnsordbok",
-        );
-        return list;
     }
 
     const IMAGES = {
@@ -56,11 +40,24 @@
         transcription: ipa_img,
     }
 
-    $: tools = tools_for($lang);
+    $: repo_info = get_repo_info($lang);
+    $: copyright = get_copyright($t, $lang);
+    $: tools = tools_for[$lang];
+
+    async function get_repo_info(lang) {
+        if (!lang) throw Error();
+        console.log(lang);
+        const obj = await capabilities_for_lang(lang);
+        if (obj.commit) {
+            return obj;
+        } else {
+            throw Error();
+        }
+    }
 </script>
 
 <main>
-    <h2>Tilgjengelige verktøy for {$lang_in_locale}</h2>
+    <h2>{$t("lt")} {$t(`lname.lang.${$lang}`)}</h2>
 
     <div class="tools-wrapper">
         {#each tools as tool}
@@ -79,6 +76,19 @@
     </p>
 
     <a href="#">Direktelenke for denne siden</a>
+
+    {#await repo_info then { commit, date }}
+        <div style="margin-top: 3em;">
+            <p class="langmodel-info">
+                Språkmodellen ble sist oppdatert {date} &mdash;&nbsp;<code>commit {commit},
+                        <a rel="external"
+                           href="https://github.com/giellalt/lang-{$lang}"
+                        >github.com/giellalt/lang-{$lang}</a></code>
+            </p>
+        </div>
+    {/await}
+
+    <p>{@html copyright}</p>
 </main>
 
 
@@ -91,7 +101,6 @@
         display: grid;
         grid-template-columns: repeat(2, max-content);
         grid-gap: 17px;
-        margin: 0 34px;
         /*width: calc(100vw - 68px);*/
     }
 
@@ -151,5 +160,19 @@
         grid-area: desc;
         font-style: italic;
         font-size: 1.05em;
+    }
+
+    p.langmodel-info {
+        display: inline;
+        font-size: 0.85em;
+        padding: 8px 10px;
+        border: 2px solid #d9d914;
+        background-color: #f4f49c;
+    }
+
+    p.langmodel-info,
+    p.langmodel-info a,
+    p.langmodel-info code {
+        color: #111;
     }
 </style>

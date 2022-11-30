@@ -2,7 +2,7 @@
 <!-- eng canned text -->
 <!-- =============================================================== -->
 <!ENTITY gte "Giellatekno">
-<!ENTITY lteng "language tools">
+<!ENTITY lteng "Language tools for">
 <!ENTITY aimeng "analyser is just in the making.">
 <!ENTITY ahweng "Analyse a handful of words only.">
 <!ENTITY adheng "Analyse, disambiguate and hyphenate text.">

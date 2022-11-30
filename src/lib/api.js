@@ -14,7 +14,18 @@ const check_arg_nonempty = (fnname, arg, argname) => {
     }
 }
 
-async function apicall(url, { api = "divvun", json_body, method = "GET" } = {}) {
+async function apicall(
+    url,
+    {
+        method = "GET",
+        api = "divvun",
+        json_body,
+
+        // assume root output from api is an object, and extract this key
+        // for the results
+        extract = "result",
+    } = {}
+) {
     if (!Object.hasOwn(API_URLS, api)) {
         throw new Error("Internal: bad call to apicall(): no such api");
     }
@@ -47,12 +58,16 @@ async function apicall(url, { api = "divvun", json_body, method = "GET" } = {}) 
         throw new Error(`api response body not json (${url})`);
     }
 
-    const results = json.result;
-    if (results === undefined) {
-        const e = json.error || json.errors || "no 'results' nor 'error' in json body";
-        throw new Error(e);
+    if (!extract) {
+        return json;
+    } else {
+        const result = json.result;
+        if (result === undefined) {
+            const e = json.error || json.errors || "no 'result' nor 'error' in json body";
+            throw new Error(e);
+        }
+        return result;
     }
-    return results;
 }
 
 export async function spell(lang, word) {
@@ -114,4 +129,10 @@ export async function num(lang, input) {
     check_arg_nonempty("num", input, "input");
 
     return apicall(`num/${lang}/${input}`, { api: "local" });
+}
+
+export async function capabilities_for_lang(lang) {
+    check_arg_nonempty("capabilities_for_lang", lang, "lang");
+
+    return apicall(`capabilities/${lang}`, { api: "local", extract: false });
 }

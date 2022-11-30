@@ -43,14 +43,54 @@ async def add_process_time_header(request, call_next):
 
 
 
+class LangCapabilities(BaseModel):
+    date: str | None
+    commit: str | None
+    tools: list[str]
+
+
 @app.get(
     "/capabilities",
     summary="capabilities",
-    description="Which tools are available for which languages",
-    response_model=dict[str, list[str]],
+    description="All languages, and their supported tools, and repository info",
+    response_model=dict[str, LangCapabilities],
 )
 async def handle():
-    return tools.capabilities
+    out = {}
+    for lang, toollist in tools.capabilities.items():
+        out[lang] = { "tools": toollist }
+        commithash, commitdate = tools.repos_info[lang]
+        if commithash:
+            out[lang]["commit"] = commithash
+        if commitdate:
+            out[lang]["date"] = commitdate
+
+    return out
+
+@app.get(
+    "/capabilities/{lang}",
+    summary="capabilities for language",
+    description="Supported tools and repository info for a langauge",
+    response_model=LangCapabilities | str,
+)
+async def handle(lang: str):
+    out = dict()
+    print(lang)
+    print(tools.capabilities)
+    toollist = tools.capabilities.get(lang)
+    if toollist is None:
+        return "no such language"
+    out["tools"] = toollist
+
+    try:
+        commithash, commitdate = tools.repos_info[lang]
+    except KeyError:
+        pass
+    else:
+        out["commit"] = commithash
+        out["date"] = commitdate
+
+    return out
 
 
 

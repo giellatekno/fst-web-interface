@@ -8,6 +8,7 @@ import {
     addMessages,
     init,
     locale as precompile_locale,
+    t,
 } from 'svelte-intl-precompile';
 
 const DEFAULT_LOCALE = "sme";
@@ -54,8 +55,21 @@ function get_initial_locale() {
     return saved_locale ?? DEFAULT_LOCALE;
 }
 
+console.debug("lib/locales.js run");
+let $t;
+const unsub_$t = t.subscribe(fn => $t = fn);
+function get_langspecific_key(key, lang) {
+    const specific_key = `${key}.lang.${lang}`;
+    const specific_value = $t(specific_key);
+    if (specific_value !== specific_key) return specific_value;
+    const langagnostic_value = $t(key);
+    if (langagnostic_value !== key) return langagnostic_value;
+    return "";
+}
+
 export {
     locale,
     locales,
     locales_in_locale,
+    get_langspecific_key,
 };

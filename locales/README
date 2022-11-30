@@ -7,8 +7,9 @@ dtd/can{lang}.dtd                                -> data/can{lang}.dtd
 (definition file, unused?) cgi-translations.dtd  -> data/cgi-translations.dtd
 
 
-after making modifications to data files, run:
+after making modifications to data files, run
 
-   ./make_final.py {lang} > {lang}.json
+   ./make_final.py {lang}.json
 
-maybe run without overwriting output file first to see that output looks all right....
+to regenerate the {lang}.json file
+

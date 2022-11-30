@@ -1,11 +1,13 @@
 import asyncio
 from asyncio.subprocess import PIPE
 import subprocess
+import shlex
 import inspect
 from itertools import islice
 from typing import Any
 from collections import defaultdict
 import logging
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
@@ -116,6 +118,21 @@ def find_response_model(all_pipelines):
             return return_annotation
 
 
+def get_repo_info(path):
+    env = dict(GIT_DIR = f"{path}/.git")
+    prog = shlex.split("git log -n 1 --format=format:\"%h %ci\"")
+    try:
+        res = subprocess.run(prog, capture_output=True, env=env)
+    except FileNotFoundError:
+        return None, None
+    else:
+        stdout = res.stdout.strip().decode("utf-8").split(" ")
+        commithash = stdout[0]
+        commitdate = " ".join(stdout[1:])
+
+    return commithash, commitdate
+
+
 def gather_available_files(wanted_files):
     """Take a set of all wanted files as input,
     and return a mapping of which files are available for each language found
@@ -125,15 +142,17 @@ def gather_available_files(wanted_files):
     if GTLANGS is None:
         return available_files
 
+    repos_info = {}
     for p in GTLANGS.glob("lang-*"):
         lang = p.name[5:]
+        repos_info[lang] = commithash, commitdate = get_repo_info(p)
 
         for wanted_file in wanted_files:
             full_path = p / wanted_file
             if full_path.is_file():
                 available_files[lang][wanted_file] = full_path
 
-    return available_files
+    return available_files, repos_info
 
 
 class Tool:
@@ -184,6 +203,9 @@ class Tools:
         # mapping of tool name -> list of langs supported
         self.capabilities = defaultdict(list)
 
+        # mapping of lang -> tuple of commithash, commitdate
+        self.repos_info = None
+
     def add(self, spec):
         tool = Tool(spec)
         self.tools[tool.name] = tool
@@ -193,7 +215,8 @@ class Tools:
         return tool
 
     def resolve_pipelines(self):
-        available_files = gather_available_files(self.all_wanted_files)
+        available_files, repos_info = gather_available_files(self.all_wanted_files)
+        self.repos_info = repos_info
 
         for toolname, tool in self.tools.items():
             if len(tool.wanted_files) == 0:

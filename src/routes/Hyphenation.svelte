@@ -4,6 +4,7 @@
     import { lang } from "../lib/stores.js";
     import { hyphenate } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
+    import { get_langspecific_key } from "../lib/locales.js";
 
     let results = [
         { word: "fattig", promise: Promise.resolve(["fat-tig"]) },
@@ -11,7 +12,7 @@
         { word: "bursdag", promise: Promise.resolve(["burs-dag"]) },
     ];
 
-    $: usage = $t(`usage.lang.${$lang}`);
+    $: usage = get_langspecific_key("usage");
 
     function pp_result(res) {
         return res.replaceAll("-", '<span style="color: red;"> &#8212; </span>');
@@ -28,7 +29,7 @@
 </script>
 
 <main>
-    <h1>[l6e] Hyphenation</h1>
+    <h1>{$t("selection.select.tool.hyphenate")}</h1>
     <p>{@html usage}</p>
 
     <form>
@@ -56,15 +57,6 @@
                 </td>
         {/each}
     </table>
-
-    <div style="margin-top: 3em;">
-        <p class="langmodel-info">
-            Språkmodellen ble sist oppdatert DATO &mdash;&nbsp;<code>commit 0c36f5c,
-                    <a rel="external"
-                       href="https://github.com/giellalt/lang-{$lang}"
-                    >github.com/giellalt/lang-{$lang}</a></code>
-        </p>
-    </div>
 </main>
 
 <style>
@@ -87,31 +79,5 @@
 
     table.results td:first-of-type {
         width: 5em;
-    }
-
-    p.langmodel-info {
-        /*
-        display: inline;
-        font-size: 0.88em;
-        padding: 10px;
-        border-left: 8px solid #e39541;
-        background-color: #f7e3aa;
-        border-top-right-radius: 4px;
-        border-top-left-radius: 2px;
-        border-bottom-left-radius: 1px;
-        box-shadow: 1px 2px 3px 0 #d59441;
-        */
-
-        display: inline;
-        font-size: 0.85em;
-        padding: 8px 10px;
-        border: 2px solid #d9d914;
-        background-color: #f4f49c;
-    }
-
-    p.langmodel-info,
-    p.langmodel-info a,
-    p.langmodel-info code {
-        color: #111;
     }
 </style>
