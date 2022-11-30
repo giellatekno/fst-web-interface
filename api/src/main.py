@@ -75,8 +75,6 @@ async def handle():
 )
 async def handle(lang: str):
     out = dict()
-    print(lang)
-    print(tools.capabilities)
     toollist = tools.capabilities.get(lang)
     if toollist is None:
         return "no such language"
