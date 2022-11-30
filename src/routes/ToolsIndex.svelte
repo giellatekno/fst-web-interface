@@ -40,19 +40,53 @@
         transcription: ipa_img,
     }
 
-    $: repo_info = get_repo_info($lang);
+    let repo_info = null;
+    let show_date_relative = false;
+    $: get_repo_info($lang);
+    $: repo_date = fmt_date_localized($locale, repo_info);
+    $: repo_date_ago = fmt_date_ago_localized($locale, repo_info);
+
     $: copyright = get_copyright($t, $lang);
     $: tools = tools_for[$lang];
 
+
+    const FMT_DATE_OPTS = { day: "numeric", month: "short", year: "numeric" };
+    const RELTIME_FMT_OPTS = { };
+    // https://blog.webdevsimplified.com/2020-07/relative-time-format/
+    const DIVISIONS = [
+        { amount: 60, name: 'seconds' },
+        { amount: 60, name: 'minutes' },
+        { amount: 24, name: 'hours' },
+        { amount: 7, name: 'days' },
+        { amount: 4.34524, name: 'weeks' },
+        { amount: 12, name: 'months' },
+        { amount: Number.POSITIVE_INFINITY, name: 'years' },
+    ];
+    function fmt_date_ago_localized(locale, date) {
+        if (!date) return null;
+        date = date.date;
+        let diff_sec = (date - Date.now()) / 1000;
+
+        const formatter = new Intl.RelativeTimeFormat(locale, RELTIME_FMT_OPTS);
+        for (let i = 0; i <= DIVISIONS.length; i++) {
+            const division = DIVISIONS[i]
+            if (Math.abs(diff_sec) < division.amount) {
+                return formatter.format(Math.round(diff_sec), division.name)
+            }
+            diff_sec /= division.amount
+        }
+    }
+    function fmt_date_localized(locale, date) {
+        if (!date) return null;
+        date = date.date;
+        return date.toLocaleDateString(locale, FMT_DATE_OPTS);
+    }
     async function get_repo_info(lang) {
         if (!lang) throw Error();
-        console.log(lang);
         const obj = await capabilities_for_lang(lang);
-        if (obj.commit) {
-            return obj;
-        } else {
-            throw Error();
-        }
+        if (!obj.commit) throw Error();
+        obj.date = new Date(obj.date);
+        repo_info = obj;
     }
 </script>
 
@@ -77,16 +111,18 @@
 
     <a href="#">Direktelenke for denne siden</a>
 
-    {#await repo_info then { commit, date }}
+    {#if repo_info}
         <div style="margin-top: 3em;">
             <p class="langmodel-info">
-                Språkmodellen ble sist oppdatert {date} &mdash;&nbsp;<code>commit {commit},
-                        <a rel="external"
-                           href="https://github.com/giellalt/lang-{$lang}"
-                        >github.com/giellalt/lang-{$lang}</a></code>
+                {$t("langmodellastupdated")}
+                <span class="date" on:click={() => show_date_relative = !show_date_relative}>
+                    {show_date_relative ? repo_date_ago : repo_date}
+                </span>&mdash;&nbsp;<code>commit {repo_info.commit},
+                    <a rel="external" href="https://github.com/giellalt/lang-{$lang}"
+                    >github.com/giellalt/lang-{$lang}</a></code>
             </p>
         </div>
-    {/await}
+    {/if}
 
     <p>{@html copyright}</p>
 </main>
@@ -95,6 +131,11 @@
 <style>
     main {
         margin-left: 34px;
+    }
+
+    span.date {
+        cursor: pointer;
+        border-bottom: 1px dashed black;
     }
 
     div.tools-wrapper {
