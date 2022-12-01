@@ -48,7 +48,7 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     return out
 
 # TODO!! some languages have a different pipeline!
-pipeline = [
+with_korp = [
     [
         "hfst-tokenize",
         "-cg",
@@ -81,3 +81,40 @@ pipeline = [
     ],
     pipeline_stdout_to_json
 ]
+
+pipeline = {
+    # these languages have an additional step in the pipeline
+    "fao": with_korp,
+    "sma": with_korp,
+    "sme": with_korp,
+    "smj": with_korp,
+    #"nob": with_korp,
+
+    # for all other languages, this is the pipeline
+    "*": [
+        [
+            "hfst-tokenize",
+            "-cg",
+
+            # built with: ./configure --enable-tokenisers
+            PartialPath(
+                "tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst"
+            ),
+        ],
+        [
+            "vislcg3",
+            "-g",
+            PartialPath(
+                "src/cg3/disambiguator.cg3"
+            ),
+        ],
+        [
+            "vislcg3",
+            "-g",
+            PartialPath(
+                "src/cg3/dependency.cg3"
+            ),
+        ],
+        pipeline_stdout_to_json
+    ]
+}

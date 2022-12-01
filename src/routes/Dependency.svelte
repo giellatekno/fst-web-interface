@@ -44,8 +44,6 @@
                     </div>
                 {/each}
             {/if}
-        {:catch e}
-            FEIL: {e}
         {/await}
     {/if}
 </main>

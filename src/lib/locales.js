@@ -55,7 +55,6 @@ function get_initial_locale() {
     return saved_locale ?? DEFAULT_LOCALE;
 }
 
-console.debug("lib/locales.js run");
 let $t;
 const unsub_$t = t.subscribe(fn => $t = fn);
 function get_langspecific_key(key, lang) {
