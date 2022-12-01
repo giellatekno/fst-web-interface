@@ -2,12 +2,14 @@
     import { t } from "svelte-intl-precompile";
     import { Pulse } from "svelte-loading-spinners";
     import { lang } from "../lib/stores.js";
+    import { get_langspecific_key } from "../lib/locales.js";
     import { dependency } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
 
     let results = null;
 
-    $: usage = $t(`usage.lang.${$lang}`);
+    //$: usage = $t(`usage.lang.${$lang}`);
+    $: usage = get_langspecific_key("usage", $lang);
 
     function on_new_value({ detail: value }) {
         results = dependency($lang, value);

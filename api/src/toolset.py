@@ -119,16 +119,24 @@ def find_response_model(all_pipelines):
 
 
 def get_repo_info(path):
-    env = dict(GIT_DIR = f"{path}/.git")
-    prog = shlex.split("git log -n 1 --format=format:\"%h %cI\"")
+    # first try to read this info from REPO_INFO
+    # it will be made when deploying
+    commithash, commitdate = None, None
     try:
-        res = subprocess.run(prog, capture_output=True, env=env)
+        with open(f"{path}/REPO_INFO") as f:
+            commithash, commitdate = f.read().strip().split(" ")
     except FileNotFoundError:
-        return None, None
-    else:
-        stdout = res.stdout.strip().decode("utf-8").split(" ")
-        commithash = stdout[0]
-        commitdate = " ".join(stdout[1:])
+        # okay, try to run git command there, then
+        env = dict(GIT_DIR = f"{path}/.git")
+        prog = shlex.split("git log -n 1 --format=format:\"%h %cI\"")
+        try:
+            res = subprocess.run(prog, capture_output=True, env=env)
+        except FileNotFoundError:
+            return None, None
+        else:
+            stdout = res.stdout.strip().decode("utf-8").split(" ")
+            commithash = stdout[0]
+            commitdate = " ".join(stdout[1:])
 
     return commithash, commitdate
 
