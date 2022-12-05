@@ -4,7 +4,7 @@ summary = "paradigm"
 description = """
 Generates the morphological paradigm from lemmas
 
-`echo "$INPUT" | hfst-tokenize -q lang-$LANG/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst | hfst-lookup -q lang-$LANG/src/analyser-gt-desc.hfstol`
+`echo "$INPUT" | hfst-lookup -q lang-$LANG/src/generator-gt-norm.hfstol`
 
 The output structure is parsed and sent as json.
 """
@@ -15,20 +15,10 @@ def pipeline_stdout_to_json(stdout):
 
 pipeline = [
     [
-        "hfst-tokenize",
-        # also in conf.pl: --beam=0 (result filtering?)
-        "-q", 
-        
-        PartialPath(
-            # built with: ./configure --enable-tokenisers
-            "tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst",
-        )
-    ],
-    [
         "hfst-lookup",
         # also in conf.pl: --beam=0 (see above)
         "-q", 
-        PartialPath("src/analyser-gt-desc.hfstol")
+        PartialPath("src/generator-gt-norm.hfstol")
     ],
     pipeline_stdout_to_json,
 ]

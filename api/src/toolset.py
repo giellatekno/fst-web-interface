@@ -148,7 +148,7 @@ def gather_available_files(wanted_files):
     available_files = defaultdict(dict)
 
     if GTLANGS is None:
-        return available_files
+        return available_files, (None, None)
 
     repos_info = {}
     for p in GTLANGS.glob("lang-*"):
@@ -159,6 +159,8 @@ def gather_available_files(wanted_files):
             full_path = p / wanted_file
             if full_path.is_file():
                 available_files[lang][wanted_file] = full_path
+            else:
+                logger.warn(f"lang-{lang} wants file {wanted_file}, but it was not found")
 
     return available_files, repos_info
 
