@@ -11,6 +11,7 @@ from os import get_terminal_size
 builtin_print = __builtins__.print
 
 # lang: est  not in github
+# bxr fails to build
 
 # After initial "build all", these langs seems to be ok:
 #  ciw cor evn fit fkv gle hdn
@@ -19,7 +20,7 @@ builtin_print = __builtins__.print
 #  sje sma som vep vot yrk
 
 LANGS = [
-    "bxr", "ciw", "cor", "evn",
+    "ciw", "cor", "evn",
     "fao", "fin", "fit", "fkv", "gle",
     "hdn", "ipk", "izh", "kal", "kca",
     "koi", "kpv", "liv", "mdf", "mhr",
@@ -306,7 +307,7 @@ async def read_pipeline_specs():
     return needed
 
 
-async def main(langs, verbose=False):
+async def main(langs, no_app=False, verbose=False):
     have_compiler = await run_assignments(
         ("Make image: compiler", [docker_build_compiler]),
         verbose=verbose
@@ -329,6 +330,11 @@ async def main(langs, verbose=False):
     have_langs = await run_assignments(*lang_assignments, verbose=verbose)
     if not isinstance(have_langs, list):
         have_langs = [have_langs]
+
+    if no_app:
+        print("Skipping last step (Make image: app) due to --no-app")
+        return
+
     if not all(have_langs):
         print("Cannot continue due to missing languages")
         return
@@ -347,11 +353,24 @@ async def main(langs, verbose=False):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(prog="build")
-    parser.add_argument("langs", nargs="*")
-    parser.add_argument("--verbose", "-v", action="store_true")
+    langs_help = "language codes of language models to build, in 3-letter iso-639-3 format. use --langs to just print out a list of supported languages"
+    showlangs_help = "don't run normal build, just show a list of supported languages"
+    verbose_help = "prints all messages (not filtered) on new lines, instead of filtering some lines and overwriting previous lines"
+    no_app_help="stop after making langauge models, do not run the final step where the app image is made"
+    prog_description = "uses docker to create images of compiled language models, and finally makes a deployable image of the app with all the compiled language artifacts from all languages that it needs to be able to run all defined pipelines"
+
+
+    parser = argparse.ArgumentParser(prog="build", description=prog_description)
+    parser.add_argument("langs", nargs="*", help=langs_help)
+    parser.add_argument("--langs", dest="showlangs", action="store_true", help=showlangs_help)
+    parser.add_argument("--verbose", "-v", action="store_true", help=verbose_help)
+    parser.add_argument("--no-app", "-n", action="store_true", help=no_app_help)
 
     args = parser.parse_args()
+
+    if args.showlangs:
+        print(" ".join(LANGS))
+        sys.exit()
 
     if len(args.langs) == 0:
         args.langs = LANGS
@@ -368,4 +387,4 @@ if __name__ == "__main__":
     args = parse_args()
 
     if args is not None:
-        asyncio.run(main(args.langs, verbose=args.verbose))
+        asyncio.run(main(args.langs, no_app=args.no_app, verbose=args.verbose))
