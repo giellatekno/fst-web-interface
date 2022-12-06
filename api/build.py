@@ -9,8 +9,16 @@ from os import get_terminal_size
 
 builtin_print = __builtins__.print
 
+# lang: est  not in github
+
+# After initial "build all", these langs seems to be ok:
+#  ciw cor evn fit fkv gle hdn
+#  ipk izh kca kpv liv mns
+#  myv nio nob olo rmf sjd
+#  sje sma som vep vot yrk
+
 LANGS = [
-    "bxr", "ciw", "cor", "est", "evn",
+    "bxr", "ciw", "cor", "evn",
     "fao", "fin", "fit", "fkv", "gle",
     "hdn", "ipk", "izh", "kal", "kca",
     "koi", "kpv", "liv", "mdf", "mhr",
@@ -70,6 +78,16 @@ RUN git log -n 1 --format=format:"%h %cI" > REPO_INFO
 RUN autoreconf -i
 RUN ./configure --enable-fst-hyphenator --enable-spellers --enable-tokenisers --enable-phonetic --enable-tts
 RUN make -j
+RUN tar -czf lang-{lang}.tar.gz \
+        REPO_INFO \
+        tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst \
+        tools/hyphenators/hyphenator-gt-desc.hfstol \
+        src/analyser-gt-desc.hfstol \
+        src/generator-gt-norm.hfstol \
+        src/cg3/disambiguator.cg3 \
+        src/cg3/dependency.cg3 \
+        src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol \
+        src/phonetics/txt2ipa.compose.hfst
 """
 
 DOCKERFILE_app = """
@@ -79,7 +97,7 @@ ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Oslo"
 RUN apt-get -y install curl
 RUN curl https://apertium.projectjj.com/apt/install-nightly.sh | bash
 
-# this seems to pull in _a lot_. can we extract only the binaries we need from this?
+# note: only cg3 and hfst, not "all-dev" (for smaller image size)
 RUN apt-get -yf install cg3 hfst
 
 {COPY_FROM_LANGS}
@@ -99,17 +117,9 @@ CMD ["gunicorn", "src.main:app", "--worker-class", "uvicorn.workers.UvicornWorke
 
 
 DOCKERFILE_APP_COPY_LANG_FILES = """
-RUN mkdir -p /progs/lang-{lang}
+COPY --from=fst-lang-{lang} /progs/lang-{lang}/lang-{lang}.tar.gz /progs/lang-{lang}/lang-{lang}.tar.gz
 WORKDIR /progs/lang-{lang}
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/REPO_INFO /progs/lang-{lang}/REPO_INFO
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst /progs/lang-{lang}/tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/tools/hyphenators/hyphenator-gt-desc.hfstol /progs/lang-{lang}/tools/hyphenators/hyphenator-gt-desc.hfstol
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/src/analyser-gt-desc.hfstol /progs/lang-{lang}/src/analyser-gt-desc.hfstol
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/src/generator-gt-norm.hfstol /progs/lang-{lang}/src/generator-gt-norm.hfstol
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/src/cg3/disambiguator.cg3 /progs/lang-{lang}/src/disambiguator.cg3
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/src/cg3/dependency.cg3 /progs/lang-{lang}/src/dependency.cg3
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol /progs/lang-{lang}/src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol
-COPY --from=fst-lang-{lang} /progs/lang-{lang}/src/phonetics/txt2ipa.compose.hfst /progs/lang-{lang}/src/phonetics/txt2ipa.compose.hfst
+RUN tar -xzf lang-{lang}.tar.gz && rm lang-{lang}.tar.gz
 """
 
 
