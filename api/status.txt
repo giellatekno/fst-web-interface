@@ -4,78 +4,162 @@ After initial "build all", these langs seems to be ok:
    myv nio nob olo rmf sjd
    sje sma smn, som vep vot yrk
 
-lang: est  not in github
-bxr fails to build
+
+## Languages that I can not compile now:
+
+est  not in github
+bxr  fails to build (have not explored why)
+
 sme  fails to build (after at least 30-40 minutes of compiling..)
-    disambiguator.cg3: Error: Cannot stat semsets.cg3 due to error -1 - bailing out!
-    make[3]: *** [Makefile:1172: disambiguator.bin] Error 1
-    make[3]: *** Waiting for unfinished jobs....
-    Sections: 1, Rules: 162, Sets: 454, Tags: 2473
-    10 rules cannot be skipped by index.
-      HUNION   transcriptor-gt-desc.hfstol
-    Sections: 1, Rules: 468, Sets: 940, Tags: 1601
-    17 rules cannot be skipped by index.
-    Sections: 1, Rules: 364, Sets: 441, Tags: 670
-    3 rules cannot be skipped by index.
-    Grammar has dependency rules.
-    Sections: 1, Rules: 501, Sets: 1134, Tags: 8233
-    4 rules cannot be skipped by index.
-      GEN      transcriptor-gt-desc.hfstol
-    make[3]: Leaving directory '/progs/lang-sme/tools/tts'
-    make[2]: *** [Makefile:817: all-recursive] Error 1
-    make[2]: Leaving directory '/progs/lang-sme/tools/tts'
-    make[1]: *** [Makefile:439: all-recursive] Error 1
-    make[1]: Leaving directory '/progs/lang-sme/tools'
-    make: *** [Makefile:542: all-recursive] Error 1
-    The command '/bin/sh -c make -j' returned a non-zero code: 2
-smj fails to build (137 - OOM). Last several output lines:
-    CG3COMP  mwe-dis.bin
-    CP       analyser-tts-cggt-input.hfst
-    HXFST    analyser-tts-cggt-output.hfst
-    Sections: 1, Rules: 20, Sets: 52, Tags: 1635
-    9 rules cannot be skipped by index.
-      HSUBST   analyser_relabelled-tts-cggt-input.hfst
-    HSUBST   analyser_relabelled-tts-cggt-output.hfst
-    HPM2FST  tokeniser-tts-cggt-desc.pmhfst
-    HSUBST   analyser_relabelled-disamb-gt-desc.hfst
-    HPM2FST  tokeniser-disamb-gt-desc.pmhfst
-    The command '/bin/sh -c make -j' returned a non-zero code: 137
+     disambiguator.cg3: Error: Cannot stat semsets.cg3 due to error -1 - bailing out!
+     make[3]: *** [Makefile:1172: disambiguator.bin] Error 1
+     make[3]: *** Waiting for unfinished jobs....
+     Sections: 1, Rules: 162, Sets: 454, Tags: 2473
+     10 rules cannot be skipped by index.
+       HUNION   transcriptor-gt-desc.hfstol
+     Sections: 1, Rules: 468, Sets: 940, Tags: 1601
+     17 rules cannot be skipped by index.
+     Sections: 1, Rules: 364, Sets: 441, Tags: 670
+     3 rules cannot be skipped by index.
+     Grammar has dependency rules.
+     Sections: 1, Rules: 501, Sets: 1134, Tags: 8233
+     4 rules cannot be skipped by index.
+       GEN      transcriptor-gt-desc.hfstol
+     make[3]: Leaving directory '/progs/lang-sme/tools/tts'
+     make[2]: *** [Makefile:817: all-recursive] Error 1
+     make[2]: Leaving directory '/progs/lang-sme/tools/tts'
+     make[1]: *** [Makefile:439: all-recursive] Error 1
+     make[1]: Leaving directory '/progs/lang-sme/tools'
+     make: *** [Makefile:542: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
 
-    observing it during compilation, the last command seemed to
-    eat up about 2 GB of RAM every second, on my system starting
-    from memory consumption of ~1.5GB, to taking up 15.4 (GB) (max)
-    in a matter of only several seconds. At which point, all cpus
-    started going to max, and Swap memory filled up very quickly (~1 GB),
-    at which point the OOM killer came and did its job, and all memory
-    was free again. (down to ~1.5GB)
-    Need to verify that this is not due to the build script, or the fact
-    that it's run in docker.
-rus fails to build. last few output lines:
-    HRGX2FST disamb-tokeniser-flags.accented.hfst
-    HRGX2FST make-disamb-CG-tags.accented.hfst
-    rm disamb-accented-sigma.txt disamb-tags.txt disamb-flags.txt disamb-tokeniser-flags.regex make-url-CG-tags.regex make-disamb-CG-tags.regex url-sigma.txt disamb-sigma.txt url-tags.txt disamb-accented-tags.txt disamb-accented-flags.txt disamb-tokeniser-flags.accented.regex make-disamb-CG-tags.accented.regex
-    make[3]: Leaving directory '/progs/lang-rus/tools/tokenisers/filters'
-    Making all in .
-    make[3]: Entering directory '/progs/lang-rus/tools/tokenisers'
-    make[3]: *** No rule to make target 'tokeniser-disamb-gt-desc.accented.pmhfst', needed by 'all-am'.  Stop.
-    make[3]: *** Waiting for unfinished jobs....
-      HTXT2FST btrelabeller.hfst
-    HTXT2FST relabeller.hfst
-    HXFST    analyser-disamb-gt-desc.hfst
-    HXFST    analyser-url-gt-desc.hfst
-    CG3COMP  mwe-dis.bin
-    Sections: 1, Rules: 7, Sets: 27, Tags: 1619
-    1 rules cannot be skipped by index.
-    rm analyser-url-gt-desc.hfst analyser-disamb-gt-desc.hfst
-    make[3]: Leaving directory '/progs/lang-rus/tools/tokenisers'
-    make[2]: *** [Makefile:821: all-recursive] Error 1
-    make[2]: Leaving directory '/progs/lang-rus/tools/tokenisers'
-    make[1]: Leaving directory '/progs/lang-rus/tools'
-    make[1]: *** [Makefile:437: all-recursive] Error 1
-    make: *** [Makefile:540: all-recursive] Error 1
-    The command '/bin/sh -c make -j' returned a non-zero code: 2
+smj  fails to build (137 - OOM). Last several output lines:
+     CG3COMP  mwe-dis.bin
+     CP       analyser-tts-cggt-input.hfst
+     HXFST    analyser-tts-cggt-output.hfst
+     Sections: 1, Rules: 20, Sets: 52, Tags: 1635
+     9 rules cannot be skipped by index.
+       HSUBST   analyser_relabelled-tts-cggt-input.hfst
+     HSUBST   analyser_relabelled-tts-cggt-output.hfst
+     HPM2FST  tokeniser-tts-cggt-desc.pmhfst
+     HSUBST   analyser_relabelled-disamb-gt-desc.hfst
+     HPM2FST  tokeniser-disamb-gt-desc.pmhfst
+     The command '/bin/sh -c make -j' returned a non-zero code: 137
 
-sms ....
+     observing it during compilation, the last command seemed to
+     eat up about 2 GB of RAM every second, on my system starting
+     from memory consumption of ~1.5GB, to taking up 15.4 (GB) (max)
+     in a matter of only several seconds. At which point, all cpus
+     started going to max, and Swap memory filled up very quickly (~1 GB),
+     at which point the OOM killer came and did its job, and all memory
+     was free again. (down to ~1.5GB)
+     Need to verify that this is not due to the build script, or the fact
+     that it's run in docker.
 
-missing: fin sms kal koi mhr udm fao mdf mrj
+rus  fails to build. last few output lines:
+     HRGX2FST disamb-tokeniser-flags.accented.hfst
+     HRGX2FST make-disamb-CG-tags.accented.hfst
+     rm disamb-accented-sigma.txt disamb-tags.txt disamb-flags.txt disamb-tokeniser-flags.regex make-url-CG-tags.regex make-disamb-CG-tags.regex url-sigma.txt disamb-sigma.txt url-tags.txt disamb-accented-tags.txt disamb-accented-flags.txt disamb-tokeniser-flags.accented.regex make-disamb-CG-tags.accented.regex
+     make[3]: Leaving directory '/progs/lang-rus/tools/tokenisers/filters'
+     Making all in .
+     make[3]: Entering directory '/progs/lang-rus/tools/tokenisers'
+     make[3]: *** No rule to make target 'tokeniser-disamb-gt-desc.accented.pmhfst', needed by 'all-am'.  Stop.
+     make[3]: *** Waiting for unfinished jobs....
+       HTXT2FST btrelabeller.hfst
+     HTXT2FST relabeller.hfst
+     HXFST    analyser-disamb-gt-desc.hfst
+     HXFST    analyser-url-gt-desc.hfst
+     CG3COMP  mwe-dis.bin
+     Sections: 1, Rules: 7, Sets: 27, Tags: 1619
+     1 rules cannot be skipped by index.
+     rm analyser-url-gt-desc.hfst analyser-disamb-gt-desc.hfst
+     make[3]: Leaving directory '/progs/lang-rus/tools/tokenisers'
+     make[2]: *** [Makefile:821: all-recursive] Error 1
+     make[2]: Leaving directory '/progs/lang-rus/tools/tokenisers'
+     make[1]: Leaving directory '/progs/lang-rus/tools'
+     make[1]: *** [Makefile:437: all-recursive] Error 1
+     make: *** [Makefile:540: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
+
+sms  .... same story, oom killed
+     HPROJECT lexicon-gt-desc-tag_weighted_no_analysis.hfst
+     HINTRSCT hyphenator-raw-gt-desc.tmp.hfst
+     /usr/bin/hfst-compose-intersect: warning: Transducer type mismatch in <stdin> and ../../src/fst/phonology.rev.hfst; using former type as output
+       CP       hyphenator-raw-gt-desc.hfst
+     HXFST    hyphenator-gt-desc-input.hfst
+     HXFST    hyphenator-gt-desc-output.hfst
+     HXFST    hyphenator-gt-desc-no_fallback.hfst
+     The command '/bin/sh -c make -j' returned a non-zero code: 137
+
+mdf  fails to build (it fails very quickly)
+     HLEXC    url.tmp.hfst
+     HLEXC    lexicon.tmp.hfst
+     CP       url.hfst
+     /usr/bin/hfst-lexc: The file lexicon.tmp.lexc did not compile cleanly.
+     (if there are no error messages above, try -v or -d to get more info)
+     make[2]: *** [Makefile:1198: lexicon.tmp.hfst] Error 1
+     make[2]: *** Deleting file 'lexicon.tmp.hfst'
+     make[2]: *** Waiting for unfinished jobs....
+     rm phonology.hfst
+     make[2]: Leaving directory '/progs/lang-mdf/src/fst'
+     make[1]: Leaving directory '/progs/lang-mdf/src'
+     make[1]: *** [Makefile:1203: all-recursive] Error 1
+     make: *** [Makefile:542: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
+
+mrj  fails to build (it fails very quickly)
+     *** Compiling mrj - Western Mari. ***
+     CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/bash /progs/lang-mrj/build-aux/missing autoconf
+     make[1]: Nothing to be done for 'all-am'.
+     make[1]: Leaving directory '/progs/lang-mrj'
+     Making all in src
+     make[1]: Entering directory '/progs/lang-mrj/src'
+     Making all in fst
+     make[2]: *** No rule to make target 'generated_files/urj-Cyrl-mrj-propernouns.lexc', needed by 'lexicon.tmp.lexc'.  Stop.
+     make[2]: Entering directory '/progs/lang-mrj/src/fst'
+     make[2]: Leaving directory '/progs/lang-mrj/src/fst'
+     make[1]: *** [Makefile:1202: all-recursive] Error 1
+     make[1]: Leaving directory '/progs/lang-mrj/src'
+     make: *** [Makefile:541: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
+
+udm  fails to build (it fails very quickly)
+     GEN      lexicon.tmp.lexc
+     HLEXC    lexicon.tmp.hfst
+     CP       url.hfst
+     /usr/bin/hfst-lexc: The file lexicon.tmp.lexc did not compile cleanly.
+     (if there are no error messages above, try -v or -d to get more info)
+     make[2]: *** [Makefile:1175: lexicon.tmp.hfst] Error 1
+     make[2]: *** Deleting file 'lexicon.tmp.hfst'
+     make[2]: *** Waiting for unfinished jobs....
+     rm phonology.hfst
+     make[2]: Leaving directory '/progs/lang-udm/src/fst'
+     make[1]: Leaving directory '/progs/lang-udm/src'
+     make[1]: *** [Makefile:1202: all-recursive] Error 1
+     make: *** [Makefile:541: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
+
+mhr  fails to build (it fails very quickly)
+     *** Compiling mhr - Eastern Mari. ***
+     
+     CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/bash /progs/lang-mhr/build-aux/missing autoconf
+     make[1]: Nothing to be done for 'all-am'.
+     make[1]: Leaving directory '/progs/lang-mhr'
+     Making all in src
+     make[1]: Entering directory '/progs/lang-mhr/src'
+     Making all in fst
+     make[2]: Entering directory '/progs/lang-mhr/src/fst'
+     make[2]: Leaving directory '/progs/lang-mhr/src/fst'
+     make[2]: *** No rule to make target 'generated_files/urj-Cyrl-mhr-propernouns.lexc', needed by 'lexicon.tmp.lexc'.  Stop.
+     make[1]: Leaving directory '/progs/lang-mhr/src'
+     make[1]: *** [Makefile:1203: all-recursive] Error 1
+     make: *** [Makefile:542: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
+
+
+For some of the langs (mhr, udm, ...?) it may be some configuration
+or maybe other dependency issue, since they fail so quickly. It
+doesn't seem like there is make targets, or something to that effect.
+
+missing: fin sms kal koi fao
 
