@@ -10,15 +10,6 @@ from os import get_terminal_size
 
 builtin_print = __builtins__.print
 
-# lang: est  not in github
-# bxr fails to build
-
-# After initial "build all", these langs seems to be ok:
-#  ciw cor evn fit fkv gle hdn
-#  ipk izh kca kpv liv mns
-#  myv nio nob olo rmf sjd
-#  sje sma som vep vot yrk
-
 LANGS = [
     "ciw", "cor", "evn",
     "fao", "fin", "fit", "fkv", "gle",
