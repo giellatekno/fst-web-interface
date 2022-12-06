@@ -1,5 +1,6 @@
 import asyncio
 import argparse
+import inspect
 import subprocess
 import sys
 from itertools import count
@@ -78,16 +79,17 @@ RUN git log -n 1 --format=format:"%h %cI" > REPO_INFO
 RUN autoreconf -i
 RUN ./configure --enable-fst-hyphenator --enable-spellers --enable-tokenisers --enable-phonetic --enable-tts
 RUN make -j
-RUN tar -czf lang-{lang}.tar.gz \
-        REPO_INFO \
-        tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst \
-        tools/hyphenators/hyphenator-gt-desc.hfstol \
-        src/analyser-gt-desc.hfstol \
-        src/generator-gt-norm.hfstol \
-        src/cg3/disambiguator.cg3 \
-        src/cg3/dependency.cg3 \
-        src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol \
-        src/phonetics/txt2ipa.compose.hfst
+#RUN tar -czf lang-{lang}.tar.gz \
+#        REPO_INFO \
+#        tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst \
+#        tools/hyphenators/hyphenator-gt-desc.hfstol \
+#        src/analyser-gt-desc.hfstol \
+#        src/generator-gt-norm.hfstol \
+#        src/cg3/disambiguator.cg3 \
+#        src/cg3/dependency.cg3 \
+#        src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol \
+#        src/phonetics/txt2ipa.compose.hfst
+RUN tar -czf lang-{lang}.tar.gz {lang_files_needed}
 """
 
 DOCKERFILE_app = """
@@ -136,15 +138,16 @@ async def _read(fd):
 COLUMNS = get_terminal_size().columns
 
 def logit(n, title, s):
-    avail = COLUMNS - len(title)
     s = s.strip()
+    if s.startswith("--->"):
+        return
+    avail = COLUMNS - len(title)
     if len(s) > avail:
         s = s[:avail - 3] + "..."
     builtin_print(f"\x1b[{n}F\x1b[K", end="")
     builtin_print(f"{title}...{s}", end="")
     builtin_print(f"\x1b[{n}E", end="")
     sys.stdout.flush()
-
 
 
 async def worker(q, r, verbose=False):
@@ -166,8 +169,9 @@ async def docker_build_compiler(verbose, print):
     return await run_docker_build("compiler", DOCKERFILE_compiler, verbose, print)
 
 
-async def docker_build_lang(lang, verbose, print):
-    input = DOCKERFILE_lang.format(lang=lang)
+async def docker_build_lang(lang, lang_files, verbose, print):
+    lang_files_needed = " ".join(lang_files[lang])
+    input = DOCKERFILE_lang.format(lang=lang, lang_files_needed=lang_files_needed)
     return await run_docker_build(f"lang-{lang}", input, verbose, print)
 
 
@@ -260,6 +264,48 @@ async def run_assignments(*assignments, verbose=False):
     return results if len(results) > 1 else results[0]
 
 
+def normalize_pipelines(pipelines):
+    if isinstance(pipelines, list):
+        return {"*": pipelines}
+    else:
+        return pipelines
+
+async def read_pipeline_specs():
+    """Read all pipeline specs (from src/pipelines), to populate
+    which files all languages need. Some languages need more files
+    than others.
+
+    Ideally, this information can also be used to compile only the
+    output artifacts that is needed...but it might be quick enough
+    to just compile "everything" and pick what we need."""
+    needed = { lang: set() for lang in LANGS }
+
+    from src import toolspecs
+    from src.util import PartialPath
+
+    for toolname, spec in inspect.getmembers(toolspecs):
+        if toolname.startswith("__"):
+            continue
+        pipelines = normalize_pipelines(spec.pipeline)
+        for lang, pipeline in pipelines.items():
+            for program in pipeline:
+                if not isinstance(program, list):
+                    continue
+                for item in program:
+                    if not isinstance(item, PartialPath):
+                        continue
+                    needed_path = item.p
+
+                    if lang == "*":
+                        # add to all langs
+                        for currentlang in needed:
+                            needed[currentlang].add(needed_path)
+                    else:
+                        needed[lang].add(needed_path)
+
+    return needed
+
+
 async def main(langs, verbose=False):
     have_compiler = await run_assignments(
         ("Make image: compiler", [docker_build_compiler]),
@@ -272,10 +318,13 @@ async def main(langs, verbose=False):
         print(f"{sys.argv[0]} failed: {msg}")
         return
 
+    print("Reading lang specs to determine while output files is needed...", end="")
+    lang_files = await read_pipeline_specs()
+    print("done")
     lang_assignments = []
     for lang in langs:
         lang_assignments.append(
-            (f"Make image: lang-{lang}", [docker_build_lang, lang])
+            (f"Make image: lang-{lang}", [docker_build_lang, lang, lang_files])
         )
     have_langs = await run_assignments(*lang_assignments, verbose=verbose)
     if not isinstance(have_langs, list):
@@ -295,7 +344,6 @@ async def main(langs, verbose=False):
         print(msg)
     else:
         print("done")
-
 
 
 def parse_args():
