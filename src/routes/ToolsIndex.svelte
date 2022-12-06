@@ -62,8 +62,8 @@
         { amount: 12, name: 'months' },
         { amount: Number.POSITIVE_INFINITY, name: 'years' },
     ];
-    function fmt_date_ago_localized(locale, date) {
-        if (!date) return null;
+    function fmt_date_ago_localized(locale, repo_info) {
+        if (!repo_info || repo_info == "no api") return null;
         date = date.date;
         let diff_sec = (date - Date.now()) / 1000;
 
@@ -76,17 +76,21 @@
             diff_sec /= division.amount
         }
     }
-    function fmt_date_localized(locale, date) {
-        if (!date) return null;
+    function fmt_date_localized(locale, repo_info) {
+        if (!repo_info || repo_info == "no api") return null;
         date = date.date;
         return date.toLocaleDateString(locale, FMT_DATE_OPTS);
     }
     async function get_repo_info(lang) {
         if (!lang) throw Error();
         const obj = await capabilities_for_lang(lang);
-        if (!obj.commit) throw Error();
-        obj.date = new Date(obj.date);
-        repo_info = obj;
+        if (!obj || !obj.commit) {
+            console.warn("error getting repo info");
+            repo_info = "no api";
+        } else {
+            obj.date = new Date(obj.date);
+            repo_info = obj;
+        }
     }
 </script>
 
@@ -113,13 +117,17 @@
 
     {#if repo_info}
         <div style="margin-top: 3em;">
-            <p class="langmodel-info">
-                {$t("langmodellastupdated")}
-                <span class="date" on:click={() => show_date_relative = !show_date_relative}>
-                    {show_date_relative ? repo_date_ago : repo_date}
-                </span>&mdash;&nbsp;<code>commit {repo_info.commit},
-                    <a rel="external" href="https://github.com/giellalt/lang-{$lang}"
-                    >github.com/giellalt/lang-{$lang}</a></code>
+            <p class="langmodel-info" class:no-api={repo_info === "no api"}>
+                {#if repo_info === "no api"}
+                    Error: no API available! (tools will not work at all)
+                {:else}
+                    {$t("langmodellastupdated")}
+                    <span class="date" on:click={() => show_date_relative = !show_date_relative}>
+                        {show_date_relative ? repo_date_ago : repo_date}
+                    </span>&mdash;&nbsp;<code>commit {repo_info.commit},
+                        <a rel="external" href="https://github.com/giellalt/lang-{$lang}"
+                        >github.com/giellalt/lang-{$lang}</a></code>
+                {/if}
             </p>
         </div>
     {/if}
@@ -159,7 +167,8 @@
             'img img title title title'
             'img img desc desc desc';
         grid-template-columns: 35px 35px repeat(3, max-content);
-        background-color: #f0e89e;
+        background-color: #f2ecb7;
+        border: 1px solid #d5b867;
         border-radius: 4px;
         padding: 4px 12px;
         box-shadow: 2px 2px 4px 0px rgba(121, 121, 89, 0.44);
@@ -209,6 +218,11 @@
         padding: 8px 10px;
         border: 2px solid #d9d914;
         background-color: #f4f49c;
+    }
+
+    p.langmodel-info.no-api {
+        background: #ff5656;
+        border: 2px solid #e31919;
     }
 
     p.langmodel-info,
