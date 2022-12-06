@@ -319,7 +319,7 @@ async def main(langs, no_app=False, verbose=False):
         print(f"{sys.argv[0]} failed: {msg}")
         return
 
-    print("Reading lang specs to determine while output files is needed...", end="")
+    print("Reading lang specs to determine which output files is needed...", end="")
     lang_files = await read_pipeline_specs()
     print("done")
     lang_assignments = []
