@@ -2,7 +2,9 @@ import asyncio
 import argparse
 import inspect
 import subprocess
+import pathlib
 import sys
+
 from itertools import count
 from functools import partial
 from multiprocessing import cpu_count
@@ -298,7 +300,32 @@ async def read_pipeline_specs():
     return needed
 
 
-async def main(langs, no_app=False, verbose=False):
+async def do_extract_tarball(lang, verbose=False, print=print):
+    print("copying")
+    cmd = (f"docker cp $(docker create --name tc-{lang} fst-lang-{lang}):"
+           f"/progs/lang-{lang}/lang-{lang}.tar.gz ./compiled/lang-{lang}.tar.gz"
+           f" && docker rm tc-{lang}")
+    proc = await asyncio.create_subprocess_shell(cmd)
+    await proc.wait()
+    print("done")
+
+
+async def run_extract_tarballs(langs, verbose=False, print=print):
+    """Extract tarballs from images by running the image and catting out the files."""
+    # first, make sure you are in the correct folder
+    folder = pathlib.Path(".") / "compiled"
+    folder.mkdir(exist_ok=True)
+    assignments = [
+        (f"Extract tarball: lang-{lang}.tar.gz", [do_extract_tarball, lang])
+        for lang in langs
+    ]
+    await run_assignments(*assignments)
+
+
+async def main(args):
+    langs, verbose = args.langs, args.verbose
+    no_app, extract_tarballs = args.no_app, args.extract_tarballs
+
     have_compiler = await run_assignments(
         ("Make image: compiler", [docker_build_compiler]),
         verbose=verbose
@@ -322,6 +349,11 @@ async def main(langs, no_app=False, verbose=False):
     if not isinstance(have_langs, list):
         have_langs = [have_langs]
 
+    have_langs = [ lang[5:] for lang in have_langs ]
+
+    if extract_tarballs:
+        await run_extract_tarballs(have_langs)
+
     if no_app:
         print("Skipping last step (Make image: app) due to --no-app")
         return
@@ -329,8 +361,6 @@ async def main(langs, no_app=False, verbose=False):
     if not all(have_langs):
         print("Cannot continue due to missing languages")
         return
-
-    have_langs = [ lang[5:] for lang in have_langs ]
 
     app_assignment = ("Make image: app", [docker_build_app, have_langs])
     have_app = await run_assignments(app_assignment, verbose=verbose)
@@ -349,6 +379,7 @@ def parse_args():
     verbose_help = "prints all messages (not filtered) on new lines, instead of filtering some lines and overwriting previous lines"
     no_app_help="stop after making langauge models, do not run the final step where the app image is made"
     prog_description = "uses docker to create images of compiled language models, and finally makes a deployable image of the app with all the compiled language artifacts from all languages that it needs to be able to run all defined pipelines"
+    extract_tarballs_help = "After making the languages, extract the tarball of compile artifacts to the host system (will be stored in folder compiled/)"
 
 
     parser = argparse.ArgumentParser(prog="build", description=prog_description)
@@ -356,6 +387,7 @@ def parse_args():
     parser.add_argument("--langs", dest="showlangs", action="store_true", help=showlangs_help)
     parser.add_argument("--verbose", "-v", action="store_true", help=verbose_help)
     parser.add_argument("--no-app", "-n", action="store_true", help=no_app_help)
+    parser.add_argument("--extract-tarballs", action="store_true", help=extract_tarballs_help)
 
     args = parser.parse_args()
 
@@ -378,4 +410,4 @@ if __name__ == "__main__":
     args = parse_args()
 
     if args is not None:
-        asyncio.run(main(args.langs, no_app=args.no_app, verbose=args.verbose))
+        asyncio.run(main(args))

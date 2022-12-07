@@ -3,12 +3,14 @@ After initial "build all", these langs seems to be ok:
    ipk izh kca kpv liv mns
    myv nio nob olo rmf sjd
    sje sma smn, som vep vot yrk
+   kal
 
 
 ## Languages that I can not compile now:
 
 est  not in github
 bxr  fails to build (have not explored why)
+fao  fails to build, but it just sort of...hangs
 
 sme  fails to build (after at least 30-40 minutes of compiling..)
      disambiguator.cg3: Error: Cannot stat semsets.cg3 due to error -1 - bailing out!
@@ -156,10 +158,42 @@ mhr  fails to build (it fails very quickly)
      make: *** [Makefile:542: all-recursive] Error 1
      The command '/bin/sh -c make -j' returned a non-zero code: 2
 
+koi  fails to build:
+     *** Compiling koi - Komi-Permyak. ***
+     
+     CDPATH="${ZSH_VERSION+.}:" && cd . && /bin/bash /progs/lang-koi/build-aux/missing autoconf
+     make[1]: Nothing to be done for 'all-am'.
+     make[1]: Leaving directory '/progs/lang-koi'
+     Making all in src
+     make[1]: Entering directory '/progs/lang-koi/src'
+     Making all in fst
+     make[2]: Entering directory '/progs/lang-koi/src/fst'
+     echo "! Missing shared common data" > generated_files/urj-Cyrl-koi-propernouns.lexc
+     CP       url.tmp.lexc
+     CP       generated_files/mul-koi-punctuation.lexc
+     CP       generated_files/mul-koi-symbols.lexc
+     HTWOLC   phonology.hfst
+     HLEXC    url.tmp.hfst
+     GEN      lexicon.tmp.lexc
+     HLEXC    lexicon.tmp.hfst
+     CP       url.hfst
+     /usr/bin/hfst-lexc: The file lexicon.tmp.lexc did not compile cleanly.
+     (if there are no error messages above, try -v or -d to get more info)
+     make[2]: *** [Makefile:1187: lexicon.tmp.hfst] Error 1
+     make[2]: *** Deleting file 'lexicon.tmp.hfst'
+     make[2]: *** Waiting for unfinished jobs....
+     rm phonology.hfst
+     make[2]: Leaving directory '/progs/lang-koi/src/fst'
+     make[1]: *** [Makefile:1202: all-recursive] Error 1
+     make[1]: Leaving directory '/progs/lang-koi/src'
+     make: *** [Makefile:541: all-recursive] Error 1
+     The command '/bin/sh -c make -j' returned a non-zero code: 2
+
+
 
 For some of the langs (mhr, udm, ...?) it may be some configuration
 or maybe other dependency issue, since they fail so quickly. It
 doesn't seem like there is make targets, or something to that effect.
 
-missing: fin sms kal koi fao
+missing: fin
 
