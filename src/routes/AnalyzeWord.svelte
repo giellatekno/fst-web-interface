@@ -83,9 +83,4 @@
         text-align: right;
         color: blue;
     }
-
-    span.word-props {
-        padding-left: 1em;
-        color: black;
-    }
 </style>

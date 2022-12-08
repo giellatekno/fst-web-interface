@@ -92,6 +92,13 @@
             repo_info = obj;
         }
     }
+
+    function only_on_enter(fn) {
+        return function(ev) {
+            if (ev.key !== "Enter") return;
+            fn();
+        }
+    }
 </script>
 
 <main>
@@ -113,7 +120,8 @@
         Andre ressurser for {$lang_in_locale}
     </p>
 
-    <a href="#">Direktelenke for denne siden</a>
+    <!-- TODO: current page link -->
+    <a href="/">Direktelenke for denne siden</a>
 
     {#if repo_info}
         <div style="margin-top: 3em;">
@@ -122,7 +130,10 @@
                     Error: no API available! (tools will not work at all)
                 {:else}
                     {$t("langmodellastupdated")}
-                    <span class="date" on:click={() => show_date_relative = !show_date_relative}>
+                    <span role="button" class="date"
+                        on:click={() => show_date_relative = !show_date_relative}
+                        on:keydown={only_on_enter(() => show_date_relative = !show_date_relative)}
+                    >
                         {show_date_relative ? repo_date_ago : repo_date}
                     </span>&mdash;&nbsp;<code>commit {repo_info.commit},
                         <a rel="external" href="https://github.com/giellalt/lang-{$lang}"

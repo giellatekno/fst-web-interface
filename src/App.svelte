@@ -85,6 +85,7 @@
         /*margin-left: 34px;*/
     }
 
+    /*
     footer {
         color: #ffffff;
         padding: 12px 0 12px 34px;
@@ -92,15 +93,16 @@
         flex-direction: column;
         margin-top: 26px;
         background-color: #0a2d3aee;
-        /*
         background: linear-gradient(to bottom, #fdfdfd, 70%, #0A2D3A);
-        */
         border-top: 1px solid #ddd;
     }
+    */
 
+    /*
     footer > img.gt_logo {
         height: 46px;
-        width: 136px; /* 140 */
+        width: 136px;
         filter: invert(100%) contrast(85%) drop-shadow(2px 2px 3px #222);
     }
+    */
 </style>

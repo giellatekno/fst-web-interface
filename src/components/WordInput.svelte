@@ -50,6 +50,13 @@
             timer = window.setTimeout(on_debounced, debounce);
         }
     }
+
+    function only_on_enter(fn) {
+        return function (ev) {
+            if (ev.key !== "Enter") return;
+            fn();
+        }
+    }
 </script>
 
 <div>
@@ -59,7 +66,9 @@
         bind:value
         placeholder={placeholder}
     >
-    <span on:click={reset} class="cross">&#x2718;</span>
+    <span role="button" tabindex="0" on:click={reset}
+                        on:keydown={only_on_enter(reset)}
+    class="cross">&#x2718;</span>
 </div>
 
 <style>

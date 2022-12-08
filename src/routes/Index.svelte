@@ -82,6 +82,13 @@
             //window.history.pushState(null, "", `/${lang}`);
         }
     }
+
+    function only_on_enter(fn) {
+        return function (ev) {
+            if (ev.key !== "Enter") return;
+            fn();
+        }
+    }
 </script>
 
 <main>
@@ -96,24 +103,33 @@
 
             <span
                 class="label"
+                role="button"
+                tabindex="0"
                 class:on={show_sami}
                 on:click={() => show_sami = !show_sami}
+                on:keydown={only_on_enter(() => show_sami = !show_sami)}
             >
                 <label for="sami">{$t("samilanguages")}</label>
                 <input name="sami" type="radio" checked={show_sami} />
             </span>
             <span
                 class="label"
+                role="button"
+                tabindex="0"
                 class:on={show_uralic}
                 on:click={() => show_uralic = !show_uralic}
+                on:keydown={only_on_enter(() => show_uralic = !show_uralic)}
             >
                 <label for="uralicnonsami">{$t("nonsamiuralic")}</label>
                 <input name="uralicnonsami" type="radio" checked={show_uralic} />
             </span>
             <span
                 class="label"
+                role="button"
+                tabindex="0"
                 class:on={show_others}
                 on:click={() => show_others = !show_others}
+                on:keydown={only_on_enter(() => show_others = !show_others)}
             >
                 <label for="others">{$t("otherlanguages")}</label>
                 <input name="others" type="radio" checked={show_others} />
@@ -172,10 +188,6 @@
         font-weight: bold;
     }
 
-    div.filters > form {
-        display: inline;
-    }
-
     span.label {
         margin-left: 16px;
         padding: 2px 8px;
@@ -201,14 +213,6 @@
     span.label > input {
         appearance: none;
         display: none;
-    }
-
-    blockquote {
-        margin-left: 0;
-        padding: 16px;
-        border: 1px solid #fbac59;
-        font-style: italic;
-        background-color: rgba(221, 157, 36, 0.13);
     }
 
     h2 {

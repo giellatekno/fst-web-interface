@@ -2,10 +2,12 @@
     import languageIcon from "../assets/language.svg";
     import { fly } from "svelte/transition";
     import { quintOut } from "svelte/easing";
+    import { t } from "svelte-intl-precompile";
     import {
         locale,
         locales,
         locales_in_locale,
+        get_langspecific_key,
     } from "../lib/locales.js";
 
     let open = false;
@@ -13,10 +15,31 @@
         $locale = loc;
         open = false;
     }
+
+    function onkeydown(ev) {
+        if (ev.key !== "Enter") return;
+        ev.preventDefault();
+        open = !open;
+    }
+
+    function on_locale_keydown(ev, loc) {
+        if (ev.key !== "Enter") return;
+        ev.preventDefault();
+        open = false;
+        $locale = loc;
+    }
+
+    function globalkeydown(ev, loc) {
+        if (!open || ev.key !== "Escape") return;
+        ev.preventDefault();
+        open = false;
+    }
 </script>
 
+<svelte:window on:keydown={globalkeydown} />
+
 <main>
-    <header on:click={() => open = !open}>
+    <header role="button" tabindex="0" on:keydown={onkeydown} on:click={() => open = !open}>
         <img
             alt="Innholdspråk"
             src={languageIcon}
@@ -32,12 +55,14 @@
             in:fly={{ y: -18, duration: 170, easing: quintOut, opacity: 0.2 }}
             out:fly={{ y: -18, duration: 120, easing: quintOut, opacity: 0 }}
             class="fullscreen">
-            <h1>Grensesnittspråk</h1>
+            <h1>{$t("interfacelanguage")}</h1>
 
             <div class="lang-container">
                 {#each locales as loc}
-                    <div class="lang"
+                    <div class="lang" role="button"
+                         tabindex="0"
                          on:click={set_locale(loc)}
+                         on:keydown={ev => on_locale_keydown(ev, loc)}
                          >{locales_in_locale[loc]}</div>
                 {/each}
             </div>

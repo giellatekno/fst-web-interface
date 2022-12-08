@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <content>
+    <interfacelanguage>[rus] Interface language</interfacelanguage>
     <search>[rus] Search</search>
     <languagetools>[rus] Language tools</languagetools>
     <generate>[rus] Generate</generate>

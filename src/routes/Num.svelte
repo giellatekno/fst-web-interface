@@ -52,19 +52,11 @@
         margin-left: 34px;
     }
 
-    div.result {
-        font-size: 1.2em;
-    }
-
     td {
         padding: 6px;
     }
 
     tr > td:first-of-type {
         vertical-align: top;
-    }
-
-    div.result > span.numbers_as_text {
-        margin-left: 34px;
     }
 </style>

@@ -25,12 +25,6 @@
         align-items: center;
     }
 
-    span.link {
-        cursor: pointer;
-        color: blue;
-        text-decoration: underline;
-    }
-
     span.separator {
         margin-left: 6px;
         margin-right: 6px;

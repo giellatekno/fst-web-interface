@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <content>
+    <interfacelanguage>[sme] Interface language</interfacelanguage>
     <search>[sme] Search</search>
     <languagetools>[sme] Language tools</languagetools>
     <generate>[sme] Generate</generate>

@@ -16,7 +16,7 @@
 </script>
 
 <div>
-    <img src={icon} width="20" height="20">
+    <img alt="" src={icon} width="20" height="20">
     <input bind:value on:keydown={onkeydown} placeholder="{$t("search")}...">
 </div>
 
