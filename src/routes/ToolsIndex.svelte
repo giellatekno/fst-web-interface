@@ -64,7 +64,7 @@
     ];
     function fmt_date_ago_localized(locale, repo_info) {
         if (!repo_info || repo_info == "no api") return null;
-        date = date.date;
+        const date = repo_info.date;
         let diff_sec = (date - Date.now()) / 1000;
 
         const formatter = new Intl.RelativeTimeFormat(locale, RELTIME_FMT_OPTS);
@@ -78,7 +78,7 @@
     }
     function fmt_date_localized(locale, repo_info) {
         if (!repo_info || repo_info == "no api") return null;
-        date = date.date;
+        const date = repo_info.date;
         return date.toLocaleDateString(locale, FMT_DATE_OPTS);
     }
     async function get_repo_info(lang) {

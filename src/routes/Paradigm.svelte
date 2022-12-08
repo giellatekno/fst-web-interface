@@ -10,8 +10,11 @@
     $: usage = $t(`usage.lang.${$lang}`);
 
     function pp_res(res) {
-        return JSON.stringify(res);
-        //return res.replaceAll("\n", "<br>");
+        return JSON.stringify(res.result)
+            .slice(1, -1)
+            .trim()
+            .replaceAll("\\n", "<br>")
+            .replaceAll("\\t", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
     }
 
     function on_new_value({ detail: value }) {
@@ -38,6 +41,8 @@
         {:then res}
             {#if res !== null}
                 {@html pp_res(res)}
+            {:else}
+                tmp: ingen resultat
             {/if}
         {:catch e}
             Error: {e}

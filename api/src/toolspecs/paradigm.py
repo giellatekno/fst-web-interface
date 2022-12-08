@@ -9,16 +9,21 @@ Generates the morphological paradigm from lemmas
 The output structure is parsed and sent as json.
 """
 
+# echo word | analyze
+
 def pipeline_stdout_to_json(stdout):
-    # TODO
     return { "result": stdout }
 
 pipeline = [
     [
+        "hfst-tokenize",
+        "-q", "--beam=0",
+        PartialPath("tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst"),
+    ],
+    [
         "hfst-lookup",
-        # also in conf.pl: --beam=0 (see above)
-        "-q", 
-        PartialPath("src/generator-gt-norm.hfstol")
+        "-q", "--beam=0",
+        PartialPath("src/analyser-gt-desc.hfstol"),
     ],
     pipeline_stdout_to_json,
 ]
