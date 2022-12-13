@@ -116,7 +116,13 @@ export async function disambiguate(lang, input) {
 export async function paradigm(lang, input) {
     check_arg_nonempty("paradigm", input, "input");
 
-    return apicall(`paradigm/${lang}/${input}`, { api: "local" });
+    // this must be dynamic
+    const query_params = new URLSearchParams({
+        word_class: "N",
+        mode: "standard",
+    }).toString();
+
+    return apicall(`paradigm/${lang}/${input}?${query_params}`, { api: "local" });
 }
 
 export async function dependency(lang, input) {

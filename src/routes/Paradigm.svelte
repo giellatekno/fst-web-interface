@@ -40,7 +40,14 @@
             <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
         {:then res}
             {#if res !== null}
-                {@html pp_res(res)}
+                <table>
+                    {#each res.result as [tags, word]}
+                        <tr>
+                            <td>{tags}</td>
+                            <td>{word}</td>
+                        </tr>
+                    {/each}
+                </table>
             {:else}
                 tmp: ingen resultat
             {/if}
