@@ -20,13 +20,20 @@ from .config import GTLANGS
 from .util import PartialPath
 
 
+def noop(*args, **kwargs): pass
+
+
 def dict_first_value(d):
     """Extracts the "first" value of a dictionary. "First" being the
-    vale of the key that comes first in d.keys()."""
+    first entry in d.values()."""
     return list(islice(d.values(), 1))[0]
 
 
-def find_needed_files(all_pipelines):
+def fn_takes_query_params(f):
+    return "query_params" in inspect.signature(f).parameters
+
+
+def find_needed_files(all_pipelines, extra_files):
     """Find all needed files from a pipeline."""
     needed = set()
 
@@ -174,10 +181,51 @@ class Tool:
         self.description = spec_dict.get("description", "(no description given)")
         self.summary = spec_dict.get("summary", "(no summary given)")
         self.pipelines = normalize_pipelines(spec_dict["pipeline"])
-        self.wanted_files = find_needed_files(self.pipelines)
+        self.query_params = spec_dict.get("query_params", {})
+        self.extra_files = spec_dict.get("extra_files", {})
+        self.wanted_files = find_needed_files(self.pipelines, spec_dict.get("extra_files"))
         self.response_model = find_response_model(self.pipelines)
+        
+        if "on_startup" not in spec_dict:
+            self.on_startup = noop
+        else:
+            on_startup = spec_dict["on_startup"]
+            if not callable(on_startup):
+                logger.error(f"toolspec/{self.name}: on_startup must be a function")
+                on_startup = noop
+            self.on_startup = on_startup
 
-    async def run_pipeline(self, lang, input):
+    def resolve_extra_files(self):
+        for p in GTLANGS.glob("lang-*"):
+            lang = p.name[5:]
+
+            if "*" in self.extra_files:
+                star_updates = {}
+                for entry, partial_path in self.extra_files["*"].items():
+                    file_path = p / partial_path.p
+                    if file_path.is_file():
+                        star_updates[entry] = file_path
+                    else:
+                        logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
+                        star_updates[entry] = None
+                    if lang in self.extra_files:
+                        self.extra_files[lang].update(star_updates)
+
+            if lang in self.extra_files:
+                updates = {}
+                for entry, partial_path in self.extra_files[lang].items():
+                    if not isinstance(partial_path, PartialPath):
+                        continue
+                    file_path = p / partial_path.p
+                    if file_path.is_file():
+                        updates[entry] = file_path
+                    else:
+                        updates[entry]= None
+                        logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
+                self.extra_files[lang].update(updates)
+
+
+    async def run_pipeline(self, lang, input, query_params=None):
         final_output = { "input": input }
 
         pipeline = self.pipelines.get(lang)
@@ -185,7 +233,17 @@ class Tool:
         for prog in pipeline:
             if callable(prog):
                 try:
-                    input = prog(input)
+                    if inspect.iscoroutinefunction(prog):
+                        print("will run an async function")
+                        if fn_takes_query_params(prog):
+                            input = await prog(input, str(lang), query_params=query_params)
+                        else:
+                            input = await prog(input)
+                    else:
+                        if fn_takes_query_params(prog):
+                            input = prog(input, str(lang), query_params=query_params)
+                        else:
+                            input = prog(input)
                 except Exception as e:
                     logger.exception("Exception in pipeline python step")
                     final_output["error"] = "Python step of pipeline threw unhandled exception"
@@ -229,6 +287,7 @@ class Tools:
         self.repos_info = repos_info
 
         for toolname, tool in self.tools.items():
+            tool.resolve_extra_files()
             if len(tool.wanted_files) == 0:
                 logger.info(f"tool %s is non-fst (no requirements on GTLANGS-specific files)", toolname)
 
@@ -236,6 +295,9 @@ class Tools:
             tool.langs = list(tool.pipelines.keys())
             for lang in tool.langs:
                 self.capabilities[lang].append(toolname)
+
+            for lang in self.capabilities:
+                tool.on_startup(lang)
 
     def print_available_tools_by_language(self):
         """Prints a list of languages, and which tools are available for each of those."""
