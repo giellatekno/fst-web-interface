@@ -29,6 +29,12 @@
         dispatch("new-value", value);
     }
 
+    function on_enter_keydown() {
+        window.clearTimeout(timer);
+        timer = null;
+        dispatch("new-value", value);
+    }
+
     function on_input(ev) {
         if (debounce === null) return;
         const value = ev.target.value;
@@ -63,6 +69,7 @@
     <input
         bind:this={input}
         on:input={on_input}
+        on:keydown={only_on_enter(on_enter_keydown)}
         bind:value
         placeholder={placeholder}
     >

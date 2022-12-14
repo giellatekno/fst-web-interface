@@ -184,15 +184,23 @@ def on_startup(lang):
 
 async def generate_paradigm(analyses, lang, query_params={}):
     #print(f"generate_paradigm(). {lang=}, {query_params=}")
-    word_class = query_params.get("word_class")
+    word_class = query_params.get("word_class", "Any")
     mode = query_params.get("mode", "standard")
+
+    if word_class == "Any":
+        # TODO If word class is explicitly set to Any, or not given,
+        # we want to select a word class by some metric, and primarily
+        # show that output, but also give a "you could also have meant"-box,
+        # showing on the side
+        # TODO TEMP for now..
+        word_class = "N"
 
     try:
         # TODO word_class is supposed to be optional, so if it isn't given, we
         # must select one, using some method.. (found in smi.pl)
         paradigmfile = PARADIGM_FILES[lang][mode][word_class]
     except KeyError:
-        return "ERROR: lag, mode or word_class not found"
+        return { "error": "lang, mode or word_class not found" }
 
     return await call_para(analyses, lang, paradigmfile)
 
