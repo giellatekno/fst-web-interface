@@ -196,8 +196,17 @@ class Tool:
             self.on_startup = on_startup
 
     def resolve_extra_files(self):
+        """Gets called once per tool"""
+        #if not self.extra_files:
+            # this tool doesn't have any extra files, just skip out immediately
+        #    return []
+        available_langs = []
+
         for p in GTLANGS.glob("lang-*"):
             lang = p.name[5:]
+
+            if lang not in self.extra_files:
+                self.extra_files[lang] = {}
 
             if "*" in self.extra_files:
                 star_updates = {}
@@ -208,8 +217,8 @@ class Tool:
                     else:
                         logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
                         star_updates[entry] = None
-                    if lang in self.extra_files:
-                        self.extra_files[lang].update(star_updates)
+
+                    self.extra_files[lang].update(star_updates)
 
             if lang in self.extra_files:
                 updates = {}
@@ -220,9 +229,16 @@ class Tool:
                     if file_path.is_file():
                         updates[entry] = file_path
                     else:
-                        updates[entry]= None
-                        logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
+                        updates[entry] = None
+                        #logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
                 self.extra_files[lang].update(updates)
+
+            if any( value is None for value in self.extra_files[lang].values() ):
+                logger.error(f"tool:{self.name} for lang={lang} disabled due to missing files")
+            else:
+                available_langs.append(lang)
+
+        return available_langs
 
 
     async def run_pipeline(self, lang, input, query_params=None):
@@ -287,12 +303,18 @@ class Tools:
         self.repos_info = repos_info
 
         for toolname, tool in self.tools.items():
-            tool.resolve_extra_files()
+            # set of languages for which all extra files was resolved
+            extra_files_langs = set(tool.resolve_extra_files())
+
             if len(tool.wanted_files) == 0:
                 logger.info(f"tool %s is non-fst (no requirements on GTLANGS-specific files)", toolname)
 
             tool.pipelines = resolve_pipelines(tool.pipelines, available_files)
-            tool.langs = list(tool.pipelines.keys())
+
+            # set of languages for which the pipelines was succesfully resolved
+            pipeline_langs = set(tool.pipelines.keys())
+            enabled_langs = list(extra_files_langs & pipeline_langs)
+            tool.langs = enabled_langs
             for lang in tool.langs:
                 self.capabilities[lang].append(toolname)
 

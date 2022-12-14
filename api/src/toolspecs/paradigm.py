@@ -154,9 +154,22 @@ extra_files = {
         "paradigm_min.txt": PartialPath("test/data/paradigm_min.sma.txt"),
         "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sma.txt"),
         "korpustags.txt": PartialPath("test/data/korpustags.sma.txt"),
-        "generator-gt-norm.hfstol": PartialPath("src/generator-gt-norm.hfstol"),
+    },
+    "sme": {
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sme.txt"),
+        "paradigm_min.txt": PartialPath("test/data/paradigm_min.sme.txt"),
+        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sme.txt"),
+        "korpustags.txt": PartialPath("test/data/korpustags.sme.txt"),
+    },
+    "nob": {
+        # TODO for now, intentionally wrong to provoke the error
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sme.txt"),
+        "paradigm_min.txt": PartialPath("test/data/paradigm_min.sme.txt"),
+        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sme.txt"),
+        "korpustags.txt": PartialPath("test/data/korpustags.sme.txt"),
     },
     "*": {
+        "generator-gt-norm.hfstol": PartialPath("src/generator-gt-norm.hfstol"),
     }
 }
 

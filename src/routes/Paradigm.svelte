@@ -30,6 +30,8 @@
     <RadioGroup header="Word class" bind:selected={word_class} choices={word_class_choices} />
     <RadioGroup header="Paradigmestørrelse" bind:selected={size} choices={paradigm_sizes} />
 
+    <div style="height: 16px" /> <!-- just for some space -->
+
     <WordInput
         debounce={1000}
         on:new-value={({ detail }) => value = detail}
