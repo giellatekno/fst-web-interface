@@ -378,21 +378,37 @@ group develops language models for.</p>
 <p><strong>fst-web-interface</strong> replaces the <em>cgi-bin</em>-based setup, which can currently
 be seen at <a href="https://giellatekno.uit.no/smilang.eng.html">giellatekno.uit.no</a></p>
 <h2 id="architechture">Architechture</h2>
-<p>Broadly speaking, there is a <em>client-side</em> <a href="https://svelte.dev">Svelte</a> web app, which
-fetches data from a <em>server-side</em> <a href="https://fastapi.tiangolo.com/">FastAPI</a> API. The API uses the
-normal <a href="https://hfst.github.io/">hfst</a> tool-chain with the <a href="https://github.com/giellalt">Giellatekno language models</a>
+<p><strong>fst-web-interface</strong> consists of two parts: a <em>client-side</em> <a href="https://svelte.dev">Svelte</a> web app,
+and a <em>server-side</em> <a href="https://fastapi.tiangolo.com/">FastAPI</a> API.</p>
+<p>The API uses the normal <a href="https://hfst.github.io/">hfst</a> tool-chain with the <a href="https://github.com/giellalt">Giellatekno language models</a>
 to provide results to queries coming from the <em>client-side</em>.</p>
 <p>For everything related to <strong>hfst</strong> and the Giellatekno language models, check out
 <a href="https://giellalt.github.io/">Giellatekno documentation</a>.</p>
 <h2 id="project-layout">Project layout</h2>
-<p>In the root folder, the client-side page is stored.</p>
-<p>api  cgi-scripts  docs  index.html  jsconfig.json  locales  node_modules  package.json  package-lock.json  perl_extractions  README.md  src  svelte.config.js  vite.config.js</p>
-<pre><code>api/              -- everything related to the api
-cgi-scripts/      -- a copy of the old cgi scripts, for reference
-locales/          -- locale data
-docs/             -- documentation (you're reading it now)
-    README.md     -- documentation documentation
-node_modules/     -- used by npm, where js packages used in the project are stored
+<pre><code>api/                   -- API sub-project directory
+    main.py            -- entry point of the FastAPI app
+    toolset.py         -- defines what a "tool" is
+    toolspecs/         -- the tools, and how they invoke hfst to produce results
+client/                -- The Svelte client-side app
+    index.html         -- Skeleton html for svelte
+    locales/           -- localization
+        data/          -- locale data, stored in XML files (brought over from the previous
+                          Apache Forrest-based solution
+        {lang}.json    -- the compiled locale data for that language
+        xmltojson.py
+        make_final.py  -- scripts for compiling the stuff in /data to {lang}.json
+    package.json
+    package-lock.json
+    node_modules/      -- standard package info and packages in js projects
+    vite.config.js
+    svelte.config.js
+    jsconfig.json      -- configuration files for the tools
+docs/                  -- documentation
+    README.md          -- documentation documentation
+    mkdocs.yml         -- mkdocs configuration file
+    docs/              -- markdown files of the actual documentation
+cgi-scripts/           -- a copy of the old cgi scripts, for reference
+perl_extractions/      -- a temporary place with some python translations of some perl scripts
 </code></pre>
 
 

@@ -235,16 +235,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    Architecture
+  <a href="#project-layout" class="md-nav__link">
+    Project layout
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#project-layout" class="md-nav__link">
-    Project layout
+  <a href="#routes" class="md-nav__link">
+    Routes
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    Architecture
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tools" class="md-nav__link">
+    Tools
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline" class="md-nav__link">
+    pipeline
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-list" class="md-nav__link">
+    pipeline list
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -328,16 +362,50 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    Architecture
+  <a href="#project-layout" class="md-nav__link">
+    Project layout
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#project-layout" class="md-nav__link">
-    Project layout
+  <a href="#routes" class="md-nav__link">
+    Routes
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    Architecture
+  </a>
+  
+    <nav class="md-nav" aria-label="Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tools" class="md-nav__link">
+    Tools
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline" class="md-nav__link">
+    pipeline
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-list" class="md-nav__link">
+    pipeline list
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -358,23 +426,54 @@
 
 
 <h1 id="api">API</h1>
-<p>FastAPI automatically documents the routes in the API using OpenAPI. They
-can be read at <a href="localhost:8000/docs">/docs</a> or <a href="localhost:8000/redoc">/redoc</a>.</p>
+<h2 id="project-layout">Project layout</h2>
+<pre><code>main.py            -- entry point
+toolset.py         -- defines what a tool is
+toolspecs/         -- individual tool specifications
+config.py          -- Reads system configuration
+                      Note: NOT a place to configure how the api will behave
+util.py            -- Various utilities
+</code></pre>
+<h2 id="routes">Routes</h2>
+<p>The API exposes one route per tool. They take their arguments on the path of
+the url. Language and input is also taken in on the path.</p>
+<p>The simplest way to explain how the path looks for the tool routes, is this:</p>
+<pre><code>/{tool}/{lang}/{input}
+</code></pre>
+<p>That is, if a user is exploring the <code>"analyze"</code> tool for north sami (<code>"sme"</code>),
+and writes down the input <code>"viessu"</code>, the query path will be</p>
+<pre><code>/analyze/sme/viessu
+</code></pre>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Use <a href="https://hoppscotch.io/">hoppscotch</a> to manually test out API queries.</p>
+<p>FastAPI automatically documents the routes in the API using OpenAPI. They
+can be read at <a href="localhost:8000/docs">/docs</a> or <a href="localhost:8000/redoc">/redoc</a>. The <a href="localhost:8000/docs">/docs</a> one can
+be used to test out queries to the API. It's also possible to use a tool
+like <a href="https://hoppscotch.io/">hoppscotch</a> to run test queries against the API.</p>
 </div>
 <h2 id="architecture">Architecture</h2>
 <p>Routes in the API is dynamically imported from the <strong>toolspecs/</strong> folder.</p>
 <p>One file in the <strong>toolspecs/</strong> folder corresponds to one route.</p>
-<p>Each of those files defines a few names:</p>
-<pre><code>summary            -- string
-description        -- string
-pipeline           -- list
-</code></pre>
-<h2 id="project-layout">Project layout</h2>
-<pre><code>main.py            -- entry point
-toolspecs/         -- tool specifications
+<h3 id="tools">Tools</h3>
+<p>Tools are python files located in the <strong>toolspecs/</strong> folder. They are python
+scripts, but certain variable names will be interpreted and read specially.
+Defining a name <strong>summary</strong> as a string will make that string show up in the
+OpenAPI documentation. A longer <strong>description</strong> can also be given. What the
+tool does is specified by the variable named <strong>pipeline</strong>.</p>
+<h3 id="pipeline">pipeline</h3>
+<p>Can be either a dictionary or a list. If it is a dictionary, the keys are strings
+of 3-letter iso language names, and the value is a pipeline list of that language.
+The special key <code>"*"</code> will be used for all languages that are not specified.</p>
+<h3 id="pipeline-list">pipeline list</h3>
+<p>A pipeline list (which is just a normal python list) consists of a series
+of steps that will be done in sequence. The input to the first step is the
+input from the route. The output from the last step is the return value of
+the route. Each step takes input from it</p>
+<p>A pipeline list (which is just a normal python list) specifies the operations
+that this tool will do to its input. Each entry in the list can be either
+a list or a function. If it is a function (async or not), it will be called,
+and the output will be the input for the next step.</p>
+<pre><code>route input =&gt; step1 =&gt; step2 =&gt; stepN =&gt; response from route
 </code></pre>
 
 
