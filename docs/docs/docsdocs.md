@@ -14,8 +14,12 @@ a nice theme by these tools.
 
 ## View
 
-The build output is a static web site located in the __site/__ folder. Just open
-up the index.html page in a browser to view the documentation.
+The documentation is hosted on Github Pages:
+
+[https://giellatekno.github.io/fst-web-interface/](https://giellatekno.github.io/fst-web-interface/)
+
+If the documentation is built locally (see below), it is available in the __site/__ folder.
+Just open up the index.html page in a browser to view the documentation.
 
     firefox site/index.html
 
@@ -50,8 +54,16 @@ be used. Specify another one with:
 
 Open up a browser at that address to see the generated documentation as you write it.
 
-To build the final documentation site, use
+### Building
+
+To automatically build and publish the documentation on Github Pages, it's all done in a
+single command:
+
+    mkdocs gh-deploy
+
+To build the final documentation site locally, use
 
     mkdocs build
 
 It ends up as a static build in the __site/__ directory, as mentioned above.
+

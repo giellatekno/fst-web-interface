@@ -31,10 +31,6 @@ For everything related to __hfst__ and the Giellatekno language models, check ou
 
 ## Project layout
 
-In the root folder, the client-side page is stored.
-
-api  cgi-scripts  docs  index.html  jsconfig.json  locales  node_modules  package.json  package-lock.json  perl_extractions  README.md  src  svelte.config.js  vite.config.js
-
     api/                   -- API sub-project directory
         main.py            -- entry point of the FastAPI app
         toolset.py         -- defines what a "tool" is
