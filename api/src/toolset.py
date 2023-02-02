@@ -8,6 +8,13 @@ from typing import Any
 from collections import defaultdict
 import logging
 
+from .config import GTLANGS
+from .util import PartialPath
+from .util import noop
+
+# this imports all toolspecs as a module with the name "toolspecs"
+from . import toolspecs
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
@@ -16,17 +23,11 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-from .config import GTLANGS
-from .util import PartialPath
-
-
-def noop(*args, **kwargs): pass
-
 
 def dict_first_value(d):
     """Extracts the "first" value of a dictionary. "First" being the
     first entry in d.values()."""
-    return list(islice(d.values(), 1))[0]
+    return next(islice(d.values(), 1))
 
 
 def fn_takes_query_params(f):
@@ -53,6 +54,7 @@ def resolve_pipeline(wanted_lang, pipelines, available_files):
     partial_path, searching first for the specific lang, and otherwise
     in the general section."""
 
+
 def normalize_pipelines(pipelines):
     """Turns a pipeline spec of just a single list into one with just that
     one single list as the default (catchall) pipeline. If the pipeline already
@@ -63,7 +65,10 @@ def normalize_pipelines(pipelines):
         return pipelines
 
 
-def resolve_pipelines(pipelines: dict[str, list], available_files: dict[str, str]):
+def resolve_pipelines(
+    pipelines: dict[str, list],
+    available_files: dict[str, str],
+):
     """Replace all occurences of PartialPaths in all pipelines with the
     real file path, found in the `available_files` dictionary. If the
     PartialPath is not available, that pipeline will be removed, as it cannot
@@ -134,7 +139,7 @@ def get_repo_info(path):
             commithash, commitdate = f.read().strip().split(" ")
     except FileNotFoundError:
         # okay, try to run git command there, then
-        env = dict(GIT_DIR = f"{path}/.git")
+        env = {"GIT_DIR": f"{path}/.git"}
         prog = shlex.split("git log -n 1 --format=format:\"%h %cI\"")
         try:
             res = subprocess.run(prog, capture_output=True, env=env)
@@ -185,21 +190,22 @@ class Tool:
         self.extra_files = spec_dict.get("extra_files", {})
         self.wanted_files = find_needed_files(self.pipelines, spec_dict.get("extra_files"))
         self.response_model = find_response_model(self.pipelines)
-        
+
         if "on_startup" not in spec_dict:
             self.on_startup = noop
         else:
             on_startup = spec_dict["on_startup"]
             if not callable(on_startup):
-                logger.error(f"toolspec/{self.name}: on_startup must be a function")
+                msg = f"toolspec/{self.name}: on_startup must be a function"
+                logger.error(msg)
                 on_startup = noop
             self.on_startup = on_startup
 
     def resolve_extra_files(self):
         """Gets called once per tool"""
-        #if not self.extra_files:
-            # this tool doesn't have any extra files, just skip out immediately
-        #    return []
+        # if not self.extra_files:
+        #     this tool doesn't have any extra files, just skip out immediately
+        #     return []
         available_langs = []
 
         for p in GTLANGS.glob("lang-*"):
@@ -233,37 +239,45 @@ class Tool:
                         #logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
                 self.extra_files[lang].update(updates)
 
-            if any( value is None for value in self.extra_files[lang].values() ):
+            if any(value is None for value in self.extra_files[lang].values()):
                 logger.error(f"tool:{self.name} for lang={lang} disabled due to missing files")
             else:
                 available_langs.append(lang)
 
         return available_langs
 
+    async def _run_callable(fn, input, lang, query_params=None):
+        is_coroutine = inspect.iscoroutinefunction(fn)
+        takes_query_params = fn_takes_query_params(fn)
+
+        match (is_coroutine, takes_query_params):
+            case (True, True):
+                output = await fn(input, str(lang), query_params=query_params)
+            case (True, False):
+                output = await fn(input)
+            case (False, True):
+                output = fn(input, str(lang), query_params=query_params)
+            case (False, False):
+                output = fn(input)
+
+        return output
 
     async def run_pipeline(self, lang, input, query_params=None):
-        final_output = { "input": input }
+        final_output = {"input": input}
 
         pipeline = self.pipelines.get(lang)
 
         for prog in pipeline:
             if callable(prog):
                 try:
-                    if inspect.iscoroutinefunction(prog):
-                        print("will run an async function")
-                        if fn_takes_query_params(prog):
-                            input = await prog(input, str(lang), query_params=query_params)
-                        else:
-                            input = await prog(input)
-                    else:
-                        if fn_takes_query_params(prog):
-                            input = prog(input, str(lang), query_params=query_params)
-                        else:
-                            input = prog(input)
-                except Exception as e:
-                    logger.exception("Exception in pipeline python step")
-                    final_output["error"] = "Python step of pipeline threw unhandled exception"
+                    step_output = self._run_callable(prog, input, query_params)
+                except Exception:
+                    msg = "Python step in pipeline threw unhandled exception"
+                    logger.exception(msg)
+                    final_output["error"] = msg
                     return final_output
+
+                input = step_output
             else:
                 subp = await asyncio.create_subprocess_exec(
                         *prog, stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -333,11 +347,9 @@ class Tools:
 
 tools = Tools()
 
-from . import toolspecs
 for name, spec in inspect.getmembers(toolspecs):
     if not name.startswith("__"):
         tools.add(spec)
 
 tools.resolve_pipelines()
 tools.print_available_tools_by_language()
-

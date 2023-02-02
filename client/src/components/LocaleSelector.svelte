@@ -34,6 +34,33 @@
         ev.preventDefault();
         open = false;
     }
+
+    function clickoutside(element, fn) {
+        function on_click(ev) {
+            if (!ev.target.contains(element)) {
+                fn();
+            }
+        }
+
+        // the newly created popup will instantly trigger the click,
+        // so have the first click just setup the real handler
+        document.body.addEventListener(
+            "click",
+            function () {
+                document.body.addEventListener("click", on_click);
+            },
+            { once: true }
+        );
+
+        return {
+            update(new_fn) {
+                fn = new_fn;
+            },
+            destroy() {
+                document.body.removeEventListener("click", on_click);
+            }
+        };
+    }
 </script>
 
 <svelte:window on:keydown={globalkeydown} />
@@ -52,9 +79,11 @@
 
     {#if open}
         <div
+            use:clickoutside={() => open = false}
             in:fly={{ y: -18, duration: 170, easing: quintOut, opacity: 0.2 }}
             out:fly={{ y: -18, duration: 120, easing: quintOut, opacity: 0 }}
-            class="fullscreen">
+            class="fullscreen"
+        >
             <h1>{$t("interfacelanguage")}</h1>
 
             <div class="lang-container">
