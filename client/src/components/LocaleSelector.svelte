@@ -89,6 +89,7 @@
             <div class="lang-container">
                 {#each locales as loc}
                     <div class="lang" role="button"
+                         class:selected={loc == $locale}
                          tabindex="0"
                          on:click={set_locale(loc)}
                          on:keydown={ev => on_locale_keydown(ev, loc)}
@@ -113,17 +114,16 @@
     }
     div.fullscreen {
         color: white;
-        background-color: rgba(30, 40, 40, 0.95);
-        padding: 16px;
+        background-color: rgba(40, 40, 40, 0.95);
+        padding: 18px;
         position: absolute;
         border-radius: 8px;
         left: 34px; top: 28px;
-        height: calc(23% - 28px);
     }
     div.fullscreen > h1 {
         margin: 0;
         font-size: 22px;
-        padding-left: 18px;
+        padding-left: 16px;
     }
     div.lang-container {
         padding: 0;
@@ -137,6 +137,9 @@
         font-size: 1.3em;
         border-bottom: 3px solid transparent;
         transition: border-bottom 0.25s ease-out;
+    }
+    div.lang.selected {
+        color: red;
     }
     div.lang:hover {
         border-bottom: 3px solid white;
