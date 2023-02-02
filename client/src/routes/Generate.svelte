@@ -5,7 +5,7 @@
     import { generate } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
 
-    let results = null;
+    let results = [];
 
     $: usage = get_usage($t, $lang);
     $: introduction = get_introduction($t, $lang);
@@ -62,7 +62,8 @@
     }
 
     function on_new_value({ detail: value }) {
-        results = generate($lang, value);
+        results.unshift(generate($lang, value));
+        results = results;
     }
 </script>
 
@@ -73,30 +74,53 @@
     {#if instruction}<p>{@html instruction}</p>{/if}
     {#if example}<p>{@html example}</p>{/if}
 
-    <form>
-        <WordInput
-            debounce={1000}
-            on:new-value={on_new_value}
-            on:new-input-started={() => results = null}
-            on:reset-value={() => results = null}
-        />
-    </form>
+    <WordInput
+        debounce={1500}
+        on:new-value={on_new_value}
+        on:new-input-started={() => {}}
+        on:reset-value={() => results = []}
+    />
 
-    {#if results}
-        {#await results}
-            <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
-        {:then res}
-            {#if res !== null}
-                {JSON.stringify(res)}
-            {/if}
-        {:catch e}
-            Error: e
-        {/await}
-    {/if}
+    <table>
+        <colgroup>
+            <col>
+            <col>
+        </colgroup>
+
+        {#each results as result}
+            {#await result}
+                <tr>
+                    <td>
+                        <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
+                    </td>
+                </tr>
+            {:then res}
+                {#if res !== null && res.not_found === null}
+                    <tr>
+                        <td>{res.input}</td>
+                        <td>{res.found}</td>
+                    </tr>
+                {:else}
+                    <tr>
+                        <td>{res.input}</td>
+                        <td>([l6e] ingen resultater)</td>
+                    </tr>
+                {/if}
+            {/await}
+        {/each}
+    </table>
 </main>
 
 <style>
     main {
         margin-left: 34px;
+    }
+
+    table > colgroup > col:first-of-type {
+        min-width: 10em;
+    }
+
+    table td:first-of-type {
+        padding-right: 2em;
     }
 </style>

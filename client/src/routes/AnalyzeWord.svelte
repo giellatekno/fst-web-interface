@@ -5,7 +5,7 @@
     import { analyze } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
 
-    let results = null;
+    let results = [];
 
     $: usage = get_usage($lang, $t);
     $: instruction = $t(`instruction.tool.analyze`);
@@ -22,7 +22,8 @@
     }
 
     function on_new_value({ detail: value }) {
-        results = analyze($lang, value);
+        results.unshift(analyze($lang, value));
+        results = results;
     }
 </script>
 
@@ -36,29 +37,34 @@
         <WordInput
             debounce={1000}
             on:new-value={on_new_value}
-            on:new-input-started={() => results = null}
-            on:reset-value={() => results = null}
+            on:new-input-started={() => {}}
+            on:reset-value={() => results = []}
         />
     </form>
 
-    {#if results}
-        {#await results}
-            <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
-        {:then res}
-            <table>
-                {#each res as { word, root, cls, props }}
-                    <tr>
-                        <td class="input-word">{word}</td>
-                        <td class="root-word">{root}</td>
-                        <td class="word-cls">{cls}</td>
-                        <td class="word-props">{props}</td>
-                    </tr>
-                {/each}
-            </table>
-        {:catch e}
-            Error: {e}
-        {/await}
-    {/if}
+    
+    <table>
+        {#each results as result}
+            {#await result}
+                <tr>
+                    <td colspan="4">
+                        <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
+                    </td>
+                </tr>
+            {:then res}
+                    {#each res as { word, root, cls, props }}
+                        <tr>
+                            <td class="input-word">{word}</td>
+                            <td class="root-word">{root}</td>
+                            <td class="word-cls">{cls}</td>
+                            <td class="word-props">{props}</td>
+                        </tr>
+                    {/each}
+            {:catch e}
+                Error: {e}
+            {/await}
+        {/each}
+    </table>
 
     <p>{@html end}</p>
 </main>

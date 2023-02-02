@@ -1,4 +1,5 @@
 <script>
+    import { onMount } from "svelte";
     import example_img from "../assets/language.svg";
     import spellcheck_img from "../assets/spellcheck.svg";
     import hyphenation_img from "../assets/hyphenation.svg";
@@ -7,6 +8,10 @@
     import { t } from "svelte-intl-precompile";
     import { locale } from "../lib/locales.js";
     import { capabilities_for_lang } from "../lib/api.js";
+    import {
+        only_on_enter,
+        fmt_date_ago_localized,
+    } from "../lib/utils";
     import {
         lang,
         lang_in_locale,
@@ -42,45 +47,28 @@
 
     let repo_info = null;
     let show_date_relative = false;
+    let tools_available = [];
+
+    onMount(async () => {
+        await get_repo_info($lang);
+        tools_available = repo_info.tools;
+    });
+
     $: get_repo_info($lang);
     $: repo_date = fmt_date_localized($locale, repo_info);
-    $: repo_date_ago = fmt_date_ago_localized($locale, repo_info);
+    $: repo_date_ago = fmt_date_ago_localized(repo_info?.date, $locale);
 
     $: copyright = get_copyright($t, $lang);
     $: tools = tools_for[$lang];
 
-
     const FMT_DATE_OPTS = { day: "numeric", month: "short", year: "numeric" };
-    const RELTIME_FMT_OPTS = { };
-    // https://blog.webdevsimplified.com/2020-07/relative-time-format/
-    const DIVISIONS = [
-        { amount: 60, name: 'seconds' },
-        { amount: 60, name: 'minutes' },
-        { amount: 24, name: 'hours' },
-        { amount: 7, name: 'days' },
-        { amount: 4.34524, name: 'weeks' },
-        { amount: 12, name: 'months' },
-        { amount: Number.POSITIVE_INFINITY, name: 'years' },
-    ];
-    function fmt_date_ago_localized(locale, repo_info) {
-        if (!repo_info || repo_info == "no api") return null;
-        const date = repo_info.date;
-        let diff_sec = (date - Date.now()) / 1000;
 
-        const formatter = new Intl.RelativeTimeFormat(locale, RELTIME_FMT_OPTS);
-        for (let i = 0; i <= DIVISIONS.length; i++) {
-            const division = DIVISIONS[i]
-            if (Math.abs(diff_sec) < division.amount) {
-                return formatter.format(Math.round(diff_sec), division.name)
-            }
-            diff_sec /= division.amount
-        }
-    }
     function fmt_date_localized(locale, repo_info) {
         if (!repo_info || repo_info == "no api") return null;
         const date = repo_info.date;
         return date.toLocaleDateString(locale, FMT_DATE_OPTS);
     }
+
     async function get_repo_info(lang) {
         if (!lang) throw Error();
         const obj = await capabilities_for_lang(lang);
@@ -92,13 +80,6 @@
             repo_info = obj;
         }
     }
-
-    function only_on_enter(fn) {
-        return function(ev) {
-            if (ev.key !== "Enter") return;
-            fn();
-        }
-    }
 </script>
 
 <main>
@@ -106,7 +87,7 @@
 
     <div class="tools-wrapper">
         {#each tools as tool}
-            <a href="/{$lang}/{tool}" class="tool">
+            <a href="/{$lang}/{tool}" class="tool" class:grayed={!tools_available.includes(tool)}>
                 <img src={IMAGES[tool] || example_img} alt="">
                 <span class="title">{$t(tool)}</span>
                 <span class="desc">
@@ -185,6 +166,12 @@
         box-shadow: 2px 2px 4px 0px rgba(121, 121, 89, 0.44);
         transition:
             background-color ease-out 0.25s;
+    }
+
+    a.tool.grayed {
+        filter: grayscale(1.0) blur(0.5px);
+        color: #757272;
+        box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.44);
     }
 
     @media screen and (max-width: 768px) {

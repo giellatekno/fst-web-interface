@@ -61,7 +61,7 @@ async function apicall(
     if (!extract) {
         return json;
     } else {
-        const result = json.result;
+        const result = json[extract];
         if (result === undefined) {
             const e = json.error || json.errors || "no 'result' nor 'error' in json body";
             throw new Error(e);
@@ -142,4 +142,8 @@ export async function capabilities_for_lang(lang) {
     check_arg_nonempty("capabilities_for_lang", lang, "lang");
 
     return apicall(`capabilities/${lang}`, { api: "local", extract: false });
+}
+
+export async function capabilities() {
+    return apicall(`capabilities`, { api: "local" });
 }

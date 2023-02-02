@@ -1,7 +1,7 @@
-from enum import Enum, StrEnum
+from enum import StrEnum
 from time import time
 import inspect
-from typing import Optional, Union, Any, TypeVar, Generic
+from typing import Union, TypeVar, Generic
 
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,10 +24,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = [
-        "*",
-        # what else... ?
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,13 +32,13 @@ app.add_middleware(
     expose_headers=["X-Process-Time"],
 )
 
+
 @app.middleware("http")
 async def add_process_time_header(request, call_next):
     t0 = time()
     response = await call_next(request)
     response.headers["X-Process-Time"] = str(time() - t0)
     return response
-
 
 
 class LangCapabilities(BaseModel):
@@ -53,20 +50,21 @@ class LangCapabilities(BaseModel):
 @app.get(
     "/capabilities",
     summary="capabilities",
-    description="All languages, and their supported tools, and repository info",
-    response_model=dict[str, LangCapabilities],
+    description="All languages, their supported tools, and repository info",
+    response_model=dict[str, dict[str, LangCapabilities]],
 )
-async def handle():
+async def handle_capabilities():
     out = {}
     for lang, toollist in tools.capabilities.items():
-        out[lang] = { "tools": toollist }
+        out[lang] = {"tools": toollist}
         commithash, commitdate = tools.repos_info[lang]
         if commithash:
             out[lang]["commit"] = commithash
         if commitdate:
             out[lang]["date"] = commitdate
 
-    return out
+    return {"result": out}
+
 
 @app.get(
     "/capabilities/{lang}",
@@ -74,7 +72,7 @@ async def handle():
     description="Supported tools and repository info for a langauge",
     response_model=LangCapabilities | str,
 )
-async def handle(lang: str):
+async def handle_capabilities_for_lang(lang: str):
     out = dict()
     toollist = tools.capabilities.get(lang)
     if toollist is None:
@@ -90,8 +88,6 @@ async def handle(lang: str):
         out["date"] = commitdate
 
     return out
-
-
 
 
 def _generate_route_handler(tool):

@@ -1,6 +1,8 @@
 <script>
+    import { onMount } from "svelte";
     import { t } from "svelte-intl-precompile";
     import { locale } from "../lib/locales.js";
+    import { only_on_enter } from "../lib/utils.js";
     import {
         langs,
         language_names,
@@ -10,13 +12,22 @@
     } from "../lib/langs.js";
     import { lang } from "../lib/stores.js";
     import Search from "../components/Search.svelte";
+    import {
+        capabilities,
+    } from "../lib/api.js";
 
     let search = "";
     let show_sami = false;
     let show_uralic = false;
     let show_others = false;
+    let langs_in_api = [];
 
     $: visible_langs = filter_langs(search, show_sami, show_uralic, show_others);
+
+    onMount(async () => {
+        const cap = await capabilities();
+        langs_in_api = Object.keys(cap);
+    });
 
     function filter_langs(search, show_sami, show_uralic, show_others) {
         const any_filters_on = show_sami || show_uralic || show_others;
@@ -65,7 +76,6 @@
         }
     }
 
-
     let langs_container_el;
     function onenter() {
         if (visible_langs.length === 1) {
@@ -80,13 +90,6 @@
 
             // ...and this doesn't trigger our logic
             //window.history.pushState(null, "", `/${lang}`);
-        }
-    }
-
-    function only_on_enter(fn) {
-        return function (ev) {
-            if (ev.key !== "Enter") return;
-            fn();
         }
     }
 </script>
@@ -138,7 +141,7 @@
 
         <div class="langs" bind:this={langs_container_el}>
             {#each visible_langs as lng}
-                <span class="language">
+                <span class="language" class:grayed={!langs_in_api.includes(lng)}>
                     <a href="/{lng}">
                         {$t(`lname.lang.${lng}`)}
                         <!--{language_names[$locale][lng]}-->
@@ -174,6 +177,10 @@
         display: grid;
         width: 800px;
         grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    div.langs > span.language.grayed > a {
+        color: gray;
     }
 
     div.filters {

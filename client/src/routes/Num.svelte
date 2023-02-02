@@ -5,12 +5,13 @@
     import { num } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
 
-    let results = null;
+    let results = [];
 
     $: usage = $t(`usage.lang.${$lang}`);
 
-    function on_new_value({ detail: value }) {
-        results = num($lang, value);
+    async function on_new_value({ detail: value }) {
+        results.unshift(num($lang, value));
+        results = results;
     }
 </script>
 
@@ -22,29 +23,29 @@
         <WordInput
             debounce={1000}
             on:new-value={on_new_value}
-            on:new-input-started={() => results = null}
-            on:reset-value={() => results = null}
+            on:new-input-started={() => {}}
+            on:reset-value={() => results = []}
         />
     </form>
 
-    {#if results}
-        {#await results}
-            <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
-        {:then res}
-            <table class="result">
-                <tr>
+    <table>
+        {#each results as result}
+            <tr>
+                {#await result}
+                    <td colspan="2">
+                        <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
+                    </td>
+                {:then res}
                     <td>{res.number}</td>
                     <td>
                         {#each res.answers as text}
                             {text}<br>
                         {/each}
                     </td>
-                </tr>
-            </table>
-        {:catch e}
-            Error: {e}
-        {/await}
-    {/if}
+                {/await}
+            </tr>
+        {/each}
+    </table>
 </main>
 
 <style>

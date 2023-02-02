@@ -3,6 +3,7 @@
          A styled input box for entering search words (but _not_ a "search" box).
     */
     import { createEventDispatcher } from "svelte";
+    import { only_on_enter } from "../lib/utils";
     const dispatch = createEventDispatcher();
 
     export let value = "";
@@ -54,13 +55,6 @@
 
         if (value !== "") {
             timer = window.setTimeout(on_debounced, debounce);
-        }
-    }
-
-    function only_on_enter(fn) {
-        return function (ev) {
-            if (ev.key !== "Enter") return;
-            fn();
         }
     }
 </script>
