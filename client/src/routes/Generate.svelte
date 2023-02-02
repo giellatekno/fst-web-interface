@@ -68,7 +68,11 @@
 </script>
 
 <main>
-    <h1>{$t("generate")}</h1>
+    <span>
+        <h1>{$t("generate")}</h1>
+        <a href="/{$lang}">[l6e] Tilbake til verktøy</a>
+    </span>
+
     {#if usage}<p>{@html usage}</p>{/if}
     {#if introduction}<p>{@html introduction}</p>{/if}
     {#if instruction}<p>{@html instruction}</p>{/if}
@@ -114,6 +118,13 @@
 <style>
     main {
         margin-left: 34px;
+    }
+
+    h1 {
+        display: inline-block;
+        padding-right: 1em;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     table > colgroup > col:first-of-type {

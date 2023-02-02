@@ -29,7 +29,11 @@
 </script>
 
 <main>
-    <h1>{$t("selection.select.tool.hyphenate")}</h1>
+    <span>
+        <h1>{$t("selection.select.tool.hyphenate")}</h1>
+        <a href="/{$lang}">[l6e] Tilbake til verktøy</a>
+    </span>
+
     <p>{@html usage}</p>
 
     <form>
@@ -62,6 +66,13 @@
 <style>
     main {
         margin-left: 34px;
+    }
+
+    h1 {
+        display: inline-block;
+        padding-right: 1em;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     table.results tr:first-of-type {

@@ -24,7 +24,11 @@
 </script>
 
 <main>
-    <h1>[l6e] Paradigm</h1>
+    <span>
+        <h1>{$t("paradigm")}</h1>
+        <a href="/{$lang}">[l6e] Tilbake til verktøy</a>
+    </span>
+
     <p>{@html usage}</p>
 
     <RadioGroup header="Word class" bind:selected={word_class} choices={word_class_choices} />
@@ -67,5 +71,12 @@
 <style>
     main {
         margin-left: 34px;
+    }
+
+    h1 {
+        display: inline-block;
+        padding-right: 1em;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 </style>

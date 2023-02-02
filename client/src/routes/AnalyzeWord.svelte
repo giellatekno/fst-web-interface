@@ -28,7 +28,11 @@
 </script>
 
 <main>
-    <h1>[l6e] Analyze</h1>
+    <span>
+        <h1>{$t("analyze")}</h1>
+        <a href="/{$lang}">[l6e] Tilbake til verktøy</a>
+    </span>
+
     <p>{@html usage}</p>
 
     <p>{@html instruction}</p>
@@ -72,6 +76,13 @@
 <style>
     main {
         margin-left: 34px;
+    }
+
+    h1 {
+        display: inline-block;
+        padding-right: 1em;
+        padding-bottom: 0;
+        margin-bottom: 0;
     }
 
     td.input-word {
