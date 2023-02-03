@@ -41,10 +41,20 @@ async def add_process_time_header(request, call_next):
     return response
 
 
+T = TypeVar("T")
+class ErrorResponse(BaseModel):
+    input: str
+    error: str
+
+
+class OkResponse(GenericModel, Generic[T]):
+    input: str
+    result: T
+
+
 class LangCapabilities(BaseModel):
-    date: str | None
-    commit: str | None
     tools: list[str]
+    repo_info: dict[str, str]
 
 
 @app.get(
@@ -54,40 +64,17 @@ class LangCapabilities(BaseModel):
     response_model=dict[str, dict[str, LangCapabilities]],
 )
 async def handle_capabilities():
-    out = {}
-    for lang, toollist in tools.capabilities.items():
-        out[lang] = {"tools": toollist}
-        commithash, commitdate = tools.repos_info[lang]
-        if commithash:
-            out[lang]["commit"] = commithash
-        if commitdate:
-            out[lang]["date"] = commitdate
-
-    return {"result": out}
+    return {"result": tools.capabilities()}
 
 
 @app.get(
     "/capabilities/{lang}",
     summary="capabilities for language",
     description="Supported tools and repository info for a langauge",
-    response_model=LangCapabilities | str,
+    response_model=LangCapabilities,
 )
 async def handle_capabilities_for_lang(lang: str):
-    out = dict()
-    toollist = tools.capabilities.get(lang)
-    if toollist is None:
-        return "no such language"
-    out["tools"] = toollist
-
-    try:
-        commithash, commitdate = tools.repos_info[lang]
-    except KeyError:
-        pass
-    else:
-        out["commit"] = commithash
-        out["date"] = commitdate
-
-    return out
+    return tools.capabilities()[lang]
 
 
 def _generate_route_handler(tool):
@@ -139,14 +126,6 @@ def _generate_route_handler(tool):
 
 # Dynamically add routes for all tools defined in toolspecs/
 
-class ErrorResponse(BaseModel):
-    input: str
-    error: str
-
-T = TypeVar("T")
-class OkResponse(GenericModel, Generic[T]):
-    input: str
-    result: T
 
 
 for name, tool in tools.tools.items():

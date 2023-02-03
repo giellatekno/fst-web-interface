@@ -45,39 +45,39 @@
         transcription: ipa_img,
     }
 
-    let repo_info = null;
     let show_date_relative = false;
-    let tools_available = [];
 
+    let repo_info = null;
+    let tools_available = [];
     onMount(async () => {
-        await get_repo_info($lang);
-        tools_available = repo_info.tools;
+        repo_info = await get_repo_info($lang);
     });
 
-    $: get_repo_info($lang);
-    $: repo_date = fmt_date_localized($locale, repo_info);
+    $: repo_date = fmt_date_localized($locale, repo_info?.date);
     $: repo_date_ago = fmt_date_ago_localized(repo_info?.date, $locale);
 
     $: copyright = get_copyright($t, $lang);
     $: tools = tools_for[$lang];
+    $: console.log(tools_available);
 
     const FMT_DATE_OPTS = { day: "numeric", month: "short", year: "numeric" };
 
-    function fmt_date_localized(locale, repo_info) {
-        if (!repo_info || repo_info == "no api") return null;
-        const date = repo_info.date;
+    function fmt_date_localized(locale, date) {
+        if (!date) return "??";
         return date.toLocaleDateString(locale, FMT_DATE_OPTS);
     }
 
     async function get_repo_info(lang) {
         if (!lang) throw Error();
-        const obj = await capabilities_for_lang(lang);
-        if (!obj || !obj.commit) {
-            console.warn("error getting repo info");
-            repo_info = "no api";
+        const cap_for_lang = await capabilities_for_lang(lang);
+        if (!cap_for_lang || !cap_for_lang.tools) {
+            return null;
         } else {
-            obj.date = new Date(obj.date);
-            repo_info = obj;
+            tools_available = cap_for_lang.tools;
+            return {
+                hash: cap_for_lang.repo_info.hash,
+                date: new Date(cap_for_lang.repo_info.date),
+            };
         }
     }
 </script>
@@ -107,7 +107,7 @@
     {#if repo_info}
         <div style="margin-top: 3em;">
             <p class="langmodel-info" class:no-api={repo_info === "no api"}>
-                {#if repo_info === "no api"}
+                {#if repo_info === null}
                     Error: no API available! (tools will not work at all)
                 {:else}
                     {$t("langmodellastupdated")}

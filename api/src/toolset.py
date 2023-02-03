@@ -5,7 +5,6 @@ import shlex
 import subprocess
 from collections import defaultdict
 from copy import deepcopy
-from itertools import islice
 from pathlib import Path
 from typing import Any
 
@@ -27,57 +26,22 @@ logger.addHandler(ch)
 DETECTED_GTLANGS = list(p.name[5:] for p in GTLANGS.glob("lang-*"))
 
 
-def dict_first_value(d):
-    """Extracts the "first" value of a dictionary. "First" being the
-    first entry in d.values()."""
-    return next(islice(d.values(), 1))
-
-
 def get_repo_info(path):
-    # first try to read this info from REPO_INFO
-    # it will be made when deploying
-    commithash, commitdate = None, None
-    try:
-        with open(f"{path}/REPO_INFO") as f:
-            commithash, commitdate = f.read().strip().split(" ")
-    except FileNotFoundError:
-        # okay, try to run git command there, then
-        env = {"GIT_DIR": f"{path}/.git"}
-        prog = shlex.split("git log -n 1 --format=format:\"%h %cI\"")
-        try:
-            res = subprocess.run(prog, capture_output=True, env=env)
-        except FileNotFoundError:
-            return None, None
-        else:
-            stdout = res.stdout.strip().decode("utf-8").split(" ")
-            commithash = stdout[0]
-            commitdate = " ".join(stdout[1:])
+    prog = shlex.split("git log -n 1 --format=format:\"%h %cI\"")
+    res = subprocess.run(prog, capture_output=True, text=True,
+                         env={"GIT_DIR": f"{path}/.git"})
+    if not res.stdout:
+        return None
 
-    return commithash, commitdate
+    hash, date = res.stdout.strip().split(" ", maxsplit=1)
+    return {"hash": hash, "date": date}
 
 
-def gather_available_files(wanted_files):
-    """Take a set of all wanted files as input,
-    and return a mapping of which files are available for each language found
-    in $GTLANGS."""
-    available_files = defaultdict(dict)
-
-    if GTLANGS is None:
-        return available_files, (None, None)
-
-    repos_info = {}
-    for p in GTLANGS.glob("lang-*"):
-        lang = p.name[5:]
-        repos_info[lang] = commithash, commitdate = get_repo_info(p)
-
-        for wanted_file in wanted_files:
-            full_path = p / wanted_file
-            if full_path.is_file():
-                available_files[lang][wanted_file] = full_path
-            else:
-                logger.warn(f"lang-{lang} wants file {wanted_file}, but it was not found")
-
-    return available_files, repos_info
+def flat(some_list):
+    out = []
+    for sublist in some_list:
+        out.extend(sublist)
+    return out
 
 
 class Tool:
@@ -282,29 +246,34 @@ class Tool:
 
 class Tools:
     def __init__(self):
-        self.tools = {}
-
-        # mapping of tool name -> list of langs supported
-        self.capabilities = defaultdict(list)
-
-        # mapping of lang -> tuple of commithash, commitdate
-        self.repos_info = None
+        self.tools: dict[str, Tool] = {}
+        self.repo_info_for_lang: dict[str, dict] = {}
+        self.tools_for_lang = defaultdict(list)
 
     def add(self, spec):
         tool = Tool(spec)
         self.tools[tool.name] = tool
+        for lang in tool.langs:
+            self.tools_for_lang[lang].append(tool.name)
 
         return tool
 
-    def print_available_tools_by_language(self):
-        """Prints a list of languages, and which tools are available
-        for each of those."""
-        for lang, tools in self.capabilities.items():
-            print(f"Available tools for language '{lang}': {', '.join(tools)}")
+    def capabilities(self):
+        out = {}
 
-    def print_available_langs_by_tool(self):
-        """Prints a list of tools, and which languages are
-        available for each of those."""
+        for lang, tools in self.tools_for_lang.items():
+            out[lang] = {
+                "tools": tools,
+                "repo_info": self.repo_info_for_lang[lang]
+            }
+
+        return out
+
+    def collect_repos_info(self):
+        for p in GTLANGS.glob("lang-*"):
+            lang = p.name[5:]
+            if repo_info := get_repo_info(p):
+                self.repo_info_for_lang[lang] = repo_info
 
 
 tools = Tools()
@@ -313,4 +282,4 @@ for name, spec in inspect.getmembers(toolspecs):
     if not name.startswith("__"):
         tools.add(spec)
 
-tools.print_available_tools_by_language()
+tools.collect_repos_info()
