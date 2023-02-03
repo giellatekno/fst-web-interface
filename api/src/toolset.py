@@ -1,12 +1,13 @@
 import asyncio
-from asyncio.subprocess import PIPE
-import subprocess
-import shlex
 import inspect
-from itertools import islice
-from typing import Any
-from collections import defaultdict
 import logging
+import shlex
+import subprocess
+from collections import defaultdict
+from copy import deepcopy
+from itertools import islice
+from pathlib import Path
+from typing import Any
 
 from .config import GTLANGS
 from .util import PartialPath
@@ -23,111 +24,13 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+DETECTED_GTLANGS = list(p.name[5:] for p in GTLANGS.glob("lang-*"))
+
 
 def dict_first_value(d):
     """Extracts the "first" value of a dictionary. "First" being the
     first entry in d.values()."""
     return next(islice(d.values(), 1))
-
-
-def fn_takes_query_params(f):
-    return "query_params" in inspect.signature(f).parameters
-
-
-def find_needed_files(all_pipelines, extra_files):
-    """Find all needed files from a pipeline."""
-    needed = set()
-
-    for _lang, pipeline in all_pipelines.items():
-        for program in pipeline:
-            if not isinstance(program, list):
-                continue
-            for entry in program:
-                if isinstance(entry, PartialPath):
-                    needed.add(entry.p)
-
-    return needed
-
-
-def resolve_pipeline(wanted_lang, pipelines, available_files):
-    """From the dictionary of available files, find a matching file for
-    partial_path, searching first for the specific lang, and otherwise
-    in the general section."""
-
-
-def normalize_pipelines(pipelines):
-    """Turns a pipeline spec of just a single list into one with just that
-    one single list as the default (catchall) pipeline. If the pipeline already
-    is a dict, we just return it as is."""
-    if isinstance(pipelines, list):
-        return {"*": pipelines}
-    else:
-        return pipelines
-
-
-def resolve_pipelines(
-    pipelines: dict[str, list],
-    available_files: dict[str, str],
-):
-    """Replace all occurences of PartialPaths in all pipelines with the
-    real file path, found in the `available_files` dictionary. If the
-    PartialPath is not available, that pipeline will be removed, as it cannot
-    run due to missing files."""
-    resolved_pipelines = {}
-
-    for avail_lang, avail_files in available_files.items():
-        pipeline = pipelines.get(avail_lang)
-        if not pipeline:
-            pipeline = pipelines.get("*")
-            if not pipeline:
-                # no pipelines for this tool, for this language
-                break
-
-        new_pipeline = []
-        for program in pipeline:
-            if callable(program):
-                new_pipeline.append(program)
-            else:
-                new_program = []
-                for s in program:
-                    if isinstance(s, str):
-                        new_program.append(s)
-                    elif isinstance(s, PartialPath):
-                        partial_path = s.p
-                        found_file = avail_files.get(partial_path)
-                        if found_file:
-                            new_program.append(found_file)
-                        else:
-                            new_program = None
-                            break
-
-                if new_program is not None:
-                    new_pipeline.append(new_program)
-                else:
-                    new_pipeline = None
-                    break
-
-        if new_pipeline is not None:
-            resolved_pipelines[avail_lang] = new_pipeline
-
-    assert "*" not in resolved_pipelines
-    return resolved_pipelines
-
-
-def find_response_model(all_pipelines):
-    """Find the response model of all pipelines. All pipelines must have the
-    same response model, because the route in fastapi is defined by the
-    first one we find, and any other pipeline that does not share the
-    same response model, will fail to verify on return, and lead to a crash."""
-    last_step = dict_first_value(all_pipelines)[-1]
-    if isinstance(last_step, list):
-        return str
-    elif callable(last_step):
-        return_annotation = inspect.signature(last_step).return_annotation
-        if return_annotation is inspect.Signature.empty:
-            return Any
-        else:
-            return return_annotation
 
 
 def get_repo_info(path):
@@ -178,18 +81,20 @@ def gather_available_files(wanted_files):
 
 
 class Tool:
+    """Each file in toolspecs/ is a "Tool", and it is handled by this class."""
+
     def __init__(self, spec):
-        # spec as given in toolspecs/<file>.py
         self.spec = spec
         self.name = spec.__name__.split(".")[-1]
         spec_dict = dict(inspect.getmembers(spec))
-        self.description = spec_dict.get("description", "(no description given)")
+        self.description = spec_dict.get("description", "(no description)")
         self.summary = spec_dict.get("summary", "(no summary given)")
-        self.pipelines = normalize_pipelines(spec_dict["pipeline"])
+        self.pipelines = spec_dict["pipeline"]
+        self.normalize_pipelines()
+        self.resolve_pipelines()
         self.query_params = spec_dict.get("query_params", {})
         self.extra_files = spec_dict.get("extra_files", {})
-        self.wanted_files = find_needed_files(self.pipelines, spec_dict.get("extra_files"))
-        self.response_model = find_response_model(self.pipelines)
+        self.find_response_model()
 
         if "on_startup" not in spec_dict:
             self.on_startup = noop
@@ -200,6 +105,85 @@ class Tool:
                 logger.error(msg)
                 on_startup = noop
             self.on_startup = on_startup
+
+    def normalize_pipelines(self):
+        """Make sure `pipelines` is a dictionary of lang -> pipeline"""
+        if isinstance(self.pipelines, list):
+            default_pipeline = self.pipelines
+            self.pipelines = {}
+        else:
+            default_pipeline = self.pipelines["*"]
+            # TODO what if no default pipeline?
+
+        for available in DETECTED_GTLANGS:
+            if available not in self.pipelines:
+                self.pipelines[available] = deepcopy(default_pipeline)
+
+        if "*" in self.pipelines:
+            del self.pipelines["*"]
+
+    def resolve_pipelines(self):
+        """Resolve the PartilPaths given in all pipelines to real Paths,
+        and log a warning for when files are not found"""
+        new_pipelines = {}
+        self.langs = []
+
+        for lang, pipeline in self.pipelines.items():
+            assert lang != "*", "\"*\" still exists"
+            new_pipeline = []
+
+            for program in pipeline:
+                if not isinstance(program, list):
+                    # program is a python function
+                    new_pipeline.append(program)
+                    continue
+
+                new_program = []
+                for entry in program:
+                    if not isinstance(entry, PartialPath):
+                        new_program.append(entry)
+                        continue
+
+                    pp = entry.p
+                    resolved_path = GTLANGS / f"lang-{lang}" / pp
+                    if resolved_path.is_file():
+                        new_program.append(str(resolved_path))
+                    else:
+                        logger.warn(f"lang-{lang} wants file {pp}, but"
+                                    f" {resolved_path} does not exist")
+                        new_program = None
+                        break
+                if new_program is not None:
+                    new_pipeline.append(new_program)
+                else:
+                    new_pipeline = None
+                    break
+
+            if new_pipeline is not None:
+                new_pipelines[lang] = new_pipeline
+                self.langs.append(lang)
+
+        self.pipelines = new_pipelines
+
+    def find_response_model(self):
+        """Find the response model of *all* pipelines. All pipelines must have
+        the same response model, because each tool is one route in fastapi,
+        and one route can only have one response model. Maybe it would be
+        possible to make some kind of combination of all response models,
+        that's not really needed."""
+        if not self.pipelines:
+            self.response_model = None
+
+        last_step = next(iter(self.pipelines.values()))[-1]
+
+        if isinstance(last_step, list):
+            self.response_model = str
+        elif callable(last_step):
+            ret_ann = inspect.signature(last_step).return_annotation
+            if ret_ann is inspect.Signature.empty:
+                self.response_model = Any
+            else:
+                self.response_model = ret_ann
 
     def resolve_extra_files(self):
         """Gets called once per tool"""
@@ -246,9 +230,9 @@ class Tool:
 
         return available_langs
 
-    async def _run_callable(fn, input, lang, query_params=None):
+    async def _run_callable(self, fn, input, lang, query_params=None):
         is_coroutine = inspect.iscoroutinefunction(fn)
-        takes_query_params = fn_takes_query_params(fn)
+        takes_query_params = "query_params" in inspect.signature(fn).parameters
 
         match (is_coroutine, takes_query_params):
             case (True, True):
@@ -264,21 +248,24 @@ class Tool:
 
     async def run_pipeline(self, lang, input, query_params=None):
         final_output = {"input": input}
-
-        pipeline = self.pipelines.get(lang)
+        pipeline = self.pipelines[lang]
 
         for prog in pipeline:
             if callable(prog):
                 try:
-                    step_output = self._run_callable(prog, input, query_params)
-                except Exception:
-                    msg = "Python step in pipeline threw unhandled exception"
+                    step_output = await self._run_callable(
+                            prog, input, lang, query_params)
+                except Exception as e:
+                    msg = f"Python step in pipeline threw unhandled exception: {e}"
                     logger.exception(msg)
                     final_output["error"] = msg
                     return final_output
 
                 input = step_output
             else:
+                all_ok = all(isinstance(x, (str, Path)) for x in prog)
+                assert all_ok, prog
+                PIPE = subprocess.PIPE
                 subp = await asyncio.create_subprocess_exec(
                         *prog, stdin=PIPE, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = await subp.communicate(input.encode("utf-8"))
@@ -296,7 +283,6 @@ class Tool:
 class Tools:
     def __init__(self):
         self.tools = {}
-        self.all_wanted_files = set()
 
         # mapping of tool name -> list of langs supported
         self.capabilities = defaultdict(list)
@@ -308,41 +294,17 @@ class Tools:
         tool = Tool(spec)
         self.tools[tool.name] = tool
 
-        self.all_wanted_files |= tool.wanted_files
-
         return tool
 
-    def resolve_pipelines(self):
-        available_files, repos_info = gather_available_files(self.all_wanted_files)
-        self.repos_info = repos_info
-
-        for toolname, tool in self.tools.items():
-            # set of languages for which all extra files was resolved
-            extra_files_langs = set(tool.resolve_extra_files())
-
-            if len(tool.wanted_files) == 0:
-                logger.info(f"tool %s is non-fst (no requirements on GTLANGS-specific files)", toolname)
-
-            tool.pipelines = resolve_pipelines(tool.pipelines, available_files)
-
-            # set of languages for which the pipelines was succesfully resolved
-            pipeline_langs = set(tool.pipelines.keys())
-            enabled_langs = list(extra_files_langs & pipeline_langs)
-            tool.langs = enabled_langs
-            for lang in tool.langs:
-                self.capabilities[lang].append(toolname)
-
-            for lang in self.capabilities:
-                tool.on_startup(lang)
-
     def print_available_tools_by_language(self):
-        """Prints a list of languages, and which tools are available for each of those."""
+        """Prints a list of languages, and which tools are available
+        for each of those."""
         for lang, tools in self.capabilities.items():
             print(f"Available tools for language '{lang}': {', '.join(tools)}")
 
     def print_available_langs_by_tool(self):
-        """Prints a list of tools, and which languages are available for each of those."""
-        pass
+        """Prints a list of tools, and which languages are
+        available for each of those."""
 
 
 tools = Tools()
@@ -351,5 +313,4 @@ for name, spec in inspect.getmembers(toolspecs):
     if not name.startswith("__"):
         tools.add(spec)
 
-tools.resolve_pipelines()
 tools.print_available_tools_by_language()

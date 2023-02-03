@@ -10,17 +10,20 @@ Gives the relevant morphological analysis of each word in context.
 The output structure is parsed and sent as json.
 """
 
+
 class WordDisamb(BaseModel):
     root_word: str
     classes: str
+
 
 class ResponseLine(BaseModel):
     input_word: str
     word_disambs: list[WordDisamb]
 
+
 def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     out = []
-    #{ input_word, input_word_result },
+    # { input_word, input_word_result },
     # where input_word_result = {
     #   root_word, classes }
 
@@ -33,16 +36,16 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
             input_word = line[2:-2]
             word_disambs = []
         elif line == ":":
-                out.append({
-                    "input_word": input_word,
-                    "word_disambs": word_disambs
-                })
+            out.append({
+                "input_word": input_word,
+                "word_disambs": word_disambs
+            })
         else:
             q1 = line.index('"') + 1
             q2 = line.index('"', q1)
             root_word = line[q1:q2]
             w_ind = line.index("<")
-            classes = line[q2 + 2 : w_ind - 1]
+            classes = line[q2 + 2:w_ind - 1]
 
             word_disambs.append({
                 "root_word": root_word,
@@ -54,6 +57,7 @@ def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
     })
 
     return out
+
 
 pipeline = [
     [

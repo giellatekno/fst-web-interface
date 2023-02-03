@@ -9,30 +9,31 @@ Put dashes in between each syllable of a word.
 Output is structured up as json.
 """
 
+
 def pipeline_stdout_to_json(stdout) -> list[str]:
-    output = stdout.strip()
-    #{'input': 'konspirasjon', 'result': []}}
-    out = set()
-    lines = output.split("\n")
-    for line in lines:
-        splits = line.strip().split("\t")
-        if len(splits) != 3:
-            continue
-        else:
-            given, result, weight = splits
+    # {'input': 'konspirasjon', 'result': []}}
+    out = []
+    for line in stdout.strip().split("\n"):
+        try:
+            given, result, weight = line.strip().split("\t")
 
             # TODO koffer står det # på noen av og til?
             result = result.replace("#", "-")
 
-            out.add(result)
+            out.append(result)
+        except ValueError:
+            # line was not 3 columns, so just ignore it
+            pass
 
-    return list(out)
+    return out
+
 
 pipeline = [
     [
         "hfst-lookup",
         "-q",
         PartialPath(
+            # --enable-fst-hyphenator
             "tools/hyphenators/hyphenator-gt-desc.hfstol"
         )
     ],

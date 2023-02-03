@@ -93,11 +93,6 @@ async def handle_capabilities_for_lang(lang: str):
 def _generate_route_handler(tool):
     if len(tool.langs) == 0:
         return None
-    elif len(tool.langs) == 1 and tool.langs[0] == "*":
-        # This tool doesn't want any GTLANGS files, which means
-        # it doesn't run any of the fst programs.
-        async def handler(lang: str, input: str):
-            return await tool.run_pipeline(lang, input)
     else:
         Langs = StrEnum(tool.name + "Langs", tool.langs)
 
@@ -105,41 +100,39 @@ def _generate_route_handler(tool):
         for name, desc in tool.query_params.items():
             query_params[name] = Query()
 
-        if not tool.query_params:
-            async def handler(lang: Langs, input: str):
-                return await tool.run_pipeline(lang, input)
-        else:
-            # first make the function without the required query params in
-            # the signature
-            async def handler(lang: Langs, input: str):
-                actual_query_params = { [name]: locals()[name] for name in query_params }
-                return await tool.run_pipeline(lang, input, query_params=actual_query_params)
+        async def fn(lang: Langs, input: str):
+            pass
 
-            # extract the signature as we have it, and update it
-            signature = inspect.signature(handler)
-            new_signature = signature.replace(
-                parameters = (
-                    *signature.parameters.values(),
-                    *[
-                        inspect.Parameter(
-                            name,
-                            kind = inspect.Parameter.KEYWORD_ONLY,
-                            default = Query(default=..., description=param["description"]),
-                            annotation = str,
-                        )
-                        for name, param in tool.query_params.items()
-                    ]
-                )
-            )
+        # extract the signature as we have it, and update it
+        signature = inspect.signature(fn)
+        new_signature = signature.replace(
+            parameters=(
+                *signature.parameters.values(),
+                *[
+                    inspect.Parameter(
+                        name,
+                        kind=inspect.Parameter.KEYWORD_ONLY,
+                        default=Query(
+                            default=..., description=param["description"]
+                        ),
+                        annotation=str,
+                    )
+                    for name, param in tool.query_params.items()
+                ]
+            ),
+        )
 
-            # finally re-make the function, now with the apporopriate signature
-            @with_signature(new_signature, func_name="handler")
-            async def handler(*args, **kwargs):
-                # in here we must also do some tricks to get the actual parameters
-                actual_query_params = { name: kwargs[name] for name in query_params }
-                lang = kwargs["lang"]
-                input = kwargs["input"]
-                return await tool.run_pipeline(lang, input, query_params=actual_query_params)
+        # finally re-make the function, now with the apporopriate signature
+        @with_signature(new_signature, func_name="handler")
+        async def handler(*args, **kwargs):
+            # here we must also do some tricks to get the actual parameters
+            actual_query_params = {name: kwargs[name] for name in query_params}
+            lang = kwargs["lang"]
+            input = kwargs["input"]
+            resp = await tool.run_pipeline(
+                    lang, input, query_params=actual_query_params)
+            print(resp)
+            return resp
 
     return handler
 
@@ -155,6 +148,7 @@ class OkResponse(GenericModel, Generic[T]):
     input: str
     result: T
 
+
 for name, tool in tools.tools.items():
     url = f"/{name}/"
     url += "{lang}/{input}"
@@ -166,11 +160,10 @@ for name, tool in tools.tools.items():
     app.add_api_route(
         url,
         route_handler,
-        response_model = Union[
+        response_model=Union[
             OkResponse[tool.response_model],
             ErrorResponse,
         ],
-        summary = tool.summary,
-        description = tool.description,
+        summary=tool.summary,
+        description=tool.description,
     )
-

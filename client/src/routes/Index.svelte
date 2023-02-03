@@ -189,7 +189,8 @@
     }
 
     div.filters > span.header {
-        padding: 2px 8px;
+        user-select: none;
+        padding: 2px 0px;
         border-radius: 5px;
         color: #000;
         font-weight: bold;
@@ -220,6 +221,10 @@
     span.label > input {
         appearance: none;
         display: none;
+    }
+
+    span.label > label {
+        user-select: none;
     }
 
     h2 {
