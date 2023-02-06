@@ -29,7 +29,7 @@ and install the dependencies.
 
 ```bash
 git clone https://github.com/giellatekno/fst-web-interface
-cd fst-web-interface
+cd fst-web-interface/client
 npm install
 npm run dev
 ```
@@ -69,17 +69,4 @@ The javascript frontend framework in this project is Svelte.
 Read about it at [svelte.dev](https://svelte.dev/).
 
 The API framework is FastAPI. Read about it at [fastapi.tiangolo.com](https://fastapi.tiangolo.com/).
-
-
-## Deployment
-
-At this point, how we do deployment for this project is yet to be
-determined.
-
-The Svelte app builds to static html/css/js, and can be served by any
-web server. But keep in mind that it is a SPA, and as such, all requests
-for "children" routes should all resolve to index.html.
-
-For the API, there are numerous options, including containerized type
-setups, documented on the FastAPI website.
 
