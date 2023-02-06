@@ -58,7 +58,6 @@
 
     $: copyright = get_copyright($t, $lang);
     $: tools = tools_for[$lang];
-    $: console.log(tools_available);
 
     const FMT_DATE_OPTS = { day: "numeric", month: "short", year: "numeric" };
 

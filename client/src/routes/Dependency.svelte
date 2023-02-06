@@ -10,6 +10,7 @@
 
     //$: usage = $t(`usage.lang.${$lang}`);
     $: usage = get_langspecific_key("usage", $lang);
+    $: console.log(results);
 
     function on_new_value({ detail: value }) {
         results = dependency($lang, value);
@@ -38,14 +39,19 @@
             <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
         {:then res}
             {#if res}
-                {#each res as { word, root, props, dep }}
+                {#each res as { word, defs }, i}
                     <div class="result">
-                        <span class="word">{word}</span>
+                        <span class="word">{i+1}. {word}</span>
                         <br>
                         <div class="def">
-                            <span class="rootword">{root}</span>
-                            <span class="props">{props}</span>
-                            <span class="dep">{dep}</span>
+                            {#each defs as { root, wcs, dep } }
+                                <span class="rootword">{root}</span>
+                                <span class="wcs" class:red={wcs === "?"}>
+                                    {wcs}
+                                </span>
+                                <span class="dep">{dep.replace("->", " ➜ ")}</span>
+                                <br>
+                            {/each}
                         </div>
                     </div>
                 {/each}
@@ -70,24 +76,32 @@
         font-size: 1.2em;
     }
 
-    div.result > span.word {
-        color: red;
-    }
-
     div.result > div.def {
         padding-top: 0.3em;
         margin-left: 3em;
     }
 
-    span.rootword {
-        color: blue;
+    span.word {
+        color: red;
     }
 
-    span.props {
-        color: green;
+    span.rootword {
+        color: rgb(100, 100, 255);
+        font-style: italic;
+    }
+
+    span.wcs {
+        color: rgb(50, 50, 50);
+        font-family: monospace;
+    }
+
+    span.wcs.red {
+        color: red;
     }
 
     span.dep {
-        color: orange;
+        color: #4d483f;
+        font-weight: bold;
+        padding-left: 1em;
     }
 </style>

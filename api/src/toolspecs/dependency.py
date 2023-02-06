@@ -13,39 +13,64 @@ The output structure is parsed and sent as json.
 """
 line_re = r'"\<(?P<word>\w+)\>"'
 
-class ResponseLine(BaseModel):
-    word: str
+
+class Def(BaseModel):
     root: str
+    wcs: str
     dep: str
 
-def pipeline_stdout_to_json(stdout) -> list[ResponseLine]:
+
+class ResponseLine(BaseModel):
+    word: str
+    defs: list[Def]
+
+
+# TODO dot handling.
+# dots at the end of a "sentence" we can just easily remove,
+# but if a word has a dot in it, for example: "f.eks.", or
+# "Prof.", we don't currently handle it
+
+
+WORD = re.compile(r'''
+"<(?P<word>(\w+|,))>"              # capture the input word, can be ","
+    (?P<lines>
+        (
+            \s+(.+)\n
+        )+
+    )
+''', re.MULTILINE | re.VERBOSE)
+
+ITEM = re.compile(r'''
+     "(?P<root>(\w+|,))"               # root word is in quotes, can be ","
+     \ (?P<wcs>(\?|\w+(\ \w+)*))       # wcs = word classes
+     \ \#(?P<dep>\d+->\d+)             # finally capture the dependency "X->X"
+''', re.MULTILINE | re.VERBOSE)
+
+
+def pipeline_stdout_to_json(output) -> list[ResponseLine]:
+    # if ends with ".", remove it
+    if output.endswith("."):
+        output = output[:-1]
+
     out = []
 
-    obj = {}
-    for line in stdout.split("\n"):
-        if line.startswith('"<'):
-            obj["word"] = line[2 : -2]
-        elif line.startswith("\t"):
-            q1 = line.index('"') + 1
-            q2 = line.index('"', q1)
-            obj["root"] = line[q1 : q2]
+    for m in WORD.finditer(output):
+        word = m["word"]
+        lines = m["lines"].strip()
 
-            if "<W:" in line:
-                weight_i1 = line.index("<W:", q2)
-                weight_i2 = line.index(">", weight_i1)
-            else:
-                weight_i1 = weight_i2 = q2
+        defs = []
+        for line in lines.split("\n"):
+            line = line.strip()
+            item_match = ITEM.match(line)
+            defs.append(item_match.groupdict())
 
-            obj["props"] = line[q2 + 2 : weight_i1 - 1]
-            obj["dep"] = line[weight_i2 + 2 : ]
-        elif line.startswith(":"):
-            out.append(obj)
-            obj = {}
-
-    if len(obj):
-        out.append(obj)
+        out.append({
+            "word": word,
+            "defs": defs
+        })
 
     return out
+
 
 # TODO!! some languages have a different pipeline!
 with_korp = [
@@ -82,19 +107,22 @@ with_korp = [
     pipeline_stdout_to_json
 ]
 
+
 pipeline = {
     # these languages have an additional step in the pipeline
     "fao": with_korp,
     "sma": with_korp,
     "sme": with_korp,
     "smj": with_korp,
-    #"nob": with_korp,
+    # "nob": with_korp,
 
     # for all other languages, this is the pipeline
     "*": [
         [
             "hfst-tokenize",
-            "-cg",
+            # note: -L for nicer output (doesn't separate by ":", and does
+            # not do anything with the commas, but we might want to)
+            "-cgL",
 
             # built with: ./configure --enable-tokenisers
             PartialPath(
