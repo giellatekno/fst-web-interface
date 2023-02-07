@@ -3,6 +3,10 @@ import re
 from collections import defaultdict
 from subprocess import PIPE
 import logging
+import enum
+
+from ..util import PartialPath
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
@@ -11,13 +15,11 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-from ..util import PartialPath
-
 summary = "paradigm"
 description = """
 Generates the morphological paradigm from lemmas
 
-`echo "$INPUT" | hfst-lookup -q lang-$LANG/src/generator-gt-norm.hfstol`
+`echo "$INPUT" | hfst-lookup -q lang-$LANG/src/analyser-gt-norm.hfstol`
 
 The output structure is parsed and sent as json.
 """
@@ -55,11 +57,12 @@ The output structure is parsed and sent as json.
 # that list. If no specific word class is given, we select one - by which criteria I currently
 # don't know - then use that word class to generate all forms we need.
 
+
 def read_gramfile(gramfile):
     if gramfile:
         ignored_line = re.compile(r"(^[#%$])|(^\s*$)")
         with open(gramfile) as f:
-            return [ line.strip() for line in f if not ignored_line.match(line) ]
+            return [line.strip() for line in f if not ignored_line.match(line)]
 
 
 def read_tagfile(tagfile):
@@ -70,7 +73,8 @@ def read_tagfile(tagfile):
         ignored_line = re.compile(r"(^[%$])|=|^\s*$")
         for line in f:
             line = line.strip()
-            if ignored_line.search(line): continue
+            if ignored_line.search(line):
+                continue
 
             if line.startswith("#"):
                 out[line[1:]] = tags
@@ -120,7 +124,18 @@ def generate_taglist(gramfile, tagfile):
 
 
 def pipeline_stdout_to_json(stdout):
-    return { "result": stdout }
+    return {"result": stdout}
+
+
+class ParadigmSize(enum.StrEnum):
+    min = "minimum"
+    standard = "standard"
+    full = "full"
+
+
+class POS(enum.StrEnum):
+    N = "N"
+    V = "V"
 
 
 # this pipeline can accept a few more query params:
@@ -128,23 +143,15 @@ query_params = {
     "mode": {
         "optional": True,
         "description": "the size of the paradigm, i.e. minimal, standard, full",
+        "type": ParadigmSize,
     },
     "word_class": {
         "optional": True,
         "description": "word class to find paradigm for, such as N, V, etc.",
+        "type": POS,
     },
 }
 
-# we need to know which LANG this is, to find the paradigm files
-# but all of this can probably be done when we startup the app
-#paradigmfiles = dict(
-#    minimal="paradigm_min.LANG.txt",
-#    standard="paradigm_standard.LANG.txt",
-#    full="paradigm_full.LANG.txt",
-#)
-#if mode: paradigmfile = paradigmfiles[mode]
-#if not mode or paradigmfile does not exist: paradigmfile = "paradigm.LANG.txt"
-#if paradigmfile does not exist: paradigmfile = "paradigm.txt"
 
 # extra files needed by this toolspec that is not referenced in the pipeline
 #   TODO: fallback files.... (tagfile = korpustags.LANG.txt (or if that doesn't exist): korpustags.txt)
@@ -162,30 +169,28 @@ extra_files = {
         "korpustags.txt": PartialPath("test/data/korpustags.sme.txt"),
     },
     "nob": {
-        # TODO for now, intentionally wrong to provoke the error
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sme.txt"),
-        "paradigm_min.txt": PartialPath("test/data/paradigm_min.sme.txt"),
-        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sme.txt"),
-        "korpustags.txt": PartialPath("test/data/korpustags.sme.txt"),
+        # TODO these files are copied from sme, just to have some test data!
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.nob.txt"),
+        "paradigm_min.txt": PartialPath("test/data/paradigm_min.nob.txt"),
+        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.nob.txt"),
+        "korpustags.txt": PartialPath("test/data/korpustags.nob.txt"),
     },
     "*": {
         "generator-gt-norm.hfstol": PartialPath("src/generator-gt-norm.hfstol"),
     }
 }
 
-PARADIGM_MODES = { "min": "minimal", "standard": "standard", "full": "full" }
-
-def get_extra_files(lang):
-    return { **extra_files["*"], **extra_files.get(lang, {}) }
 
 # all paradigms per lang, per paradigmmode
 # paradigm_files[lang][mode] = ...
 PARADIGM_FILES = defaultdict(dict)
 
-def on_startup(lang):
-    # for all languages, find which paradigm modes they can do (if any), and
-    # pre-generate the tags (for all langs, for all modes)
-    files = get_extra_files(lang)
+
+def on_startup(lang, extra_files):
+    """for all languages, find which paradigm modes they can do (if any), and
+    pre-generate the tags (for all langs, for all modes)"""
+    PARADIGM_MODES = {"min": "minimal", "standard": "standard", "full": "full"}
+    files = extra_files[lang]
     for abbr, mode in PARADIGM_MODES.items():
         gramfile = files.get(f"paradigm_{abbr}.txt")
         tagfile = files.get("korpustags.txt")
@@ -213,7 +218,7 @@ async def generate_paradigm(analyses, lang, query_params={}):
         # must select one, using some method.. (found in smi.pl)
         paradigmfile = PARADIGM_FILES[lang][mode][word_class]
     except KeyError:
-        return { "error": "lang, mode or word_class not found" }
+        return {"error": "lang, mode or word_class not found"}
 
     return await call_para(analyses, lang, paradigmfile)
 
@@ -232,6 +237,7 @@ async def generate_paradigm(analyses, lang, query_params={}):
     #            # handle derivations separately here
     #            pass
 
+
 async def call_para(analyses, lang, paradigmfile):
     # find the word again from analysis
     word = None
@@ -248,6 +254,7 @@ async def call_para(analyses, lang, paradigmfile):
     # we want (and all variants depends on which "mode" we're doing paradigm for)
     input = "\n".join(f"{word}+{para}" for para in paradigmfile)
     input = input.encode("utf-8")
+
 
     # now run the subprocess call
     # echo gen_input | hfst-lookup src/generator-gt-norm.hfstol

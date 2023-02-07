@@ -113,13 +113,8 @@ export async function disambiguate(lang, input) {
     return apicall(`disambiguate/${lang}/${input}`, { api: "local" });
 }
 
-const PARADIGM_SIZES = ["min", "standard", "full"];
-const WORD_CLASSES = ["Any", "N", "A", "V", "Adv", "Adj", "Pron", "Num"];
-export async function paradigm(lang, input, wordclass_idx, size_idx) {
+export async function paradigm(lang, input, word_class, mode) {
     check_arg_nonempty("paradigm", input, "input");
-
-    const word_class = WORD_CLASSES[wordclass_idx];
-    const mode = PARADIGM_SIZES[size_idx];
 
     const query_params = new URLSearchParams({ word_class, mode }).toString();
 

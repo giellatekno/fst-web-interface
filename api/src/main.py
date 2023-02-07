@@ -102,7 +102,7 @@ def _generate_route_handler(tool):
                         default=Query(
                             default=..., description=param["description"]
                         ),
-                        annotation=str,
+                        annotation=param["type"],
                     )
                     for name, param in tool.query_params.items()
                 ]
@@ -118,14 +118,12 @@ def _generate_route_handler(tool):
             input = kwargs["input"]
             resp = await tool.run_pipeline(
                     lang, input, query_params=actual_query_params)
-            print(resp)
             return resp
 
     return handler
 
 
 # Dynamically add routes for all tools defined in toolspecs/
-
 
 
 for name, tool in tools.tools.items():

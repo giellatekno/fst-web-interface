@@ -50,25 +50,38 @@ class Tool:
     def __init__(self, spec):
         self.spec = spec
         self.name = spec.__name__.split(".")[-1]
+
+        # which languages are available for this tool
+        self.langs = set()
+
         spec_dict = dict(inspect.getmembers(spec))
         self.description = spec_dict.get("description", "(no description)")
         self.summary = spec_dict.get("summary", "(no summary given)")
-        self.pipelines = spec_dict["pipeline"]
-        self.normalize_pipelines()
-        self.resolve_pipelines()
         self.query_params = spec_dict.get("query_params", {})
         self.extra_files = spec_dict.get("extra_files", {})
-        self.find_response_model()
+        self.pipelines = spec_dict["pipeline"]
+        self.resolve_pipelines()
 
-        if "on_startup" not in spec_dict:
+        # this technically returns available files
+        # TODO but where is it define that this tool should work for
+        # language X ? currently in docs paradigm tool is only
+        # available for nob and smj... (??)
+        self.resolve_extra_files()
+
+        self.find_response_model()
+        self.langs = list(self.langs)
+
+        self.on_startup = spec_dict.get("on_startup", noop)
+        if not callable(self.on_startup):
+            msg = f"toolspec/{self.name}: on_startup must be a function"
+            logger.error(msg)
             self.on_startup = noop
-        else:
-            on_startup = spec_dict["on_startup"]
-            if not callable(on_startup):
-                msg = f"toolspec/{self.name}: on_startup must be a function"
-                logger.error(msg)
-                on_startup = noop
-            self.on_startup = on_startup
+
+        for lang in DETECTED_GTLANGS:
+            if lang in self.langs:
+                self.on_startup(lang, self.extra_files)
+            else:
+                pass  # print(f"skipping on_startup for ({self.name}, {lang})")
 
     def normalize_pipelines(self):
         """Make sure `pipelines` is a dictionary of lang -> pipeline"""
@@ -89,11 +102,13 @@ class Tool:
     def resolve_pipelines(self):
         """Resolve the PartilPaths given in all pipelines to real Paths,
         and log a warning for when files are not found"""
+        self.normalize_pipelines()
+
         new_pipelines = {}
-        self.langs = []
+        disabled_langs = defaultdict(set)
 
         for lang, pipeline in self.pipelines.items():
-            assert lang != "*", "\"*\" still exists"
+            assert lang != "*", "\"*\" still exists in pipeline"
             new_pipeline = []
 
             for program in pipeline:
@@ -113,8 +128,9 @@ class Tool:
                     if resolved_path.is_file():
                         new_program.append(str(resolved_path))
                     else:
-                        logger.warn(f"lang-{lang} wants file {pp}, but"
-                                    f" {resolved_path} does not exist")
+                        #logger.warn(f"lang-{lang} wants file {pp}, but"
+                        #            f" {resolved_path} does not exist")
+                        disabled_langs[lang].add(pp)
                         new_program = None
                         break
                 if new_program is not None:
@@ -125,7 +141,13 @@ class Tool:
 
             if new_pipeline is not None:
                 new_pipelines[lang] = new_pipeline
-                self.langs.append(lang)
+                self.langs.add(lang)
+
+        for lang, files in disabled_langs.items():
+            logger.error(
+                f"({self.name}, {lang}) disabled due to missing pipeline"
+                f' files: {", ".join(files)}'
+            )
 
         self.pipelines = new_pipelines
 
@@ -149,50 +171,62 @@ class Tool:
             else:
                 self.response_model = ret_ann
 
+    def normalize_extra_files(self):
+        """Make sure `self.extra_files` is a dict of lang -> extra files."""
+        if not isinstance(self.extra_files, dict):
+            msg = "'extra_files' must be a dict"
+            logger.critical(msg)
+            exit()
+
+        default_extra_files = self.extra_files.get("*")
+
+        if default_extra_files:
+            for lang in DETECTED_GTLANGS:
+                if lang not in self.extra_files:
+                    self.extra_files[lang] = deepcopy(default_extra_files)
+                else:
+                    self.extra_files[lang].update(**deepcopy(default_extra_files))
+
+        if default_extra_files:
+            del self.extra_files["*"]
+
     def resolve_extra_files(self):
         """Gets called once per tool"""
-        # if not self.extra_files:
-        #     this tool doesn't have any extra files, just skip out immediately
-        #     return []
-        available_langs = []
+        self.normalize_extra_files()
+
+        if not self.extra_files:
+            # this tool doesn't have any extra files, just skip out immediately
+            return
+
+        disabled_langs = defaultdict(set)
 
         for p in GTLANGS.glob("lang-*"):
             lang = p.name[5:]
 
             if lang not in self.extra_files:
-                self.extra_files[lang] = {}
+                continue
 
-            if "*" in self.extra_files:
-                star_updates = {}
-                for entry, partial_path in self.extra_files["*"].items():
-                    file_path = p / partial_path.p
-                    if file_path.is_file():
-                        star_updates[entry] = file_path
-                    else:
-                        logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
-                        star_updates[entry] = None
+            updated = {}
+            for entry, path in self.extra_files[lang].items():
+                if isinstance(path, PartialPath):
+                    path = p / path.p
 
-                    self.extra_files[lang].update(star_updates)
+                if path.is_file():
+                    updated[entry] = path
+                else:
+                    disabled_langs[lang].add(str(path))
+                    updated[entry] = None
 
-            if lang in self.extra_files:
-                updates = {}
-                for entry, partial_path in self.extra_files[lang].items():
-                    if not isinstance(partial_path, PartialPath):
-                        continue
-                    file_path = p / partial_path.p
-                    if file_path.is_file():
-                        updates[entry] = file_path
-                    else:
-                        updates[entry] = None
-                        #logger.warn(f"lang-{lang} wants file {partial_path.p}, but it was not found")
-                self.extra_files[lang].update(updates)
+            self.extra_files[lang] = updated
 
-            if any(value is None for value in self.extra_files[lang].values()):
-                logger.error(f"tool:{self.name} for lang={lang} disabled due to missing files")
-            else:
-                available_langs.append(lang)
+            if all(value is not None for value in self.extra_files[lang].values()):
+                self.langs.add(lang)
 
-        return available_langs
+        for lang, files in disabled_langs.items():
+            logger.error(
+                f"({self.name}, {lang}) disabled due to missing extra files "
+                f" {', '.join(files)}"
+            )
 
     async def _run_callable(self, fn, input, lang, query_params=None):
         is_coroutine = inspect.iscoroutinefunction(fn)
