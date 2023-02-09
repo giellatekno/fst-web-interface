@@ -5,6 +5,14 @@ export function only_on_enter(fn) {
     }
 }
 
+/*
+    deep_len(arr)
+    total length of array `arr`, including length of subarrays, e.g.
+    tot_len([1, 2, 3]) == 3,
+    tot_len([1, 2, [3, 4]]) == 4
+*/
+export const deep_len = arr => !Array.isArray(arr) ? 1 : arr.map(deep_len).reduce((prev, cur) => prev + cur);
+export const is_pojo = obj => !!obj && obj.constructor === Object;
 
 // https://blog.webdevsimplified.com/2020-07/relative-time-format/
 const DIVISIONS = [

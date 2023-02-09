@@ -53,162 +53,166 @@
         }
     }
 
-    class TableBuilder {
+    function reverse_spans(spans) {
+        // TODO solve this in general
+        if (spans[0] === 1 && spans[1] === 1) {
+            // [1, 1] -> [1, 1]
+            return [1, 1];
+        } else if (spans[0] === 1 && spans[1] === 2) {
+            // [1, 2] -> [2, 1]
+            return [2, 1];
+        } else if (spans[0] === 2 && spans[1] === 1) {
+            // [2, 1] -> [1, 2]
+            return [1, 2];
+        } else {
+            throw Error("unhandled case");
+        }
+    }
+
+    function array2d(x, y) {
+        return Array(y).fill(null).map(_ => Array(x));
+    }
+
+    function group_by_length(lines) {
+        let current_size = lines[0].length;
+        let current_group = [lines[0]];
+        const groups = [];
+        for (let i = 1; i < lines.length; i++) {
+            const current_line = lines[i];
+            if (current_line.length !== current_size) {
+                current_size = current_line.length;
+                // next group
+                groups.push(current_group);
+                current_group = [];
+            }
+            current_group.push(current_line);
+        }
+        return groups;
+    }
+
+    class Layout {
         constructor() {
-            this.size_x = 0;
-            this.size_y = 0;
-            this._row_headers = [];
-            this._column_headers = null;
-            this._caption = "";
+            this.columns = [];
+            this.rows = [];
+            this.column_headers_rows = [[]];
         }
 
-        column_headers(headers) {
-            if (this._column_headers === null) {
-                this._column_headers = [[...headers]];
-            } else {
-                if (headers.length !== this._column_headers[0].length) {
-                    throw Error("incorrect number of args");
-                }
-                this._column_headers.push(headers);
+        column(...text) {
+            // text = [abc, def]
+            // [ [], [] ] --> [ [abc], [def] ]
+            for (let i = 0; i < this.columns.length; i++) {
+                this.column_headers_rows[i].push(text[i]);
             }
             return this;
         }
 
-        row_headers(headers) { this._row_headers.push(headers); return this; }
-        caption(text) { this._caption = text; return this; }
-
-        build() {
-            this.data = Array(this.size_y);
-            for (let i = 0; i < this.size_y; i++) {
-                this.data[i] = Array(this.size_x).fill(null).map(_0 => new Entry());
-            }
-            this._ready = true;
-            return new Table(this);
+        row(text) {
+            this.rows.push(text);
+            return this;
         }
     }
 
-    class Table {
-        constructor(builder) {
-            this.size_x = builder.size_x;
-            this.size_y = builder.size_y;
-            this.row_headers = builder._row_headers;
-            this.column_headers = builder._column_headers;
-            this.data = builder.data;
-        }
+    const _ignore = `
+-|A|   B |C|
+-|a|b1|b2|c|
+1|
+2|
+    `;
+    function structurize(text) {
+        let lines = text.split("\n");
+        lines = lines.splice(1, lines.length);
+        const [col_headers, row_headers] = group_by_length(lines);
 
-        entry(row, col) {
-            return this.data[row][col];
-        }
+        const col_header_height = col_headers.length;
+        const col_header_width = col_headers
+            .map(ch => ch.split("|"))
+            .reduce((prev, cur) => Math.max(prev, cur.length), 0);
+        console.log(`colum header dimensions: ${col_header_height} x ${col_header_width}`);
 
-        find_row_by_header(header) {
-            return this.row_headers.indexOf(header);
-        }
+        // allocate `columns`
+        const columns = array2d(col_header_width, col_header_height);
 
-        find_column_by_headers(...headers) {
-            console.log("find_column_by_headers()")
-            console.log(headers);
-            const indexes = [];
-            let i = 0;
-            for (let A of headers) {
-                console.log("A");
-                console.log(A);
-                const B = this.column_headers[i];
-                console.log("B");
-                console.log(B);
+        let last_index = 0;
+        for (let i = 0; i < col_headers[0].length; i++) {
+            const ch = col_headers[0][i];
+            if (ch === "|") {
+                const to_be_pushed = [];
+                let first_col = col_headers[0].slice(last_index, i);
+                to_be_pushed.push(first_col);
 
-                if (A === B) {
-                    indexes.push(i);
-                } else {
-                    // scan array
-                    console.log("we need to scan array");
+                // check and extract from all the other headers
+                for (let j = 1; j < col_headers.length; j++) {
+                    const ch_other = col_headers[j][i];
+                    if (ch_other !== ch) {
+                        // the same column in one of the other colum header row_headers
+                        // is not a "|", so it's mis-aligned
+                        throw Error(`mis-aligned column in row number ${j + 1}. "|" found in this column`
+                            + `on line 1, but this line has character ${ch_other} in that position`);
+                    }
+
+                    let other_col = col_headers[j].slice(last_index, i);
+                    to_be_pushed.push(other_col);
                 }
 
-                i++;
+                // then we need to transform all the strings in "to_be_pushed"
+                // and push them to the actual `columns`
+                //console.log(to_be_pushed);
+                console.assert(to_be_pushed.length === col_header_height);
+
+                const to_be_pushed_splits = to_be_pushed.map(s => s.split("|"));
+
+                const spans = to_be_pushed_splits.map(arr => arr.length);
+                const rev_spans = reverse_spans(spans);
+                //console.log("spans:", spans);
+                console.log(to_be_pushed_splits);
+                for (let z = 0; z < columns.length; z++) {
+                    // for each column row, a various number of objects needs
+                    // to be pushed, because of spans
+                    // how many times do we push this object?
+                    /*
+                    for (let g = 0; g < rev_spans[z]; g++) {
+                        const tbps = to_be_pushed_splits[g][0];
+                        console.assert(typeof tbps === "string", `${typeof tbps}`);
+                        columns[z].push({
+                            text: tbps.trim(),
+                            span: spans[z],
+                        });
+                    }
+                    */
+                }
+
+                last_index = ++i;
+            } else if (ch === " ") {
+                // just ignore it
+            } else if (ch === "-") {
+                // just skip to next? (basically ignoring it)
+            } else {
             }
-
-            return 
         }
 
-        find_entry_by_headers(row_header, column_header1, column_header2) {
-            const row = this.row_headers.indexOf(row_header);
-            if (row === -1) return [-1, -1];
-
-            const col1 = this.column_headers[0].indexOf(column_header1);
-            const col2 = this.column_headers[1].indexOf(column_header2);
-
-            return this.data[row][col2];
-        }
+        return {
+            row_headers,
+            columns,
+        };
     }
 
-    class VerbTables {
-        constructor(data) {
-            this.personsboyd = new TableBuilder()
-                .caption("Personsbøyd")
-                .row_headers(["Sg1", "Sg2", "Sg3", "Du1", "Du2", "Du3", "Pl1", "Pl2", "Pl3"])
-                .column_headers(["Mood", "Ind", "Cond", "Imprt", "Pot"])
-                .column_headers(["Tense", ["Present", "Preterite"], "Present", "", "Present"])
-                .build();
+    console.log(structurize(_ignore));
 
-            this.gerundium = new TableBuilder()
-                .caption("Gerundium")
-                .row_headers([
-                    "Ger+PxSg1", "Ger+PxSg2", "Ger+PxSg3", "Ger+PxDu1",
-                    "Ger+PxDu2", "Ger+PxDu3", "Ger+PxPl1", "Ger+PxPl2",
-                    "Ger+PxPl3",
-                ])
-                .build();
-            
-            this.misc = new TableBuilder()
-                .row_headers([
-                    "Inf", "PrfPrc", "PrsPrc", "Sup", "Ger", "VGen",
-                    "VAbess", "Actio+Nom", "Actio+Gen", "Actio+Loc",
-                    "Actio+Ess", "Actio+Com",
-                ])
-                .build();
+    const table = {
+        caption: "caption",
+        row_headers: ["1", "2"],
+        columns: [
+            [{text: "A", span: 1}, { text: "B", span: 2}, {text: "C", span: 1}],
+            [{text: "_a", span: 1}, { text: "_b1", span: 1 }, {text: "_b2", span:1}, {text: "c", span:1}],
+        ],
+        data: [
+            ["a", "b"],
+            ["c", "d"],
+        ],
+    };
 
-            this.d = {};
-            for (let [line, word] of data.result) {
-                const splits = line.split("+").slice(2);
-                const first = splits[0];
-                const rest = splits.slice(1);
-                const last = splits.at(-1);
-
-                // which table should this go into?
-                if (this.personsboyd.row_headers.includes(last)) {
-                    const row = this.personsboyd.find_row_by_header(first);
-                    const col = this.personsboyd.find_column_by_headers(...rest);
-                    this.personsboyd.entry(row, col).set_text(word);
-                }
-            }
-            console.log("personsbøyd");
-            console.log(this.personsboyd.data);
-        }
-
-        add(field, data) {
-            const splits = field.split("+").slice(2);
-
-            let cur = this.d;
-            for (let split of splits) cur = cur[split] = cur[split] || {};
-            if (!Array.isArray(cur.data)) cur.data = [];
-            cur.data.push(data);
-        }
-
-        columns() {
-            const c = new Set(Object.keys(this.d));
-            for (let [k, v] of Object.entries(this.d)) {
-                if ("data" in v) {
-                    c.delete(k);
-                }
-            }
-            console.log("columns");
-            console.log(Array.from(c.keys()));
-        }
-    }
 
     function parse_data(data) {
-        const vt = new VerbTables(data);
-        vt.columns();
-
         const results = {};
         for (let [line, res] of data.result) {
             const firstplus = line.indexOf("+");
@@ -242,6 +246,38 @@
         return res === undefined ? "-" : res;
     }
 </script>
+
+<hr>
+
+<table>
+    <caption>{table.caption}</caption>
+    <thead>
+        {#each table.columns as column_row}
+            <tr>
+                {#if table.row_headers}
+                    <th></th>
+                {/if}
+                {#each column_row as { text, span }}
+                    <th colspan={span}>{text}</th>
+                {/each}
+            </tr>
+        {/each}
+    </thead>
+    <tbody>
+        {#each table.data as row, i}
+            <tr>
+                {#if table.row_headers[i]}
+                    <th>{table.row_headers[i]}</th>
+                {/if}
+                {#each row as col, i}
+                    <td>{col}</td>
+                {/each}
+            </tr>
+        {/each}
+    </tbody>
+</table>
+
+<hr>
 
 {#if state === "awaiting"}
     <Pulse color="#FF0000" size="28" unit="px" duration="1s" />
@@ -413,6 +449,12 @@
         color: rgb(80, 80, 80);
         font-style: italic;
     }
+
+    /* TEMP */
+    table th {
+        border: 1px solid var(--border-color);
+    }
+    /* TEMP END */
 
     table thead tr:last-of-type {
         border-bottom: 2px solid black;
