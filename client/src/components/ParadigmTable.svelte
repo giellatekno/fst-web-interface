@@ -70,7 +70,13 @@
     }
 
     function array2d(x, y) {
-        return Array(y).fill(null).map(_ => Array(x));
+        return Array(y).fill(null).map(_ => Array(x).fill(undefined));
+    }
+
+    function *enumerate(list, start = 0) {
+        for (let i = start; i < list.length; i++) {
+            yield [i, list[i]];
+        }
     }
 
     function group_by_length(lines) {
@@ -80,8 +86,8 @@
         for (let i = 1; i < lines.length; i++) {
             const current_line = lines[i];
             if (current_line.length !== current_size) {
+                // this line's length is different, so make next group
                 current_size = current_line.length;
-                // next group
                 groups.push(current_group);
                 current_group = [];
             }
@@ -112,82 +118,74 @@
         }
     }
 
-    const _ignore = `
+    const _table_format = `
 -|A|   B |C|
 -|a|b1|b2|c|
 1|
 2|
     `;
+    class MisalignedError extends Error {
+        constructor(row, column, char, ...params) {
+            super(...params);
+            this.name = this.constructor.name;
+            this.message = `Mis-aligned column in row ${row}. `
+                + `Because "|" was found in this column on line 1, expected `
+                + `"|" to be found in column ${column} but, but found ${char}.`;
+        }
+    }
+    const MISALIGNED = (row, other_ch) => `mis-aligned column in row ${row}.`
+        + ` "|" found in this column on line 1, but this line has character `
+        + `"${other_ch}" in that column position`;
     function structurize(text) {
         let lines = text.split("\n");
         lines = lines.splice(1, lines.length);
-        const [col_headers, row_headers] = group_by_length(lines);
+        let [col_headers, row_headers] = group_by_length(lines);
+        row_headers = row_headers.map(s => s.replaceAll("|", ""));
 
         const col_header_height = col_headers.length;
         const col_header_width = col_headers
             .map(ch => ch.split("|"))
             .reduce((prev, cur) => Math.max(prev, cur.length), 0);
-        console.log(`colum header dimensions: ${col_header_height} x ${col_header_width}`);
+        //console.log(`colum header dimensions: ${col_header_height} x ${col_header_width}`);
 
         // allocate `columns`
-        const columns = array2d(col_header_width, col_header_height);
+        const columns = Array(col_header_height).fill(0).map(_0 => []);
 
         let last_index = 0;
-        for (let i = 0; i < col_headers[0].length; i++) {
-            const ch = col_headers[0][i];
-            if (ch === "|") {
-                const to_be_pushed = [];
-                let first_col = col_headers[0].slice(last_index, i);
-                to_be_pushed.push(first_col);
-
-                // check and extract from all the other headers
-                for (let j = 1; j < col_headers.length; j++) {
-                    const ch_other = col_headers[j][i];
-                    if (ch_other !== ch) {
-                        // the same column in one of the other colum header row_headers
-                        // is not a "|", so it's mis-aligned
-                        throw Error(`mis-aligned column in row number ${j + 1}. "|" found in this column`
-                            + `on line 1, but this line has character ${ch_other} in that position`);
-                    }
-
-                    let other_col = col_headers[j].slice(last_index, i);
-                    to_be_pushed.push(other_col);
-                }
-
-                // then we need to transform all the strings in "to_be_pushed"
-                // and push them to the actual `columns`
-                //console.log(to_be_pushed);
-                console.assert(to_be_pushed.length === col_header_height);
-
-                const to_be_pushed_splits = to_be_pushed.map(s => s.split("|"));
-
-                const spans = to_be_pushed_splits.map(arr => arr.length);
-                const rev_spans = reverse_spans(spans);
-                //console.log("spans:", spans);
-                console.log(to_be_pushed_splits);
-                for (let z = 0; z < columns.length; z++) {
-                    // for each column row, a various number of objects needs
-                    // to be pushed, because of spans
-                    // how many times do we push this object?
-                    /*
-                    for (let g = 0; g < rev_spans[z]; g++) {
-                        const tbps = to_be_pushed_splits[g][0];
-                        console.assert(typeof tbps === "string", `${typeof tbps}`);
-                        columns[z].push({
-                            text: tbps.trim(),
-                            span: spans[z],
-                        });
-                    }
-                    */
-                }
-
-                last_index = ++i;
-            } else if (ch === " ") {
-                // just ignore it
-            } else if (ch === "-") {
-                // just skip to next? (basically ignoring it)
-            } else {
+        const first_col_row = col_headers[0];
+        for (let [i, ch] of enumerate(first_col_row)) {
+            if (ch !== "|") {
+                continue;
             }
+
+            const first_col = first_col_row.slice(last_index, i);
+            const to_be_pushed = [first_col];
+
+            // find the other headers
+            for (let j = 1; j < col_headers.length; j++) {
+                const ch_other = col_headers[j][i];
+                if (ch_other !== ch) {
+                    throw new MisalignedError(j + 1, i, ch_other);
+                }
+
+                let other_col = col_headers[j].slice(last_index, i);
+                to_be_pushed.push(other_col);
+            }
+
+            const to_be_pushed_splits = to_be_pushed.map(s => s.split("|"));
+            const spans = to_be_pushed_splits.map(arr => arr.length);
+            const rev_spans = reverse_spans(spans);
+
+            for (let [t, arr] of enumerate(to_be_pushed_splits)) {
+                for (let inner_idx = 0; inner_idx < arr.length; inner_idx++) {
+                    columns[t].push({
+                        text: arr[inner_idx],
+                        span: rev_spans[t],
+                    });
+                }
+            }
+
+            last_index = i + 1;
         }
 
         return {
@@ -196,9 +194,7 @@
         };
     }
 
-    console.log(structurize(_ignore));
-
-    const table = {
+    let table = {
         caption: "caption",
         row_headers: ["1", "2"],
         columns: [
@@ -209,6 +205,17 @@
             ["a", "b"],
             ["c", "d"],
         ],
+    };
+
+    const _inner_data = structurize(_table_format);
+    console.log("partial table structure:", _inner_data);
+    table = {
+        caption: "caption (generated)",
+        data: [
+            ["a", "b"],
+            ["c", "d"],
+        ],
+        ..._inner_data,
     };
 
 
