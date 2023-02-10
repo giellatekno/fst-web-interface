@@ -69,8 +69,8 @@
         }
     }
 
-    function array2d(x, y) {
-        return Array(y).fill(null).map(_ => Array(x).fill(undefined));
+    function array2d(x, y, fill = undefined) {
+        return Array(y).fill(null).map(_ => Array(x).fill(fill));
     }
 
     function *enumerate(list, start = 0) {
@@ -80,18 +80,21 @@
     }
 
     function group_by_length(lines) {
-        let current_size = lines[0].length;
+        let current_len = lines[0].length;
         let current_group = [lines[0]];
         const groups = [];
-        for (let i = 1; i < lines.length; i++) {
-            const current_line = lines[i];
-            if (current_line.length !== current_size) {
+        for (let line of lines.slice(1)) {
+            console.log(`line (len=${line.length}): ${line})`);
+            if (line.length !== current_len) {
                 // this line's length is different, so make next group
-                current_size = current_line.length;
+                current_len = line.length;
                 groups.push(current_group);
                 current_group = [];
             }
-            current_group.push(current_line);
+            current_group.push(line);
+        }
+        if (current_group.length > 0) {
+            groups.push(current_group);
         }
         return groups;
     }
@@ -118,12 +121,6 @@
         }
     }
 
-    const _table_format = `
--|A|   B |C|
--|a|b1|b2|c|
-1|
-2|
-    `;
     class MisalignedError extends Error {
         constructor(row, column, char, ...params) {
             super(...params);
@@ -133,20 +130,24 @@
                 + `"|" to be found in column ${column} but, but found ${char}.`;
         }
     }
-    const MISALIGNED = (row, other_ch) => `mis-aligned column in row ${row}.`
-        + ` "|" found in this column on line 1, but this line has character `
-        + `"${other_ch}" in that column position`;
-    function structurize(text) {
-        let lines = text.split("\n");
-        lines = lines.splice(1, lines.length);
+
+    function make_table(format, caption = null) {
+        const lines = format.split("\n").filter(line => line.trim().length > 0);
+
         let [col_headers, row_headers] = group_by_length(lines);
-        row_headers = row_headers.map(s => s.replaceAll("|", ""));
+        row_headers = row_headers
+            .map(s => s.trim().replaceAll("|", ""))
+            .filter(s => s.length > 0);
+        console.log(row_headers);
 
         const col_header_height = col_headers.length;
         const col_header_width = col_headers
             .map(ch => ch.split("|"))
             .reduce((prev, cur) => Math.max(prev, cur.length), 0);
-        //console.log(`colum header dimensions: ${col_header_height} x ${col_header_width}`);
+
+        const data = array2d(col_header_width, row_headers.length, "x");
+
+        console.log(`colum header dimensions: ${row_headers.length} x ${col_header_width}`);
 
         // allocate `columns`
         const columns = Array(col_header_height).fill(0).map(_0 => []);
@@ -189,6 +190,8 @@
         }
 
         return {
+            caption,
+            data,
             row_headers,
             columns,
         };
@@ -207,21 +210,63 @@
         ],
     };
 
-    const _inner_data = structurize(_table_format);
-    console.log("partial table structure:", _inner_data);
-    table = {
-        caption: "caption (generated)",
-        data: [
-            ["a", "b"],
-            ["c", "d"],
-        ],
-        ..._inner_data,
-    };
-
+    const _table_format = `
+  -|   Indicative    |Conditional|Imperative | Potential |
+  -|Present|Preterite|Present    |           | Present   |
+Sg1|
+Sg2|
+Sg3|
+Du1|
+Du2|
+Du3|
+Pl1|
+Pl2|
+Pl3|
+    `;
+    table = make_table(
+        _table_format,
+        "Personsbøyd",
+    );
 
     function parse_data(data) {
         const results = {};
         for (let [line, res] of data.result) {
+            const splits = line.split("+");
+            const last = splits.at(-1);
+
+            // see if the line belongs in personsbøyd table
+            const row_idx = table.row_headers.indexOf(last);
+            let col_idx;
+            // find col_idx
+            switch (splits[2]) {
+                case "Ind":
+                    if (splits[3] === "Prs") {
+                        col_idx = 0;
+                    } else if (splits[3] === "Prt") {
+                        col_idx = 1;
+                    }
+                    break;
+                case "Cond":
+                    col_idx = 2;
+                    break;
+                case "Imprt":
+                    col_idx = 3;
+                    break;
+                case "Pot":
+                    col_idx = 4;
+                    break;
+                default:
+                    col_idx = -1;
+            }
+
+            if (row_idx >= 0 && col_idx >= 0) {
+                // it belongs in the personsbøyd table
+                table.data[row_idx][col_idx] = res;
+            }
+
+            console.log(table.columns[0].map(obj => obj.text.trim()));
+            console.log(splits, last, row_idx);
+
             const firstplus = line.indexOf("+");
             const secondplus = line.indexOf("+", firstplus + 1);
             line = line.slice(secondplus + 1, line.length);
@@ -257,7 +302,9 @@
 <hr>
 
 <table>
-    <caption>{table.caption}</caption>
+    {#if table.caption}
+        <caption>{table.caption}</caption>
+    {/if}
     <thead>
         {#each table.columns as column_row}
             <tr>
