@@ -5,6 +5,12 @@ export function only_on_enter(fn) {
     }
 }
 
+export function *enumerate(list, start = 0) {
+    for (let i = start; i < list.length; i++) {
+        yield [i, list[i]];
+    }
+}
+
 /*
     deep_len(arr)
     total length of array `arr`, including length of subarrays, e.g.

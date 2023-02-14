@@ -2,6 +2,8 @@
     import { tick } from "svelte";
     import { Pulse } from "svelte-loading-spinners";
 
+    import { Table } from "../lib/table.js";
+
     export let data = null;
 
     let results = null;
@@ -33,183 +35,6 @@
         Imprt: "Imperative",
     };
 
-    class Entry {
-        constructor() {
-            this._is_empty = true;
-            this._text = "";
-        }
-
-        get is_empty() {
-            return this._is_empty;
-        }
-
-        set_text(text) {
-            this._is_empty = false;
-            this._text = text;
-        }
-
-        get_text() {
-            return this._text;
-        }
-    }
-
-    function reverse_spans(spans) {
-        // TODO solve this in general
-        if (spans[0] === 1 && spans[1] === 1) {
-            // [1, 1] -> [1, 1]
-            return [1, 1];
-        } else if (spans[0] === 1 && spans[1] === 2) {
-            // [1, 2] -> [2, 1]
-            return [2, 1];
-        } else if (spans[0] === 2 && spans[1] === 1) {
-            // [2, 1] -> [1, 2]
-            return [1, 2];
-        } else {
-            throw Error("unhandled case");
-        }
-    }
-
-    function array2d(x, y, fill = undefined) {
-        return Array(y).fill(null).map(_ => Array(x).fill(fill));
-    }
-
-    function *enumerate(list, start = 0) {
-        for (let i = start; i < list.length; i++) {
-            yield [i, list[i]];
-        }
-    }
-
-    function group_by_length(lines) {
-        let current_len = lines[0].length;
-        let current_group = [lines[0]];
-        const groups = [];
-        for (let line of lines.slice(1)) {
-            console.log(`line (len=${line.length}): ${line})`);
-            if (line.length !== current_len) {
-                // this line's length is different, so make next group
-                current_len = line.length;
-                groups.push(current_group);
-                current_group = [];
-            }
-            current_group.push(line);
-        }
-        if (current_group.length > 0) {
-            groups.push(current_group);
-        }
-        return groups;
-    }
-
-    class Layout {
-        constructor() {
-            this.columns = [];
-            this.rows = [];
-            this.column_headers_rows = [[]];
-        }
-
-        column(...text) {
-            // text = [abc, def]
-            // [ [], [] ] --> [ [abc], [def] ]
-            for (let i = 0; i < this.columns.length; i++) {
-                this.column_headers_rows[i].push(text[i]);
-            }
-            return this;
-        }
-
-        row(text) {
-            this.rows.push(text);
-            return this;
-        }
-    }
-
-    class MisalignedError extends Error {
-        constructor(row, column, char, ...params) {
-            super(...params);
-            this.name = this.constructor.name;
-            this.message = `Mis-aligned column in row ${row}. `
-                + `Because "|" was found in this column on line 1, expected `
-                + `"|" to be found in column ${column} but, but found ${char}.`;
-        }
-    }
-
-    function make_table(format, caption = null) {
-        const lines = format.split("\n").filter(line => line.trim().length > 0);
-
-        let [col_headers, row_headers] = group_by_length(lines);
-        row_headers = row_headers
-            .map(s => s.trim().replaceAll("|", ""))
-            .filter(s => s.length > 0);
-        console.log(row_headers);
-
-        const col_header_height = col_headers.length;
-        const col_header_width = col_headers
-            .map(ch => ch.split("|"))
-            .reduce((prev, cur) => Math.max(prev, cur.length), 0);
-
-        const data = array2d(col_header_width, row_headers.length, "x");
-
-        console.log(`colum header dimensions: ${row_headers.length} x ${col_header_width}`);
-
-        // allocate `columns`
-        const columns = Array(col_header_height).fill(0).map(_0 => []);
-
-        let last_index = 0;
-        const first_col_row = col_headers[0];
-        for (let [i, ch] of enumerate(first_col_row)) {
-            if (ch !== "|") {
-                continue;
-            }
-
-            const first_col = first_col_row.slice(last_index, i);
-            const to_be_pushed = [first_col];
-
-            // find the other headers
-            for (let j = 1; j < col_headers.length; j++) {
-                const ch_other = col_headers[j][i];
-                if (ch_other !== ch) {
-                    throw new MisalignedError(j + 1, i, ch_other);
-                }
-
-                let other_col = col_headers[j].slice(last_index, i);
-                to_be_pushed.push(other_col);
-            }
-
-            const to_be_pushed_splits = to_be_pushed.map(s => s.split("|"));
-            const spans = to_be_pushed_splits.map(arr => arr.length);
-            const rev_spans = reverse_spans(spans);
-
-            for (let [t, arr] of enumerate(to_be_pushed_splits)) {
-                for (let inner_idx = 0; inner_idx < arr.length; inner_idx++) {
-                    columns[t].push({
-                        text: arr[inner_idx],
-                        span: rev_spans[t],
-                    });
-                }
-            }
-
-            last_index = i + 1;
-        }
-
-        return {
-            caption,
-            data,
-            row_headers,
-            columns,
-        };
-    }
-
-    let table = {
-        caption: "caption",
-        row_headers: ["1", "2"],
-        columns: [
-            [{text: "A", span: 1}, { text: "B", span: 2}, {text: "C", span: 1}],
-            [{text: "_a", span: 1}, { text: "_b1", span: 1 }, {text: "_b2", span:1}, {text: "c", span:1}],
-        ],
-        data: [
-            ["a", "b"],
-            ["c", "d"],
-        ],
-    };
-
     const _table_format = `
   -|   Indicative    |Conditional|Imperative | Potential |
   -|Present|Preterite|Present    |           | Present   |
@@ -223,12 +48,10 @@ Pl1|
 Pl2|
 Pl3|
     `;
-    table = make_table(
-        _table_format,
-        "Personsbøyd",
-    );
+    let table;// = Table.from_format(_table_format, "Personsbøyd");
 
     function parse_data(data) {
+        table = Table.from_format(_table_format, "Personsbøyd");
         const results = {};
         for (let [line, res] of data.result) {
             const splits = line.split("+");
@@ -261,11 +84,8 @@ Pl3|
 
             if (row_idx >= 0 && col_idx >= 0) {
                 // it belongs in the personsbøyd table
-                table.data[row_idx][col_idx] = res;
+                table.data.set(row_idx, col_idx, res);
             }
-
-            console.log(table.columns[0].map(obj => obj.text.trim()));
-            console.log(splits, last, row_idx);
 
             const firstplus = line.indexOf("+");
             const secondplus = line.indexOf("+", firstplus + 1);
@@ -277,19 +97,12 @@ Pl3|
                 results[line] = res;
             }
         }
+
+        table.without_empty_columns_and_rows();
+
         word = results["Inf"];
         wc = "Verb";
 
-        // TODO fjern former som ikke finnes
-        // hvis en hel rad kan fjernes, fjern hele raden
-        // hvis en hel kolonne kan fjernes, fjern hele kolonna,
-        // ellers, sett inn "-"
-        const remove_keys = [];
-        for (let [k, v] of Object.entries(results)) {
-            if (v === undefined) {
-                remove_keys.push(k);
-            }
-        }
         return results;
     }
 
@@ -301,35 +114,39 @@ Pl3|
 
 <hr>
 
-<table>
-    {#if table.caption}
-        <caption>{table.caption}</caption>
-    {/if}
-    <thead>
-        {#each table.columns as column_row}
-            <tr>
-                {#if table.row_headers}
-                    <th></th>
-                {/if}
-                {#each column_row as { text, span }}
-                    <th colspan={span}>{text}</th>
-                {/each}
-            </tr>
-        {/each}
-    </thead>
-    <tbody>
-        {#each table.data as row, i}
-            <tr>
-                {#if table.row_headers[i]}
-                    <th>{table.row_headers[i]}</th>
-                {/if}
-                {#each row as col, i}
-                    <td>{col}</td>
-                {/each}
-            </tr>
-        {/each}
-    </tbody>
-</table>
+{#if table}
+    <table>
+        {#if table.caption}
+            <caption>{table.caption}</caption>
+        {/if}
+        <thead>
+            {#each table.columns as column_row}
+                <tr>
+                    {#if table.row_headers}
+                        <th></th>
+                    {/if}
+                    {#each column_row as { text, span }}
+                        {#if text.trim() !== "-"}
+                            <th colspan={span}>{text}</th>
+                        {/if}
+                    {/each}
+                </tr>
+            {/each}
+        </thead>
+        <tbody>
+            {#each table.data.rows as row, i}
+                <tr>
+                    {#if table.row_headers[i]}
+                        <th>{table.row_headers[i]}</th>
+                    {/if}
+                    {#each row as col, i}
+                        <td>{col}</td>
+                    {/each}
+                </tr>
+            {/each}
+        </tbody>
+    </table>
+{/if}
 
 <hr>
 
