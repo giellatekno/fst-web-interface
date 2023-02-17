@@ -1,8 +1,10 @@
 import { Matrix } from "./matrix.js";
-import { enumerate } from "./utils.js";
+import { enumerate, trim, pad_center } from "./utils.js";
 
 function reverse_spans(spans) {
     // TODO solve this in general
+    if (spans.length === 1) return 1;
+
     if (spans[0] === 1 && spans[1] === 1) {
         // [1, 1] -> [1, 1]
         return [1, 1];
@@ -83,7 +85,11 @@ export class Table {
 
         this.data = new_data;
 
-        //console.log(changed_rows);
+        const new_row_headers = [];
+        for (let key of Object.keys(kept_rows).sort()) {
+            new_row_headers.push(this.row_headers[key]);
+        }
+        
         console.log("kept_cols:");
         console.log(kept_cols);
 
@@ -119,7 +125,7 @@ export class Table {
                 // THAT'S NOT NECESSARILY TRUE
             }
 
-            {
+            const __ = {
                     text: "...",
                     span: -1,
             }
@@ -128,6 +134,8 @@ export class Table {
                 new_columns[i].push(to_push);
             }
         }
+        
+        return new Table(this.caption, new_data, new_row_headers, new_columns);
     }
 
     static from_format(format, caption = null) {
@@ -139,11 +147,16 @@ export class Table {
             .filter(s => s.length > 0);
 
         const col_header_height = col_headers.length;
-        const col_header_width = col_headers
-            .map(ch => ch.split("|"))
+        const col_header_width =
+            col_headers
+            .map(column_header => {
+                return column_header
+                    .split("|")
+                    .filter(s => trim(s, "- ").length);
+            })
             .reduce((prev, cur) => Math.max(prev, cur.length), 0);
 
-        const data = new Matrix(col_header_width + 2, row_headers.length + 2);
+        const data = new Matrix(col_header_width, row_headers.length);
 
         const columns = Array(col_header_height).fill(0).map(_0 => []);
 
@@ -170,6 +183,7 @@ export class Table {
 
             const to_be_pushed_splits = to_be_pushed.map(s => s.split("|"));
             const spans = to_be_pushed_splits.map(arr => arr.length);
+
             const rev_spans = reverse_spans(spans);
 
             for (let [t, arr] of enumerate(to_be_pushed_splits)) {
@@ -186,4 +200,46 @@ export class Table {
 
         return new Table(caption, data, row_headers, columns);
     }
+
+    as_console_str({
+        show_caption = true,
+        caption_format = "{caption}",
+        caption_placement = "top",
+        empty_indicator = "-",
+    } = {}) {
+        let lines = [];
+
+        let row = 0;
+        for (let i = 0; i < this.columns.length; i++) {
+            let line = this.columns[i].map(obj => obj.text).join(" | ");
+            lines.push(line);
+        }
+
+        const data_lines = this.data.as_console_str({ empty_indicator }).split("\n");
+
+        for (let i = 0; i < this.row_headers.length; i++) {
+            const header = this.row_headers[i];
+            const data_line = data_lines[i];
+            const line = `${header} | ${data_line}`;
+            lines.push(line);
+        }
+
+        const max_line_length = Math.max(...lines.map(line => line.length));
+
+        if (show_caption) {
+            let caption = caption_format.replaceAll("{caption}", this.caption);
+            caption = pad_center(caption, max_line_length - caption.length);
+
+            if (caption_placement === "top") {
+                lines.unshift("");
+                lines.unshift(caption);
+            } else if (caption_placement === "bottom") {
+                lines.push("");
+                lines.push(caption);
+            }
+        }
+
+        return lines.join("\n");
+    }
 }
+

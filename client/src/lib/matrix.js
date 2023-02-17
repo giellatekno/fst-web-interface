@@ -4,7 +4,6 @@ function pad_center(str, size) {
         return str;
     }
 
-    // "heia", 6 => " heia ";
     let pad_right, pad_left;
     if (padding % 2 == 0) {
         pad_right = pad_left = padding / 2;
@@ -55,17 +54,26 @@ export class Matrix {
     #x;
     #y;
 
-    constructor(y, x, fill=undefined) {
+    constructor(y, x, fill=undefined, data=null) {
         this.#x = x;
         this.#y = y;
-        this.#data = Array(y).fill(null).map(_ => Array(x).fill(fill));
+        if (data) {
+            this.#data = data;
+        } else {
+            this.#data = Array(y).fill(null).map(_ => Array(x).fill(fill));
+        }
     }
 
-    get rows() {
-        return this.#data;
-    }
+    get rows() { return this.#data; }
+    get width() { return this.#x; }
+    get height() { return this.#y; }
 
-    as_console_str() {
+    [Symbol.toPrimitive]() {
+        return `${this.constructor.name}<${this.#y}, ${this.#x}>`;
+    }
+    str() { return this[Symbol.toPrimitive](); }
+
+    as_console_str({ empty_indicator = "-" } = {}) {
         const lines = [];
 
         let longest_column = -1;
@@ -75,7 +83,7 @@ export class Matrix {
             for (let x = 0; x < this.#x; x++) {
                 let val = String(this.#data[y][x]);
                 if (val === "undefined" || val === "null") {
-                    val = "-";
+                    val = empty_indicator;
                 }
 
                 longest_column = Math.max(longest_column, val.length);
@@ -106,10 +114,6 @@ export class Matrix {
         return new_lines.join("\n");
     }
 
-    str() {
-        return `${this.constructor.name}<${this.#y}, ${this.#x}>`;
-    }
-
     #boundcheck(y, x, funcname) {
         let err = [];
         if (y >= this.#y) {
@@ -123,7 +127,7 @@ export class Matrix {
             err.push(`x=${x} is too small (min x coord is 0)`);
         }
         if (err.length > 0) {
-            throw new Error(`Matrix.${funcname}(y, x): out of bounds: ` + err.join(", "));
+            throw new Error(`${funcname}(y, x): out of bounds: ` + err.join(", "));
         }
     }
 
@@ -196,31 +200,3 @@ export class Matrix {
     }
 }
 
-
-/*
-const a = new Matrix(4, 3);
-//for (let i = 0; i < 4; i++) {
-//    for (let j = 0; j < 3; j++) {
-//        twod.set(i, j, (i + 1)*(j + 1) + (j + 1));
-//    }
-//}
-a.set(0, 0, "a");
-a.set(2, 2, "c");
-
-console.log("a:", a.str());
-console.log(a.as_console_str());
-console.log();
-
-//const transposed = a.transpose();
-//console.log("transposed:", transposed.str());
-//console.log(transposed.as_console_str());
-//console.log();
-
-const a_without = a.without_empty_columns_and_rows();
-console.log("a_without:", a_without.str());
-console.log(a_without.as_console_str());
-
-//const transposed_without = transposed.without_empty_columns_and_rows();
-//console.log("transposed_without:", transposed_without.str());
-//console.log(transposed_without.as_console_str());
-*/

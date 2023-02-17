@@ -11,6 +11,58 @@ export function *enumerate(list, start = 0) {
     }
 }
 
+export function boundcheck(x, y, limit_x, limit_y, function_name) {
+    let err = [];
+    if (y >= limit_y) {
+        err.push(`y=${y} is too large (max y coord is ${this.#y - 1})`);
+    } else if (y < 0) {
+        err.push(`y=${y} is too small (min y coord is 0)`);
+    }
+    if (x >= limit_x) {
+        err.push(`x=${x} is too large (max x coord is ${this.#x - 1})`);
+    } else if (x < 0) {
+        err.push(`x=${x} is too small (min x coord is 0)`);
+    }
+    if (err.length > 0) {
+        throw new Error(`${funcname}(y, x): out of bounds: ` + err.join(", "));
+    }
+}
+
+export function trim(str, trim_characters = " \t\n") {
+    if (typeof str !== "string") {
+        throw new TypeError("trim(): argument must be string");
+    }
+    trim_characters = new Set(trim_characters);
+
+    let start = -1;
+    let end = str.length;
+
+    while (trim_characters.has(str[++start])) ;
+    while (trim_characters.has(str[--end])) ;
+
+    return str.slice(start, end + 1);
+}
+
+// pad out the string `str` to length `size`,
+// padding by spaces on each side
+export function pad_center(str, size) {
+    if (str.length >= size) {
+        return str;
+    }
+
+    let pad_left, pad_right;
+    if (size % 2 === 0) {
+        pad_left = pad_right = size / 2;
+    } else {
+        pad_left = size / 2 - 1;
+        pad_right = size / 2;
+    }
+
+    pad_left = " ".repeat(pad_left);
+    pad_right = " ".repeat(pad_right);
+    return pad_left + str + pad_right;
+}
+
 /*
     deep_len(arr)
     total length of array `arr`, including length of subarrays, e.g.
