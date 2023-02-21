@@ -11,21 +11,32 @@ export function *enumerate(list, start = 0) {
     }
 }
 
-export function boundcheck(x, y, limit_x, limit_y, function_name) {
-    let err = [];
-    if (y >= limit_y) {
-        err.push(`y=${y} is too large (max y coord is ${this.#y - 1})`);
-    } else if (y < 0) {
-        err.push(`y=${y} is too small (min y coord is 0)`);
+export function len(obj) {
+    let length = obj.length;
+    if (length !== undefined) return length;
+
+    if (is_pojo(obj)) {
+        return Object.keys(obj).length;
     }
-    if (x >= limit_x) {
-        err.push(`x=${x} is too large (max x coord is ${this.#x - 1})`);
-    } else if (x < 0) {
-        err.push(`x=${x} is too small (min x coord is 0)`);
+
+    if (obj instanceof Set || obj instanceof Map) {
+        return obj.size;
     }
-    if (err.length > 0) {
-        throw new Error(`${funcname}(y, x): out of bounds: ` + err.join(", "));
+
+    throw new TypeError(`len(): object of type '${_typeof(obj)}' has no length`);
+}
+
+export function _typeof(obj) {
+    if (obj === null) return "null";
+    const t = typeof obj;
+    switch (t) {
+        case "undefined":
+        case "number":
+        case "string":
+        case "symbol":
+            return t;
     }
+    return obj.constructor.name;
 }
 
 export function trim(str, trim_characters = " \t\n") {

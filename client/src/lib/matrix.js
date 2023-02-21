@@ -115,19 +115,19 @@ export class Matrix {
     }
 
     #boundcheck(y, x, funcname) {
-        let err = [];
+        let errors = [];
         if (y >= this.#y) {
-            err.push(`y=${y} is too large (max y coord is ${this.#y - 1})`);
+            errors.push(`y=${y} is too large (max y coord is ${this.#y - 1})`);
         } else if (y < 0) {
-            err.push(`y=${y} is too small (min y coord is 0)`);
+            errors.push(`y=${y} is too small (min y coord is 0)`);
         }
         if (x >= this.#x) {
-            err.push(`x=${x} is too large (max x coord is ${this.#x - 1})`);
+            errors.push(`x=${x} is too large (max x coord is ${this.#x - 1})`);
         } else if (x < 0) {
-            err.push(`x=${x} is too small (min x coord is 0)`);
+            errors.push(`x=${x} is too small (min x coord is 0)`);
         }
-        if (err.length > 0) {
-            throw new Error(`${funcname}(y, x): out of bounds: ` + err.join(", "));
+        if (errors.length > 0) {
+            throw new Error(`${funcname}(y, x): out of bounds: ` + errors.join(", "));
         }
     }
 
