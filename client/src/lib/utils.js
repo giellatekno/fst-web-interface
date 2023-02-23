@@ -12,7 +12,7 @@ export function *enumerate(list, start = 0) {
 }
 
 export function len(obj) {
-    let length = obj.length;
+    const length = obj.length;
     if (length !== undefined) return length;
 
     if (is_pojo(obj)) {
@@ -39,24 +39,149 @@ export function _typeof(obj) {
     return obj.constructor.name;
 }
 
-export function trim(str, trim_characters = " \t\n") {
-    if (typeof str !== "string") {
-        throw new TypeError("trim(): argument must be string");
+export function is_primitive(obj) {
+    if (obj === null || obj === undefined) return true;
+    switch (obj.constructor) {
+        case Number:
+        case BigInt:
+        case String:
+        case Symbol:
+            return true;
+        default:
+            return false;
     }
-    trim_characters = new Set(trim_characters);
+}
 
-    let start = -1;
-    let end = str.length;
+// checks if two objects are equal, deeply
+// useful for testing
+export function is_equal(a, b) {
+    if (Object.is(a, b)) return true;
 
-    while (trim_characters.has(str[++start])) ;
-    while (trim_characters.has(str[--end])) ;
+    if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length !== b.length) return false;
 
-    return str.slice(start, end + 1);
+        for (const [x, y] of zip(a, b)) {
+            if (!is_equal(x, y)) return false;
+        }
+
+        return true;
+    }
+
+    if (!(is_primitive(a) && is_primitive(b)) &&
+         (a.constructor === b.constructor)) {
+        for (const key in a) {
+            if (!(key in b)) return false;
+            if (!is_equal(a[key], b[key])) return false;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+/*
+(function test_is_equal() {
+    console.assert(is_equal(null, null));
+    console.assert(is_equal(undefined, undefined));
+    console.assert(is_equal(true, true));
+    console.assert(is_equal(false, false));
+    console.assert(is_equal(1, 1));
+    console.assert(is_equal(92.4, 92.4));
+    console.assert(is_equal("xYz", "xYz"));
+    console.assert(
+        is_equal(["a", 1, false], ["a", 1, false]),
+        'is_equal(["a", 1, false], ["a", 1, false])'
+    );
+    console.assert(
+        !is_equal(["a", 1, false], ["a", 2, false]),
+        '!is_equal(["a", 1, false], ["a", 2, false])'
+    );
+    console.assert(is_equal(
+        {a: [1, 2, 3], b: null, c: [{x: 2}, {y: 3}, false]},
+        {a: [1, 2, 3], b: null, c: [{x: 2}, {y: 3}, false]},
+    ));
+    console.log("is_equal() seems to work");
+})();
+//*/
+
+
+
+/* strip()
+ *   argument strip_characters: iterable of characters (e.g. a str)
+ *     (which characters to strip)
+ * returns
+ *   a function that takes a string,
+ *   and it strips away the 'strip_characters' from the beginning and the end
+ *
+ * This function uses "currying".
+ * Example use:
+ *   [" abc ", "xx  ", "  yy" ].map(strip()); // ["abc", "xx", "yy"]
+ *   or
+ *   const strip_whitespace = strip(" \t\n");
+ *   [" abc ", "xx  ", "  yy" ].map(strip_whitespace); // ["abc", "xx", "yy"]
+ */
+export function strip(strip_characters = " \t\n") {
+    try {
+        strip_characters = new Set(strip_characters);
+    } catch (e) {
+        if (e instanceof TypeError) {
+            throw new TypeError("strip(): 'strip_characters' must be an iterable of strings of length 1", { cause: e });
+        } else {
+            throw e;
+        }
+    }
+
+    for (const character of strip_characters) {
+        if (typeof character !== "string") {
+            throw new TypeError("strip(): 'strip_characters' must be an iterable of strings of length 1");
+        }
+
+        if (character.length !== 1) {
+            throw new TypeError("strip(): 'strip_characters' must be an iterable of strings of length 1");
+        }
+    }
+
+    return function (str) {
+        if (typeof str !== "string") {
+            throw new TypeError("strip(): input must be a string");
+        }
+
+        let start = -1;
+        let end = str.length;
+
+        while (strip_characters.has(str[++start])) ;
+        while (strip_characters.has(str[--end])) ;
+
+        return str.slice(start, end + 1);
+    }
+}
+
+export const strip_whitespace = strip(" \t\n");
+
+export function any(iterable) {
+    for (let element of iterable) {
+        if (element) return true;
+    }
+
+    return false;
+}
+
+export function all(iterable) {
+    for (let element of iterable) {
+        if (element) return false;
+    }
+
+    return true;
 }
 
 // pad out the string `str` to length `size`,
 // padding by spaces on each side
 export function pad_center(str, size) {
+    if (typeof size !== "number") {
+        throw new TypeError("pad_center(): argument 'size' must be a number");
+    }
+
     if (str.length >= size) {
         return str;
     }
@@ -72,6 +197,55 @@ export function pad_center(str, size) {
     pad_left = " ".repeat(pad_left);
     pad_right = " ".repeat(pad_right);
     return pad_left + str + pad_right;
+}
+
+export function _iter(obj) {
+    if (typeof obj === "undefined") {
+        throw new TypeError("iter(): undefined is not iterable");
+    }
+    if (obj === null) {
+        throw new TypeError("iter(): null is not iterable");
+    }
+    if (typeof obj === "boolean") {
+        throw new TypeError("iter(): boolean is not iterable");
+    }
+
+    if (obj && typeof obj.next === "function") {
+        // probably not a good enough check, but whatevs
+        return obj;
+    }
+
+    const it = obj[Symbol.iterator];
+    if (typeof it === "function") {
+        return it.call(obj);
+    }
+
+    if (is_pojo(obj)) {
+        return object_iter(obj);
+    }
+
+    throw new TypeError("iter(): don't know how to make an iterator out of that");
+}
+
+function *object_iter(obj) {
+    for (let key in obj) {
+        if (Object.hasOwn(obj, key)) {
+            yield [key, obj[key]];
+        }
+    }
+}
+
+export function *zip(...iterables) {
+    const iterators = iterables.map(_iter);
+    outer: while (true) {
+        const next_result = [];
+        for (const it of iterators) {
+            const next_it_result = it.next();
+            if (next_it_result.done) break outer;
+            next_result.push(next_it_result.value);
+        }
+        yield next_result;
+    }
 }
 
 /*

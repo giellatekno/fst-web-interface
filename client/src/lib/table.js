@@ -1,11 +1,20 @@
 import { Matrix } from "./matrix.js";
-import { enumerate, trim, pad_center, len } from "./utils.js";
+import { enumerate, strip_whitespace, pad_center, len } from "./utils.js";
 
 Array.prototype.max = function () {
     return Math.max(...this);
 }
 
-function reverse_spans(spans) {
+// what does this function take in?
+// what is `span`?
+export function reverse_spans(spans) {
+    // [
+    //   [ 1, 1, 1 ],
+    //   [ 2, 2, 1 ],
+    //   ...
+    //   .
+    //   .
+    // ]
     // TODO solve this in general
     if (spans.length === 1) return 1;
 
@@ -29,11 +38,25 @@ class MisalignedError extends Error {
         this.name = this.constructor.name;
         this.message = `Mis-aligned column in row ${row}. `
             + `Because "|" was found in this column on line 1, expected `
-            + `"|" to be found in column ${column} but, but found ${char}.`;
+            + `"|" to be found in column ${column} but, but found '${char}'.`;
     }
 }
 
-function group_by_length(lines) {
+/* group_by_length(lines)
+ *   takes a multiline string `lines`,
+ *   trims all lines, filters away empty ones,
+ *   and groups the remaining ones by their length,
+ *   so that e.g. the string
+ *     abcd
+ *     efgh
+ *     xx
+ *     yy
+ *   will return
+ *     [ ["abcd", "efgh"], ["xx", "yy"] ]
+ */
+export function group_by_length(lines) {
+    lines = lines.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+
     let current_len = lines[0].length;
     let current_group = [lines[0]];
     const groups = [];
@@ -88,127 +111,107 @@ export class Table {
     }
 
     without_empty_columns_and_rows() {
-        const {
-            matrix: new_data,
-            kept_rows,
-            kept_cols,
-        } = this.data.without_empty_columns_and_rows();
+        const data_without = this.data.without_empty_columns_and_rows();
+        const { matrix: new_data, kept_cols, kept_rows } = data_without;
 
-        this.data = new_data;
+        const kept_columns = Object.entries(kept_cols)
+            .map(([x, y]) => ([Number(x), Number(y)]))
+            .sort(([x1, x2], [y1, y2]) => x1 < y1 ? -1 : 1);
 
         const new_row_headers = [];
         for (let key of Object.keys(kept_rows).sort()) {
             new_row_headers.push(this.row_headers[key]);
         }
         
-        // columns:
-        // [
-        //   [{..}, {..}, {..}],
-        //   [{..}, {..}, {..}],    in my example: this is the longest
-        // ]
         const new_column_headers = Array(this.column_headers.length).fill(null).map(_ => []);
 
-        // "pointers" into how far we currently are in the
-        // `this.columns` array of arrays
-        const indexes = Array(this.column_headers.length).fill(0);
+        /*  this.columns =
+        [
+          [ { text: '-', span: 1 }, { text: 'A', span: 2 }, { text: 'B', span: 1 }, { text: 'C', span: 1 } ],
+          [ { text: '-', span: 1 }, { text: 'x', span: 1 }, { text: 'y', span: 1 }, { text: 'D', span: 1 }, { text: 'E', span: 1 }
+          ]
+        ]
+        */
+        // gitt også kept_columns = [ [0, 0], [2, 1] ]
+        // fill with 1 instead of 0 because of the implicit first "-" column
+        const indexes = Array(this.column_headers.length).fill(1);
+        // [ 0, 0 ]
+        
+        for (let [old_col, new_col] of kept_columns) {
+            for (let column_row = 0; column_row < this.column_headers.length; column_row++) {
+                const i = column_row + indexes[column_row];
+                const row = this.column_headers[column_row][new_col + indexes[column_row]];
 
-        // kept_cols = { 0: 0, 1: 1 }
-        for (let [new_col, old_col] of Object.entries(kept_cols)) {
-            // this loop: [0, 0], [1, 1]
-            // TODO but will it be in rising order? that is from index 0 first,
-            // then index 1, then the next, etc..
+                //indexes[column_row] += (row.span - 1);
 
-            const to_push = [];
-            for (let i = 0; i < this.column_headers.length; i++) {
-                let found = 0;
-                for (let x = 0; x < this.column_headers[i].length; x++) {
-                    found += this.column_headers[i][x].span;
-                    if (found === old_col) {
-                    }
+                new_column_headers[column_row].push({ text: row.text, span: 1 });
+            }
+            
+            for (let aa = 0; aa < indexes.length; aa++) {
+                for (let bb = 0; bb < indexes.length; bb++) {
+                    if (aa === bb) continue;
+                    const other_span = this.column_headers[aa][bb].span;
+                    indexes[bb] += other_span - 1;
                 }
-                // this.columns[i][old_col]
-                // THAT'S NOT NECESSARILY TRUE
-            }
-
-            const __ = {
-                    text: "...",
-                    span: -1,
-            }
-
-            for (let i = 0; i < to_push.length; i++) {
-                new_column_headers[i].push(to_push);
             }
         }
+
+        for (let column_row = 0; column_row < new_column_headers.length; column_row++) {
+            const row = new_column_headers[column_row];
+            row.unshift({ text: "-", span: 1 });
+        }
+        // skal hit:
+        // [
+        //   [ { text: "A", span: 1 }, { text: "B", span: 1 } ],
+        //   [ { text: "x", span: 1 }, { text: "D", span: 1 } ],
+        // ]
         
         return new Table(this.caption, new_data, new_row_headers, new_column_headers);
     }
 
     static from_format(format, caption = null) {
-        const lines = format.split("\n").filter(line => line.trim().length > 0);
-
-        let [col_header_lines, row_headers] = group_by_length(lines);
+        let [column_header_lines, row_headers] = group_by_length(format);
         row_headers = row_headers
             .map(s => s.trim().replaceAll("|", ""))
             .filter(s => s.length > 0);
 
-        const col_headers = col_header_lines
-            .map(col_header_line =>
-                col_header_line
-                    .split("|")
-                    .map(ch => trim(ch, "- "))
-                    .filter(ch => ch.length > 0)
-                );
+        // looks like: [ [], [], [], ... ]  (one subarray for each column header row)
+        const column_header_height = column_header_lines.length;
+        const column_headers = Array(column_header_height).fill(0).map(_0 => []);
 
-        const col_header_height = col_headers.length;
-        const col_header_width = col_headers.map(len).max();
-        const data = new Matrix(row_headers.length, col_header_width);
-        const column_headers = Array(col_header_height).fill(0).map(_0 => []);
+        const next_objects = Array(column_header_height).fill(0).map(_0 => ({ text: "", span: 1 }));
 
-        let last_index = 0;
-        const first_col_row = col_headers[0];
-        for (let [i, ch] of enumerate(first_col_row)) {
-            // (0, A)  (1, B)  (2, C)
-            const first_col = first_col_row.slice(last_index, i + 1);
-            const to_be_pushed = [first_col];
+        // how many characters the column header lines are. this is the same for all column headers
+        const column_header_text_length = column_header_lines[0].length;
 
-            console.log("first_col:", first_col);
+        for (let char = 0; char < column_header_text_length; char++) {
+            for (let ch = 0; ch < column_header_height; ch++) {
+                const character = column_header_lines[ch][char];
+                if (character === "|") {
+                    // if we're on the non-first row, and the character above
+                    // is _not_ a "|", then we need to increase the above slot's
+                    // span
+                    if (ch > 0) {
+                        const character_above = column_header_lines[ch - 1][char];
+                        if (character_above !== "|") {
+                            next_objects[ch - 1].span++;
+                        }
+                    }
 
-            // find the other headers - there may not be any
-            for (let j = 1; j < col_headers.length; j++) {
-                console.log("???");
-                const ch_other = col_headers[j][i];
-                if (ch_other !== ch) {
-                    throw new MisalignedError(j + 1, i, ch_other);
-                }
-
-                let other_col = col_headers[j].slice(last_index, i);
-                to_be_pushed.push(other_col);
-            }
-
-            console.log("to_be_pushed:", to_be_pushed);
-            const to_be_pushed_splits = to_be_pushed.map(s => s.split("|"));
-            const spans = to_be_pushed_splits.map(arr => arr.length);
-            console.log("to_be_pushed_splits:", to_be_pushed_splits);
-            console.log("spans:", spans);
-
-            const rev_spans = reverse_spans(spans);
-
-            for (let [t, arr] of enumerate(to_be_pushed_splits)) {
-                console.log("X");
-                for (let inner_idx = 0; inner_idx < arr.length; inner_idx++) {
-                    console.log("Y");
-                    column_headers[t].push({
-                        text: arr[inner_idx],
-                        span: rev_spans[t],
-                    });
+                    column_headers[ch].push(next_objects[ch]);
+                    next_objects[ch] = { text: "", span: 1 };
+                } else if (character === " ") {
+                    // do nothing
+                } else {
+                    // text here
+                    next_objects[ch].text += character;
                 }
             }
-
-            last_index = i + 1;
         }
 
-        console.log("!!!");
-        console.log(column_headers);
+        const col_header_width = column_headers.map(len).max();
+        const data = new Matrix(row_headers.length, col_header_width);
+
         return new Table(caption, data, row_headers, column_headers);
     }
 
@@ -221,6 +224,9 @@ export class Table {
         let lines = [];
 
         const data_lines = this.data.as_console_str({ empty_indicator }).split("\n");
+        const column_width = data_lines[0].split("|").map(len)
+            .reduce((prev, cur) => Math.max(prev, cur));
+
         for (let i = 0; i < this.row_headers.length; i++) {
             const header = this.row_headers[i];
             const data_line = data_lines[i];
@@ -229,15 +235,33 @@ export class Table {
         }
 
         // prepend the column headers
+        const column_header_rows = [];
         for (let i = 0; i < this.column_headers.length; i++) {
-            // TODO these must be padded out
             for (let x = 0; x < this.column_headers[i].length; x++) {
                 const ch = this.column_headers[i][x];
-                console.log("!!");
-                console.log(ch);
             }
-            let line = this.column_headers[i].map(obj => obj.text).join("|");
-            lines.unshift(line);
+            let line = "";
+
+            let first_column = true;
+            for (let j = 0; j < this.column_headers[i].length; j++) {
+                const o = this.column_headers[i][j];
+                if (first_column) {
+                    first_column = false;
+                    line += o.text + " |";
+                } else {
+                    if (o.span > 1) {
+                        line += pad_center(o.text, column_width * 2) + "|";
+                    } else {
+                        line += pad_center(o.text, column_width) + " |";
+                    }
+                }
+            }
+
+            column_header_rows.push(line);
+        }
+        column_header_rows.push("-".repeat(data_lines[0].length + 3));
+        for (let i = column_header_rows.length - 1; i >= 0; i--) {
+            lines.unshift(column_header_rows[i]);
         }
 
         if (show_caption) {
