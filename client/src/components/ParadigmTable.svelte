@@ -1,10 +1,11 @@
 <script>
     import { tick } from "svelte";
     import { Pulse } from "svelte-loading-spinners";
-
     import { Table } from "../lib/table.js";
+    import { find_layout } from "./_ParadigmTableLayouts.js";
 
     export let data = null;
+    //export let table_format = null;
 
     let results = null;
 
@@ -35,19 +36,22 @@
         Imprt: "Imperative",
     };
 
+    //*
     const _table_format = `
-  -|   Indicative    |Conditional|Imperative | Potential |
-  -|Present|Preterite|Present    |           | Present   |
-Sg1|
-Sg2|
-Sg3|
-Du1|
-Du2|
-Du3|
-Pl1|
-Pl2|
-Pl3|
+     -|   Indicative    |Conditional|Imperative | Potential |
+     -|Present|Preterite|Present    |           | Present   |
+   Sg1|
+   Sg2|
+   Sg3|
+   Du1|
+   Du2|
+   Du3|
+   Pl1|
+   Pl2|
+   Pl3|
+ConNeg|
     `;
+    //*/
     let table;// = Table.from_format(_table_format, "Personsbøyd");
 
     function parse_data(data) {
@@ -59,6 +63,13 @@ Pl3|
 
             // see if the line belongs in personsbøyd table
             const row_idx = table.row_headers.indexOf(last);
+            if (row_idx === -1) {
+                if (last === "ConNeg") {
+                    console.log("ConNeg not found in row headers");
+                    console.log(table.row_headers);
+                }
+                console.log(last);
+            }
             let col_idx;
             // find col_idx
             switch (splits[2]) {
@@ -98,7 +109,7 @@ Pl3|
             }
         }
 
-        table.without_empty_columns_and_rows();
+        table = table.without_empty_columns_and_rows();
 
         word = results["Inf"];
         wc = "Verb";
@@ -120,7 +131,7 @@ Pl3|
             <caption>{table.caption}</caption>
         {/if}
         <thead>
-            {#each table.columns as column_row}
+            {#each table.column_headers as column_row}
                 <tr>
                     {#if table.row_headers}
                         <th></th>

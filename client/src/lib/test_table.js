@@ -16,11 +16,11 @@ t.data.set(2, 2, "moi");
 
 //console.log(`${t}`);
 console.log(t.as_console_str({ show_caption: false }));
-console.log("==========================================");
+console.log("==============================");
 
 const t_without = t.without_empty_columns_and_rows();
 //console.log(`${t_without}`);
-console.log(t_without.as_console_str());
+console.log(t_without.as_console_str({ show_caption: false }));
 //*/
 
 function test_group_by_length1() {

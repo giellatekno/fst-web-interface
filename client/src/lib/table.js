@@ -5,8 +5,7 @@ Array.prototype.max = function () {
     return Math.max(...this);
 }
 
-// what does this function take in?
-// what is `span`?
+// what does this function take in? What is 'span'?
 export function reverse_spans(spans) {
     // [
     //   [ 1, 1, 1 ],
@@ -75,24 +74,6 @@ export function group_by_length(lines) {
     return groups;
 }
 
-/*
-  make_table()
-    take string format input (as shown below), and turn it into a structure
-    like this:
-let table = {
-    caption: "caption",
-    row_headers: ["1", "2"],
-    columns: [
-        [{text: "A", span: 1}, { text: "B", span: 2}, {text: "C", span: 1}],
-        [{text: "_a", span: 1}, { text: "_b1", span: 1 }, {text: "_b2", span:1}, {text: "c", span:1}],
-    ],
-    data: [
-        ["a", "b"],
-        ["c", "d"],
-    ],
-};
-*/
-
 export class Table {
     #data;
 
@@ -124,25 +105,12 @@ export class Table {
         }
         
         const new_column_headers = Array(this.column_headers.length).fill(null).map(_ => []);
-
-        /*  this.columns =
-        [
-          [ { text: '-', span: 1 }, { text: 'A', span: 2 }, { text: 'B', span: 1 }, { text: 'C', span: 1 } ],
-          [ { text: '-', span: 1 }, { text: 'x', span: 1 }, { text: 'y', span: 1 }, { text: 'D', span: 1 }, { text: 'E', span: 1 }
-          ]
-        ]
-        */
-        // gitt også kept_columns = [ [0, 0], [2, 1] ]
-        // fill with 1 instead of 0 because of the implicit first "-" column
         const indexes = Array(this.column_headers.length).fill(1);
-        // [ 0, 0 ]
         
         for (let [old_col, new_col] of kept_columns) {
             for (let column_row = 0; column_row < this.column_headers.length; column_row++) {
                 const i = column_row + indexes[column_row];
                 const row = this.column_headers[column_row][new_col + indexes[column_row]];
-
-                //indexes[column_row] += (row.span - 1);
 
                 new_column_headers[column_row].push({ text: row.text, span: 1 });
             }
@@ -160,11 +128,6 @@ export class Table {
             const row = new_column_headers[column_row];
             row.unshift({ text: "-", span: 1 });
         }
-        // skal hit:
-        // [
-        //   [ { text: "A", span: 1 }, { text: "B", span: 1 } ],
-        //   [ { text: "x", span: 1 }, { text: "D", span: 1 } ],
-        // ]
         
         return new Table(this.caption, new_data, new_row_headers, new_column_headers);
     }

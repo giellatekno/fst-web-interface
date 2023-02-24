@@ -10,7 +10,7 @@
     let word_class = "Any";
     let size = "Standard";
     const word_classes = {
-        Any: "?",
+        Any: "Any",
         Noun: "N",
         Verb: "V",
         Adjective: "Adj",
@@ -22,15 +22,36 @@
         Standard: "standard",
         Full: "full",
     };
-    $: results = get_results(input, word_class, size);
+    $: xx = get_results(input, word_class, size);
+    $: results = xx.results;
 
     $: usage = $t(`usage.lang.${$lang}`);
 
-    function get_results(input, word_class, size) {
+    async function get_results(input, word_class, size) {
         if (!input) return null;
         word_class = word_classes[word_class];
         const mode = paradigm_sizes[size];
-        return paradigm($lang, input, word_class, mode);
+        const api_result = await paradigm($lang, input, word_class, mode);
+        console.log(api_result);
+        if (Array.isArray(api_result)) {
+            return { pos: { results: api_result, primary: true } };
+        } else {
+            console.log("api result not an array, assuming object");
+            console.log("typeof", typeof api_result);
+            // find primary
+            let res = {};
+            const others = [];
+            for (const [pos, entry] of Object.entries(api_result)) {
+                if (entry.primary) {
+                    res[pos] = { results: entry.results, primary: true };
+                } else {
+                    // push this pos
+                    others.push(pos);
+                }
+            }
+
+            return res;
+        }
     }
 </script>
 

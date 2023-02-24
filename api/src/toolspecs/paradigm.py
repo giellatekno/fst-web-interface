@@ -134,8 +134,13 @@ class ParadigmSize(enum.StrEnum):
 
 
 class POS(enum.StrEnum):
+    Any = "Any"
+    A = "A"
     N = "N"
     V = "V"
+    Adv = "Adv"
+    Num = "Num"
+    Pron = "Pron"
 
 
 # this pipeline can accept a few more query params:
@@ -181,6 +186,62 @@ extra_files = {
 }
 
 
+def determine_is_derivation(tags):
+    return "Der" in tags
+
+
+def determine_is_compound(tags):
+    """Given a tag list, determine if it it is a compound"""
+    # from original source (smi.cgi)
+    #   if tags contains a '#', and does not start with something else than '+'
+    #   followed by '#', in that case it is a compound
+    #   if ($anl =~/\#/ && $anl !~ /^[^\+]+\#[^\#]+$/) {
+    # TODO is this correct, then?
+    return "#" in tags and not tags.startswith("+#")
+
+
+def find_poses_from_analyses(analyses):
+    out = {}
+    # analyses is a string with many lines, coming directly from 'hfst-lookup'
+    for line in analyses.split("\n"):
+        lemma, tags, weight = line.split("\t")
+        is_derivation = determine_is_derivation(tags)
+        is_compound = determine_is_compound(tags)
+
+        match (is_derivation, is_compound):
+            case (False, False):
+                # not a derivation, nor a compound
+                _lemma, pos, *_ = tags.split("+")
+                return {pos: {"rank": 1, "results": None}}
+            case (False, True):
+                # not a derivation, but is a compound
+                #  my $anltmp = $anl;
+                #  # Note: Is the following line needed when we negate /Der/ 15 lines further up?
+                #  $anltmp =~ s/\#\+Der\d\+Der\//\#/g;
+                #  $anltmp =~ /^(.*\#.*?)\+(.*)$/;
+                #  $anltmp = $1;
+                #  my $line2 = $2;
+                #  # !!! ANDERS: Where is this defined? I can't find it!
+                #  format_compound(\$anltmp, \$line2, \$word);
+                #  $fulllemma=$anltmp;
+                #  ($anlpos) = split(/\+/, $line2);
+                #  ($anllemma = $anltmp) =~ s/^.*\#([^\#]+)$/$1/;
+                #  #print FH "$anltmp ja $line2 ja $anllemma ja $anlpos\n";
+                m = re.match(r"^(.*\#.*?)\+(.*)$", tags)
+                if not m:
+                    raise Exception("don't think should have happened")
+                # anltmp = m.group(1)
+                # line2 = m.group(2)
+                # format_compound(anltmp, line2, word)
+
+                return out
+            case (True, _):
+                # derivation, compound or not we don't care
+                pass
+
+    return out
+
+
 # all paradigms per lang, per paradigmmode
 # paradigm_files[lang][mode] = ...
 PARADIGM_FILES = defaultdict(dict)
@@ -205,22 +266,43 @@ async def generate_paradigm(analyses, lang, query_params={}):
     word_class = query_params.get("word_class", "Any")
     mode = query_params.get("mode", "standard")
 
-    if word_class == "Any":
-        # TODO If word class is explicitly set to Any, or not given,
-        # we want to select a word class by some metric, and primarily
-        # show that output, but also give a "you could also have meant"-box,
-        # showing on the side
-        # TODO TEMP for now..
-        word_class = "N"
+    # fast path: specific word class was given
+    if word_class != "Any":
+        try:
+            paradigmfile = PARADIGM_FILES[lang][mode][word_class]
+        except KeyError:
+            return {"error": "lang, mode or word_class not found"}
 
-    try:
-        # TODO word_class is supposed to be optional, so if it isn't given, we
-        # must select one, using some method.. (found in smi.pl)
-        paradigmfile = PARADIGM_FILES[lang][mode][word_class]
-    except KeyError:
-        return {"error": "lang, mode or word_class not found"}
+        return await call_para(analyses, lang, paradigmfile)
 
-    return await call_para(analyses, lang, paradigmfile)
+    # slow path: word class not given
+    word_classes = find_poses_from_analyses(analyses)
+
+    # make sure the "primary" we selected is marked somehow..
+    # potential_word_classes = {
+    #   wc1: { primary: true, results: ... },
+    #   wc2: { primary: false, results: ... },
+    # }
+
+    # select_best_word_classes
+    # if lemma == input we were given, then that is the primary,
+    # otherwise select the first one we found (possible to do better?)
+
+    # then, do paradigm generation for all word classes we found,
+    # but make sure to mark the "primary" we selected specifically in the output
+
+    # primary pos we selected: the first one in the list, and dictionary
+    # preserves order? Does it necessarily preserve order when JSONified and
+    # reconstructed by js? probably not..
+    for wc, entry in word_classes.items():
+        try:
+            paradigmfile = PARADIGM_FILES[lang][mode][wc]
+        except KeyError:
+            return {"error": "lang, mode or word_class not found"}
+
+        entry["results"] = await call_para(analyses, lang, paradigmfile)
+
+    return word_classes
 
     #if word_class:
     #    paradigm_list = paradigm_lists[word_class]
@@ -255,7 +337,7 @@ async def call_para(analyses, lang, paradigmfile):
     input = "\n".join(f"{word}+{para}" for para in paradigmfile)
     input = input.encode("utf-8")
 
-
+    # TODO replace with hfst
     # now run the subprocess call
     # echo gen_input | hfst-lookup src/generator-gt-norm.hfstol
     generator_gt_norm_hfstol = extra_files[lang]["generator-gt-norm.hfstol"]
@@ -294,7 +376,7 @@ pipeline = [
         PartialPath("src/analyser-gt-desc.hfstol"),
     ],
     generate_paradigm,
-    pipeline_stdout_to_json,
+    #pipeline_stdout_to_json,
 ]
 
 
