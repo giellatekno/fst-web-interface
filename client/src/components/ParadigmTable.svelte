@@ -1,33 +1,8 @@
 <script>
-    import { tick } from "svelte";
     import { Pulse } from "svelte-loading-spinners";
-    import { Table } from "../lib/table.js";
-    import { find_layout } from "./_ParadigmTableLayouts.js";
+    import { lang } from "../lib/stores.js";
 
-    export let data = null;
-    //export let table_format = null;
-
-    let results = null;
-
-    let word = "";
-    let wc = "";
-    let wc_extra = "";
-
-    let state = "nothing";
-    $: update_state(data);
-
-    async function update_state(data) {
-        if (data === null) {
-            state = "nothing";
-            await tick();
-            return;
-        }
-        state = "awaiting";
-        await tick();
-        results = parse_data(await data);
-        state = "done";
-        await tick();
-    }
+    export let table;
 
     const TAG_TO_ENGLISH = {
         Inf: "Infinitive",
@@ -36,94 +11,18 @@
         Imprt: "Imperative",
     };
 
-    //*
-    const _table_format = `
-     -|   Indicative    |Conditional|Imperative | Potential |
-     -|Present|Preterite|Present    |           | Present   |
-   Sg1|
-   Sg2|
-   Sg3|
-   Du1|
-   Du2|
-   Du3|
-   Pl1|
-   Pl2|
-   Pl3|
-ConNeg|
-    `;
-    //*/
-    let table;// = Table.from_format(_table_format, "Personsbøyd");
 
-    function parse_data(data) {
-        table = Table.from_format(_table_format, "Personsbøyd");
-        const results = {};
-        for (let [line, res] of data.result) {
-            const splits = line.split("+");
-            const last = splits.at(-1);
+    console.log(table.as_console_str());
+    table = table.without_empty_columns_and_rows();
+    console.log(table.as_console_str());
 
-            // see if the line belongs in personsbøyd table
-            const row_idx = table.row_headers.indexOf(last);
-            if (row_idx === -1) {
-                if (last === "ConNeg") {
-                    console.log("ConNeg not found in row headers");
-                    console.log(table.row_headers);
-                }
-                console.log(last);
-            }
-            let col_idx;
-            // find col_idx
-            switch (splits[2]) {
-                case "Ind":
-                    if (splits[3] === "Prs") {
-                        col_idx = 0;
-                    } else if (splits[3] === "Prt") {
-                        col_idx = 1;
-                    }
-                    break;
-                case "Cond":
-                    col_idx = 2;
-                    break;
-                case "Imprt":
-                    col_idx = 3;
-                    break;
-                case "Pot":
-                    col_idx = 4;
-                    break;
-                default:
-                    col_idx = -1;
-            }
-
-            if (row_idx >= 0 && col_idx >= 0) {
-                // it belongs in the personsbøyd table
-                table.data.set(row_idx, col_idx, res);
-            }
-
-            const firstplus = line.indexOf("+");
-            const secondplus = line.indexOf("+", firstplus + 1);
-            line = line.slice(secondplus + 1, line.length);
-
-            if (line in results) {
-                results[line] += ", " + res;
-            } else {
-                results[line] = res;
-            }
-        }
-
-        table = table.without_empty_columns_and_rows();
-
-        word = results["Inf"];
-        wc = "Verb";
-
-        return results;
-    }
-
+    /*
     function show(obj, key) {
         const res = obj[key];
         return res === undefined ? "-" : res;
     }
+    */
 </script>
-
-<hr>
 
 {#if table}
     <table>
@@ -159,6 +58,7 @@ ConNeg|
     </table>
 {/if}
 
+<!--
 <hr>
 
 {#if state === "awaiting"}
@@ -307,6 +207,8 @@ ConNeg|
 {:else if state === "error"}
     error
 {/if}
+
+-->
 
 <style>
     table {

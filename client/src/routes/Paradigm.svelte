@@ -4,12 +4,13 @@
     import { paradigm } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
     import RadioGroup from "../components/RadioGroup.svelte";
-    import ParadigmTable from "../components/ParadigmTable.svelte";
+
+    $: usage = $t(`usage.lang.${$lang}`);
 
     let input = "";
-    let word_class = "Any";
+    let pos = "Any";
     let size = "Standard";
-    const word_classes = {
+    const poses = {
         Any: "Any",
         Noun: "N",
         Verb: "V",
@@ -22,35 +23,76 @@
         Standard: "standard",
         Full: "full",
     };
-    $: xx = get_results(input, word_class, size);
-    $: results = xx.results;
 
-    $: usage = $t(`usage.lang.${$lang}`);
+    let paradigm_component;
+    let api_data;
+    $: update_data(input, pos, $lang, size);
 
-    async function get_results(input, word_class, size) {
-        if (!input) return null;
-        word_class = word_classes[word_class];
-        const mode = paradigm_sizes[size];
-        const api_result = await paradigm($lang, input, word_class, mode);
-        console.log(api_result);
-        if (Array.isArray(api_result)) {
-            return { pos: { results: api_result, primary: true } };
+    async function update_data(input, pos, lang, size) {
+        console.log("update_data() called. size=", size);
+        if (!input) {
+            api_data = null;
+            paradigm_component = null;
+            return;
+        }
+
+        pos = poses[pos];
+        api_data = await paradigm(lang, input, pos, paradigm_sizes[size]);
+        console.log("api_data should be updated");
+
+        if (api_data === null) {
+            paradigm_component = null;
+            return;
+        }
+
+        if (pos === "Any") {
+            // determine pos from api_data
         } else {
-            console.log("api result not an array, assuming object");
-            console.log("typeof", typeof api_result);
-            // find primary
-            let res = {};
-            const others = [];
-            for (const [pos, entry] of Object.entries(api_result)) {
-                if (entry.primary) {
-                    res[pos] = { results: entry.results, primary: true };
+            const path = `../components/paradigm_layouts/${lang}/${pos}.svelte`;
+            try {
+                const module = await import(path);
+                paradigm_component = module.default;
+            } catch (e) {
+                console.error(`cannot import dynamic module from path ${path}`);
+                console.error(e);
+                return;
+            }
+        }
+    }
+
+    async function find_primary(data) {
+        if (!data) return null;
+        data = await data;
+
+        console.log("find_primary(): about to look");
+        console.log(data);
+
+        for (const [pos, entry] of Object.entries(data)) {
+            if (entry.primary) {
+                console.log("find_primary(): found!");
+                return entry;
+            }
+        }
+        console.log("find_primary(): not found!!!");
+        return null;
+    }
+
+    function make_tables(data) {
+        // figure out which tables we need, given the data
+        if (Array.isArray(data)) {
+            return [{ [pos]: { result: data, primary: true } }];
+        } else {
+            const out = [];
+            for (const [pos, entry] of Object.entries(data)) {
+                if (entry.rank === 1) {
+                    out.unshift({ [pos]: { result: entry.results, primary: true }});
                 } else {
                     // push this pos
-                    others.push(pos);
+                    out.push({ [pos]: { result: entry, primary: false }});
                 }
             }
 
-            return res;
+            return out;
         }
     }
 </script>
@@ -63,19 +105,24 @@
 
     <p>{@html usage}</p>
 
-    <RadioGroup header="Word class" bind:selected={word_class} choices={Object.keys(word_classes)} />
+    <RadioGroup header="Part of speech" bind:selected={pos} choices={Object.keys(poses)} />
     <RadioGroup header="Paradigmestørrelse" bind:selected={size} choices={Object.keys(paradigm_sizes)} />
 
     <div style="height: 16px" /> <!-- just for some space -->
 
     <WordInput
         debounce={1000}
-        on:new-value={({ detail }) => input = detail}
+        on:new-value={({ detail }) => { console.log("new input!"); input = detail} }
         on:reset-value={() => input = ""}
         on:new-input-started={() => input = ""}
     />
 
-    <ParadigmTable data={results} />
+    <!-- #key makes sure the block reacts when api_data changes -->
+    {#key api_data}
+        {#if paradigm_component !== null}
+            <svelte:component this={paradigm_component} api_data={api_data} />
+        {/if}
+    {/key}
 </main>
 
 <style>

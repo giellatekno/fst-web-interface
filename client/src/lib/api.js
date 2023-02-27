@@ -113,10 +113,10 @@ export async function disambiguate(lang, input) {
     return apicall(`disambiguate/${lang}/${input}`, { api: "local" });
 }
 
-export async function paradigm(lang, input, word_class, mode) {
+export async function paradigm(lang, input, pos, size) {
     check_arg_nonempty("paradigm", input, "input");
 
-    const query_params = new URLSearchParams({ word_class, mode }).toString();
+    const query_params = new URLSearchParams({ pos, size }).toString();
 
     return apicall(`paradigm/${lang}/${input}?${query_params}`, { api: "local" });
 }

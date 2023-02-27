@@ -54,7 +54,7 @@ class MisalignedError extends Error {
  *     [ ["abcd", "efgh"], ["xx", "yy"] ]
  */
 export function group_by_length(lines) {
-    lines = lines.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+    lines = lines.split("\n").map(line => line.trimEnd()).filter(line => line.length > 0);
 
     let current_len = lines[0].length;
     let current_group = [lines[0]];
@@ -111,6 +111,17 @@ export class Table {
             for (let column_row = 0; column_row < this.column_headers.length; column_row++) {
                 const i = column_row + indexes[column_row];
                 const row = this.column_headers[column_row][new_col + indexes[column_row]];
+
+                // TODO debugging here
+                if (row === undefined) {
+                    console.log("row was undefined!");
+                    console.log(`column_row=${column_row}, new_col=${new_col}`);
+                    console.log(`indexes[column_row]=${indexes[column_row]}`);
+                    console.log("indexes");
+                    console.log(indexes);
+                    console.log("this.column_headers");
+                    console.log(this.column_headers);
+                }
 
                 new_column_headers[column_row].push({ text: row.text, span: 1 });
             }

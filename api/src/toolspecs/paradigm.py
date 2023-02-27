@@ -44,18 +44,19 @@ The output structure is parsed and sent as json.
 #      "house" (noun, singular, as in English "a house")
 #      "house" (imperative verb of "to house", meaning "to put/give [someone] in a house",
 #               example sentence: "house them now!" (meaning: "Do put them in a house, right now!")
-#    
-# then, for each of those word classes, find a list of all other forms of that word class
+#
+# then, for each of those parts of speech, find a list of all other forms of
+#   that part of speech
 #   that we want to generate. For example, for verbs, we might want the
 #   infinitive form ("[å] bygge"), present form ("bygger"), past form ("bygde" / "bygget"?), etc
 #   Which forms we want is specified with syntax like "V+Ind+Prs" (meaning "a verb that's in
 #   indicative present form").
 #   To generate (or lookup?) a form of a specific verb would therefore be:
 #      echo "bygge+V+Ind+Prs" | src/generator-gt-norm.hfstol
-#  
-# so for the next step, if the user asked for a specific word class, we can just retrieve
-# that list. If no specific word class is given, we select one - by which criteria I currently
-# don't know - then use that word class to generate all forms we need.
+#
+# so for the next step, if the user asked for a specific pos, we can just
+# retrieve that list. If no specific pos is given, we select one - by
+# some criteria - then use that word class to generate all forms we need.
 
 
 def read_gramfile(gramfile):
@@ -104,8 +105,9 @@ def generate_tags(tag, classes, tags, taglist):
 
 
 def generate_taglist(gramfile, tagfile):
-    """Given a `gramfile` ("paradigm.LANG.txt") and `tagfile` ("korpustags.lang.txt"),
-    generate the full list of all possible tags this language can have."""
+    """Given a `gramfile` ("paradigm.LANG.txt") and `tagfile`
+    ("korpustags.lang.txt"), generate the full list of all possible tags this
+    language can have."""
     gathered = defaultdict(list)
     grammar = read_gramfile(gramfile)
     tags = read_tagfile(tagfile)
@@ -128,7 +130,7 @@ def pipeline_stdout_to_json(stdout):
 
 
 class ParadigmSize(enum.StrEnum):
-    min = "minimum"
+    min = "minimal"
     standard = "standard"
     full = "full"
 
@@ -145,14 +147,14 @@ class POS(enum.StrEnum):
 
 # this pipeline can accept a few more query params:
 query_params = {
-    "mode": {
+    "size": {
         "optional": True,
         "description": "the size of the paradigm, i.e. minimal, standard, full",
         "type": ParadigmSize,
     },
-    "word_class": {
+    "pos": {
         "optional": True,
-        "description": "word class to find paradigm for, such as N, V, etc.",
+        "description": "part of speech to find paradigm for, such as N, V, etc.",
         "type": POS,
     },
 }
@@ -262,62 +264,41 @@ def on_startup(lang, extra_files):
 
 
 async def generate_paradigm(analyses, lang, query_params={}):
-    #print(f"generate_paradigm(). {lang=}, {query_params=}")
-    word_class = query_params.get("word_class", "Any")
-    mode = query_params.get("mode", "standard")
+    pos = query_params.get("pos", "Any")
+    size = query_params.get("size", "standard")
 
-    # fast path: specific word class was given
-    if word_class != "Any":
+    # fast path: specific pos was given
+    if pos != "Any":
         try:
-            paradigmfile = PARADIGM_FILES[lang][mode][word_class]
+            paradigmfile = PARADIGM_FILES[lang][size][pos]
         except KeyError:
-            return {"error": "lang, mode or word_class not found"}
+            return {"error": "lang, size or pos not found"}
 
         return await call_para(analyses, lang, paradigmfile)
 
-    # slow path: word class not given
-    word_classes = find_poses_from_analyses(analyses)
+    # slow path: pos not given
+    poses = find_poses_from_analyses(analyses)
 
     # make sure the "primary" we selected is marked somehow..
-    # potential_word_classes = {
-    #   wc1: { primary: true, results: ... },
-    #   wc2: { primary: false, results: ... },
-    # }
-
-    # select_best_word_classes
+    # select_best_poses
     # if lemma == input we were given, then that is the primary,
     # otherwise select the first one we found (possible to do better?)
 
-    # then, do paradigm generation for all word classes we found,
+    # then, do paradigm generation for all poses we found,
     # but make sure to mark the "primary" we selected specifically in the output
 
     # primary pos we selected: the first one in the list, and dictionary
     # preserves order? Does it necessarily preserve order when JSONified and
     # reconstructed by js? probably not..
-    for wc, entry in word_classes.items():
+    for pos, entry in poses.items():
         try:
-            paradigmfile = PARADIGM_FILES[lang][mode][wc]
+            paradigmfile = PARADIGM_FILES[lang][size][pos]
         except KeyError:
-            return {"error": "lang, mode or word_class not found"}
+            return {"error": "lang, mode or pos not found"}
 
         entry["results"] = await call_para(analyses, lang, paradigmfile)
 
-    return word_classes
-
-    #if word_class:
-    #    paradigm_list = paradigm_lists[word_class]
-    #    call_para(input, paradigm_list)
-    #else:
-    #    for anl in analyses.split("\n"):
-    #        if "+?" in anl:
-    #            continue
-    #        lemma, anl = anl.split(" ")
-    #        if "Der" not in anl:
-    #            # not a derivation
-    #            pass
-    #        else:
-    #            # handle derivations separately here
-    #            pass
+    return poses
 
 
 async def call_para(analyses, lang, paradigmfile):
@@ -331,7 +312,7 @@ async def call_para(analyses, lang, paradigmfile):
         else:
             break
 
-    # for each entry in the paradigm file (for this word class),
+    # for each entry in the paradigm file (for this pos),
     # make a string like "WORD+{para}", where para is "N+..." for all variants
     # we want (and all variants depends on which "mode" we're doing paradigm for)
     input = "\n".join(f"{word}+{para}" for para in paradigmfile)
@@ -376,7 +357,5 @@ pipeline = [
         PartialPath("src/analyser-gt-desc.hfstol"),
     ],
     generate_paradigm,
-    #pipeline_stdout_to_json,
+    # pipeline_stdout_to_json,
 ]
-
-
