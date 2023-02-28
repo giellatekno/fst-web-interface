@@ -1,5 +1,18 @@
 import { Matrix } from "./matrix.js";
-import { enumerate, strip_whitespace, pad_center, len } from "./utils.js";
+import {
+    enumerate,
+    strip,
+    strip_whitespace,
+    pad_center,
+    len,
+    range,
+    zip,
+} from "./utils.js";
+
+const strip_beginning_whitespace_pipe_and_dash = strip(
+    { characters: " \t\n-|", from_end: false });
+
+const strip_pipe_from_end = strip({ characters: " \n|", from_start: false });
 
 Array.prototype.max = function () {
     return Math.max(...this);
@@ -39,6 +52,52 @@ class MisalignedError extends Error {
             + `Because "|" was found in this column on line 1, expected `
             + `"|" to be found in column ${column} but, but found '${char}'.`;
     }
+}
+
+function find_all_indexes(ch) {
+    return s => Array.from(s)
+        .map((char, i) => [char === ch, i])
+        .filter(([keep, idx]) => keep)
+        .map(([_keep, idx]) => idx);
+}
+
+function align_and_nullfill(arrays) {
+    // given
+    //   [
+    //     [ 0, 5, 9, 13],
+    //     [ 1, 5, 9, 13],
+    //   ]
+    // produce
+    //   [
+    //     [   0, null, 5, 9, 13],
+    //     [null,    1  5, 9, 13],
+    //   ]
+
+    // first find length (which is number of unique numbers)
+    const s = new Set;
+    for (let array of arrays) for (let number of array) s.add(number);
+    const numbers = ([...s]).sort((a, b) => a < b ? -1 : 1);
+    const length = s.size;
+
+    const out = Array(arrays.length).fill(0).map(_0 => []);
+
+    const next_indexes = Array(arrays.length).fill(0);
+
+    for (const n of numbers) {
+        const to_add = [];
+        for (let arr of arrays) {
+            if (arr.includes(n)) {
+                to_add.push(n);
+            } else {
+                to_add.push(null);
+            }
+        }
+        for (let i = 0; i < out.length; i++) {
+            out[i].push(to_add[i]);
+        }
+    }
+
+    return out;
 }
 
 /* group_by_length(lines)
@@ -98,6 +157,7 @@ export class Table {
         const kept_columns = Object.entries(kept_cols)
             .map(([x, y]) => ([Number(x), Number(y)]))
             .sort(([x1, x2], [y1, y2]) => x1 < y1 ? -1 : 1);
+        // [ [0, 0]  [2, 1] ]
 
         const new_row_headers = [];
         for (let key of Object.keys(kept_rows).sort()) {
@@ -105,58 +165,88 @@ export class Table {
         }
         
         const new_column_headers = Array(this.column_headers.length).fill(null).map(_ => []);
-        const indexes = Array(this.column_headers.length).fill(1);
+        const indexes = Array(this.column_headers.length).fill(0);
         
         for (let [old_col, new_col] of kept_columns) {
+            // [ [0, 0], [2, 1] ]
             for (let column_row = 0; column_row < this.column_headers.length; column_row++) {
-                const i = column_row + indexes[column_row];
-                const row = this.column_headers[column_row][new_col + indexes[column_row]];
+                const { text, span } = this.column_headers[column_row][new_col + indexes[column_row]];
 
-                // TODO debugging here
-                if (row === undefined) {
-                    console.log("row was undefined!");
-                    console.log(`column_row=${column_row}, new_col=${new_col}`);
-                    console.log(`indexes[column_row]=${indexes[column_row]}`);
-                    console.log("indexes");
-                    console.log(indexes);
-                    console.log("this.column_headers");
-                    console.log(this.column_headers);
-                }
-
-                new_column_headers[column_row].push({ text: row.text, span: 1 });
+                new_column_headers[column_row].push({ text, span });
             }
             
             for (let aa = 0; aa < indexes.length; aa++) {
                 for (let bb = 0; bb < indexes.length; bb++) {
                     if (aa === bb) continue;
                     const other_span = this.column_headers[aa][bb].span;
-                    indexes[bb] += other_span - 1;
+                    indexes[bb] += other_span;
                 }
             }
         }
 
+        /*
         for (let column_row = 0; column_row < new_column_headers.length; column_row++) {
             const row = new_column_headers[column_row];
             row.unshift({ text: "-", span: 1 });
         }
-        
+        */
+
+        //console.log("new table has these column headers");
+        //console.log(new_column_headers);
+
         return new Table(this.caption, new_data, new_row_headers, new_column_headers);
     }
 
     static from_format(format, caption = null) {
+        const groups = group_by_length(format);
+        if (groups.length === 1) {
+            // no column headers, OR no row headers!
+        }
+        if (groups.length == 2) {
+            // 
+        }
+
+        // TODO this assumtion doesn't always hold, figure out a better way to do this
         let [column_header_lines, row_headers] = group_by_length(format);
         row_headers = row_headers
             .map(s => s.trim().replaceAll("|", ""))
             .filter(s => s.length > 0);
 
-        // looks like: [ [], [], [], ... ]  (one subarray for each column header row)
+        const column_header_text_length = column_header_lines[0].length;
+        const separator_indexes = column_header_lines
+            .map(find_all_indexes("|"));
+        const aligned = align_and_nullfill(separator_indexes);
+        const column_headers = column_header_lines
+            .map(strip_pipe_from_end).map(line =>
+                line.split("|")
+                    .map(s => s.trim())
+                    .filter(s => (s !== "-") && (s !== ""))
+                    .map(s => ({ text: s, span: 1 }))
+            );
+        
+        for (let [slots, obj] of zip(aligned, column_headers)) {
+            for (let i = 1; i < slots.length; i++) {
+                if (slots[i] === null) {
+                    if (obj[i - 1]) {
+                        obj[i - 1].span++;
+                    }
+                }
+            }
+        }
+
+        /*
         const column_header_height = column_header_lines.length;
         const column_headers = Array(column_header_height).fill(0).map(_0 => []);
 
         const next_objects = Array(column_header_height).fill(0).map(_0 => ({ text: "", span: 1 }));
 
-        // how many characters the column header lines are. this is the same for all column headers
-        const column_header_text_length = column_header_lines[0].length;
+        // indexes into separator_indexes
+        const indexes_indexes = Array(column_header_lines.length).fill(0);
+
+        for (let top_index = 0; top_index < separator_indexes[0].length; top_index++) {
+            const top = separator_indexes[0][top_index];
+            // 1, 5, 9, 13
+        }
 
         for (let char = 0; char < column_header_text_length; char++) {
             for (let ch = 0; ch < column_header_height; ch++) {
@@ -182,7 +272,9 @@ export class Table {
                 }
             }
         }
+        */
 
+        // trim empty column_headers from the start
         const col_header_width = column_headers.map(len).max();
         const data = new Matrix(row_headers.length, col_header_width);
 
@@ -195,51 +287,61 @@ export class Table {
         caption_placement = "top",
         empty_indicator = "-",
     } = {}) {
-        let lines = [];
-
+        // retrieve the lines of data from the underying matrix
         const data_lines = this.data.as_console_str({ empty_indicator }).split("\n");
-        const column_width = data_lines[0].split("|").map(len)
-            .reduce((prev, cur) => Math.max(prev, cur));
 
-        for (let i = 0; i < this.row_headers.length; i++) {
-            const header = this.row_headers[i];
-            const data_line = data_lines[i];
-            const line = `${header} | ${data_line}`;
-            lines.push(line);
+        // find the widest entry out of all the fields
+        const widest_data_field = data_lines[0].split("|").map(len).max();
+        const widest_row_header = this.row_headers.map(len).max();
+        const widest_column_header = this.column_headers
+                .map(arr => arr.map(obj => obj.text).map(len).max()).max();
+        const num_columns = this.column_headers.map(len).max();
+        const entry_width = 2 + [widest_column_header, widest_row_header, widest_data_field].max();
+
+        // pad out the data to the new width
+        const padded_data_lines = data_lines.map(line =>
+            line.split("|")
+                 .map(strip_whitespace)
+                 .map(text => pad_center(text, entry_width))
+                 .join("|"));
+
+        const lines = [];
+
+        // add the lines of matrix data, with the row header included
+        if (this.row_headers.length > 0) {
+            for (const [row_header, data_line] of zip(this.row_headers, padded_data_lines)) {
+                lines.push(`${row_header} | ${data_line}`);
+            }
         }
 
-        // prepend the column headers
+        // add the column headers
         const column_header_rows = [];
         for (let i = 0; i < this.column_headers.length; i++) {
-            for (let x = 0; x < this.column_headers[i].length; x++) {
-                const ch = this.column_headers[i][x];
+            let line = [];
+            if (this.row_headers.length > 0) {
+                line.push(" ".repeat(widest_row_header - 1) + "- ");
             }
-            let line = "";
 
-            let first_column = true;
             for (let j = 0; j < this.column_headers[i].length; j++) {
-                const o = this.column_headers[i][j];
-                if (first_column) {
-                    first_column = false;
-                    line += o.text + " |";
-                } else {
-                    if (o.span > 1) {
-                        line += pad_center(o.text, column_width * 2) + "|";
-                    } else {
-                        line += pad_center(o.text, column_width) + " |";
-                    }
-                }
+                const { text, span } = this.column_headers[i][j];
+                // TODO the width is incorrect either here or above, figure it out for perfect alignment
+                const width = entry_width + ((span - 1) * (entry_width + 1));
+                line.push(pad_center(text, width));
             }
 
-            column_header_rows.push(line);
+            column_header_rows.push(line.join("|"));
         }
-        column_header_rows.push("-".repeat(data_lines[0].length + 3));
+
+        // add a dotted line between the column headers and the rest
+        column_header_rows.push("-".repeat(entry_width * num_columns + widest_row_header + 1));
+
+        // finally actually append them, using unshift() because the order is reversed
         for (let i = column_header_rows.length - 1; i >= 0; i--) {
             lines.unshift(column_header_rows[i]);
         }
 
         if (show_caption) {
-            const max_line_length = Math.max(...lines.map(line => line.length));
+            const max_line_length = lines.map(len).max();
             let caption = caption_format.replaceAll("{caption}", this.caption);
             caption = pad_center(caption, max_line_length - caption.length);
 

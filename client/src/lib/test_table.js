@@ -3,8 +3,8 @@ import { is_equal } from "./utils.js";
 
 ///*
 const _fmt = `
--| A | B | C |
--|x|y| D | E |
+-| Indicative | Conditional | Imperative | Potential | 
+-| Prs | Prt  |  something  |     D      |         E |
 a|
 b|
 c|
@@ -16,7 +16,7 @@ t.data.set(2, 2, "moi");
 
 //console.log(`${t}`);
 console.log(t.as_console_str({ show_caption: false }));
-console.log("==============================");
+console.log("\nwithout_empty_columns_and_rows:\n");
 
 const t_without = t.without_empty_columns_and_rows();
 //console.log(`${t_without}`);
@@ -34,13 +34,7 @@ function test_group_by_length2() {
     const input2 = "\nabcde\n\nefghe\nokoko\nxxx\nyy\n\nzz";
     const actual2 = group_by_length(input2);
     const expected2 = [ ["abcde", "efghe", "okoko" ], ["xxx"], ["yy", "zz"] ];
-    if (!is_equal(actual2, expected2)) {
-        console.log("test_group_by_length(): input2 failed");
-        console.log("input2", input2);
-        console.log("expected, then actual");
-        console.log(expected2);
-        console.log(actual2);
-    }
+    if (!is_equal(actual2, expected2)) throw new Error("group by length 2 failed");
 }
 
 function test_all_group_by_length() {

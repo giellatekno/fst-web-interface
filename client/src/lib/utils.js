@@ -121,24 +121,24 @@ export function is_equal(a, b) {
  *   const strip_whitespace = strip(" \t\n");
  *   [" abc ", "xx  ", "  yy" ].map(strip_whitespace); // ["abc", "xx", "yy"]
  */
-export function strip(strip_characters = " \t\n") {
+export function strip({ characters = " \t\n", from_beginning = true, from_end = true }) {
     try {
-        strip_characters = new Set(strip_characters);
+        characters = new Set(characters);
     } catch (e) {
         if (e instanceof TypeError) {
-            throw new TypeError("strip(): 'strip_characters' must be an iterable of strings of length 1", { cause: e });
+            throw new TypeError("strip(): 'characters' must be an iterable of strings of length 1", { cause: e });
         } else {
             throw e;
         }
     }
 
-    for (const character of strip_characters) {
+    for (const character of characters) {
         if (typeof character !== "string") {
-            throw new TypeError("strip(): 'strip_characters' must be an iterable of strings of length 1");
+            throw new TypeError("strip(): 'characters' must be an iterable of strings of length 1");
         }
 
         if (character.length !== 1) {
-            throw new TypeError("strip(): 'strip_characters' must be an iterable of strings of length 1");
+            throw new TypeError("strip(): 'characters' must be an iterable of strings of length 1");
         }
     }
 
@@ -150,14 +150,31 @@ export function strip(strip_characters = " \t\n") {
         let start = -1;
         let end = str.length;
 
-        while (strip_characters.has(str[++start])) ;
-        while (strip_characters.has(str[--end])) ;
+        while (from_beginning && characters.has(str[++start])) ;
+        while (from_end && characters.has(str[--end])) ;
 
         return str.slice(start, end + 1);
     }
 }
 
-export const strip_whitespace = strip(" \t\n");
+export const strip_whitespace = strip({ characters: " \t\n" });
+
+export function *range(...args) {
+    let start = 0, stop = null, step = 1;
+    switch (args.length) {
+        case 1: stop = args[0]; break;
+        case 2: start = args[0]; stop = args[1]; break;
+        case 3: start = args[0]; stop = args[1]; step = args[2]; break;
+    }
+
+    const going_up = step > 0;
+    let i = start;
+    if (going_up) {
+        for (; i < stop; i += step) yield i;
+    } else {
+        for (; i > stop; i += step) yield i;
+    }
+}
 
 export function any(iterable) {
     for (let element of iterable) {
@@ -182,21 +199,24 @@ export function pad_center(str, size) {
         throw new TypeError("pad_center(): argument 'size' must be a number");
     }
 
-    if (str.length >= size) {
+    const to_pad = size - len(str);
+    if (to_pad <= 0) {
         return str;
     }
 
     let pad_left, pad_right;
-    if (size % 2 === 0) {
-        pad_left = pad_right = size / 2;
+    if (to_pad % 2 === 0) {
+        pad_left = pad_right = to_pad / 2;
     } else {
-        pad_left = size / 2 - 1;
-        pad_right = size / 2;
+        pad_left = to_pad / 2;
+        pad_right = to_pad / 2 + 1;
     }
 
     pad_left = " ".repeat(pad_left);
     pad_right = " ".repeat(pad_right);
-    return pad_left + str + pad_right;
+    const result = pad_left + str + pad_right;
+    console.assert(result.length === size, `${result.length} != ${size}`);
+    return result;
 }
 
 export function _iter(obj) {
