@@ -3,6 +3,7 @@ import {
     enumerate,
     strip,
     strip_whitespace,
+    split,
     pad_center,
     len,
     range,
@@ -15,7 +16,16 @@ const strip_beginning_whitespace_pipe_and_dash = strip(
 const strip_pipe_from_end = strip({ characters: " \n|", from_start: false });
 
 Array.prototype.max = function () {
-    return Math.max(...this);
+    let winner = -Infinity;
+    for (let i = 0; i < this.length; i++) {
+        if (this[i] > winner) winner = this[i];
+    }
+    return winner;
+}
+
+Array.prototype.max_or = function (value) {
+    if (this.length === 0) return value;
+    return this.max();
 }
 
 // what does this function take in? What is 'span'?
@@ -155,59 +165,70 @@ export class Table {
         const { matrix: new_data, kept_cols, kept_rows } = data_without;
 
         const kept_columns = Object.entries(kept_cols)
-            .map(([x, y]) => ([Number(x), Number(y)]))
-            .sort(([x1, x2], [y1, y2]) => x1 < y1 ? -1 : 1);
-        // [ [0, 0]  [2, 1] ]
+            .map(([x, y]) => [Number(x), Number(y)])
+            .sort(([x1, x2], [y1, y2]) => x1 - y1);
 
         const new_row_headers = [];
-        for (let key of Object.keys(kept_rows).sort()) {
-            new_row_headers.push(this.row_headers[key]);
+        if (this.row_headers.length > 0) {
+            for (let key of Object.keys(kept_rows).sort()) {
+                new_row_headers.push(this.row_headers[key]);
+            }
         }
         
-        const new_column_headers = Array(this.column_headers.length).fill(null).map(_ => []);
-        const indexes = Array(this.column_headers.length).fill(0);
-        
-        for (let [old_col, new_col] of kept_columns) {
-            // [ [0, 0], [2, 1] ]
-            for (let column_row = 0; column_row < this.column_headers.length; column_row++) {
-                const { text, span } = this.column_headers[column_row][new_col + indexes[column_row]];
+        const new_column_headers = Array(this.column_headers.length)
+            .fill(null).map(_ => []);
+        const span_adjustments = Array(this.column_headers.length).fill(0);
 
-                new_column_headers[column_row].push({ text, span });
-            }
-            
-            for (let aa = 0; aa < indexes.length; aa++) {
-                for (let bb = 0; bb < indexes.length; bb++) {
-                    if (aa === bb) continue;
-                    const other_span = this.column_headers[aa][bb].span;
-                    indexes[bb] += other_span;
+        for (let [_old, _new] of kept_columns) {
+            for (let i = 0; i < new_column_headers.length; i++) {
+                const { text, span } = this.column_headers[i][_old - span_adjustments[i]];
+
+                // TODO how do I know what the new span really should be?
+                new_column_headers[i].push({ text, span: 1 });
+
+                // adjust spans
+                if (span > 1) {
+                    span_adjustments[i] += (span - 1);
                 }
             }
         }
-
-        /*
-        for (let column_row = 0; column_row < new_column_headers.length; column_row++) {
-            const row = new_column_headers[column_row];
-            row.unshift({ text: "-", span: 1 });
-        }
-        */
-
-        //console.log("new table has these column headers");
-        //console.log(new_column_headers);
 
         return new Table(this.caption, new_data, new_row_headers, new_column_headers);
     }
 
     static from_format(format, caption = null) {
         const groups = group_by_length(format);
+        let row_headers, column_headers;
+
         if (groups.length === 1) {
-            // no column headers, OR no row headers!
-        }
-        if (groups.length == 2) {
-            // 
+            const first_line = groups[0][0];
+            const splits = first_line.split("|").map(s => s.trim()).filter(s => s.length > 0);
+            
+            let data;
+
+            if (splits.length === 1) {
+                row_headers = groups[0].map(strip_pipe_from_end);
+                column_headers = [];
+                data = new Matrix(row_headers.length, 1);
+            } else {
+                row_headers = [];
+                column_headers = [
+                    groups[0][0].split("|")
+                        .map(strip_whitespace)
+                        .map(ch => ({ text: ch, span: 1 }))
+                ];
+                data = new Matrix(1, column_headers[0].length);
+            }
+
+            return new Table(caption, data, row_headers, column_headers);
         }
 
-        // TODO this assumtion doesn't always hold, figure out a better way to do this
-        let [column_header_lines, row_headers] = group_by_length(format);
+        if (groups.length !== 2) {
+            // XXX handle other lengths? Does other lengths even make sense?
+            throw new Error("Table.from_format(): malformed format");
+        }
+
+        [column_header_lines, row_headers] = group_by_length(format);
         row_headers = row_headers
             .map(s => s.trim().replaceAll("|", ""))
             .filter(s => s.length > 0);
@@ -216,13 +237,11 @@ export class Table {
         const separator_indexes = column_header_lines
             .map(find_all_indexes("|"));
         const aligned = align_and_nullfill(separator_indexes);
-        const column_headers = column_header_lines
+        column_headers = column_header_lines
             .map(strip_pipe_from_end).map(line =>
-                line.split("|")
-                    .map(s => s.trim())
+                line.split("|").map(strip_whitespace)
                     .filter(s => (s !== "-") && (s !== ""))
-                    .map(s => ({ text: s, span: 1 }))
-            );
+                    .map(s => ({ text: s, span: 1 })));
         
         for (let [slots, obj] of zip(aligned, column_headers)) {
             for (let i = 1; i < slots.length; i++) {
@@ -233,46 +252,6 @@ export class Table {
                 }
             }
         }
-
-        /*
-        const column_header_height = column_header_lines.length;
-        const column_headers = Array(column_header_height).fill(0).map(_0 => []);
-
-        const next_objects = Array(column_header_height).fill(0).map(_0 => ({ text: "", span: 1 }));
-
-        // indexes into separator_indexes
-        const indexes_indexes = Array(column_header_lines.length).fill(0);
-
-        for (let top_index = 0; top_index < separator_indexes[0].length; top_index++) {
-            const top = separator_indexes[0][top_index];
-            // 1, 5, 9, 13
-        }
-
-        for (let char = 0; char < column_header_text_length; char++) {
-            for (let ch = 0; ch < column_header_height; ch++) {
-                const character = column_header_lines[ch][char];
-                if (character === "|") {
-                    // if we're on the non-first row, and the character above
-                    // is _not_ a "|", then we need to increase the above slot's
-                    // span
-                    if (ch > 0) {
-                        const character_above = column_header_lines[ch - 1][char];
-                        if (character_above !== "|") {
-                            next_objects[ch - 1].span++;
-                        }
-                    }
-
-                    column_headers[ch].push(next_objects[ch]);
-                    next_objects[ch] = { text: "", span: 1 };
-                } else if (character === " ") {
-                    // do nothing
-                } else {
-                    // text here
-                    next_objects[ch].text += character;
-                }
-            }
-        }
-        */
 
         // trim empty column_headers from the start
         const col_header_width = column_headers.map(len).max();
@@ -292,10 +271,17 @@ export class Table {
 
         // find the widest entry out of all the fields
         const widest_data_field = data_lines[0].split("|").map(len).max();
-        const widest_row_header = this.row_headers.map(len).max();
-        const widest_column_header = this.column_headers
-                .map(arr => arr.map(obj => obj.text).map(len).max()).max();
-        const num_columns = this.column_headers.map(len).max();
+        const widest_row_header = this.row_headers.map(len).max_or(0);
+        const widest_column_header =
+            this.column_headers
+                .map(arr =>
+                    arr.map(obj => obj.text)
+                    .map(len)
+                    .max()
+                )
+                .max_or(1);
+
+        const num_columns = this.column_headers.map(len).max_or(1);
         const entry_width = 2 + [widest_column_header, widest_row_header, widest_data_field].max();
 
         // pad out the data to the new width
@@ -311,6 +297,11 @@ export class Table {
         if (this.row_headers.length > 0) {
             for (const [row_header, data_line] of zip(this.row_headers, padded_data_lines)) {
                 lines.push(`${row_header} | ${data_line}`);
+            }
+        } else {
+            // no row headers
+            for (const data_line of padded_data_lines) {
+                lines.push(data_line);
             }
         }
 

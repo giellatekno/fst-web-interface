@@ -59,42 +59,6 @@
             }
         }
     }
-
-    async function find_primary(data) {
-        if (!data) return null;
-        data = await data;
-
-        console.log("find_primary(): about to look");
-        console.log(data);
-
-        for (const [pos, entry] of Object.entries(data)) {
-            if (entry.primary) {
-                console.log("find_primary(): found!");
-                return entry;
-            }
-        }
-        console.log("find_primary(): not found!!!");
-        return null;
-    }
-
-    function make_tables(data) {
-        // figure out which tables we need, given the data
-        if (Array.isArray(data)) {
-            return [{ [pos]: { result: data, primary: true } }];
-        } else {
-            const out = [];
-            for (const [pos, entry] of Object.entries(data)) {
-                if (entry.rank === 1) {
-                    out.unshift({ [pos]: { result: entry.results, primary: true }});
-                } else {
-                    // push this pos
-                    out.push({ [pos]: { result: entry, primary: false }});
-                }
-            }
-
-            return out;
-        }
-    }
 </script>
 
 <main>

@@ -1,21 +1,4 @@
-function pad_center(str, size) {
-    const padding = size - str.length;
-    if (padding <= 0) {
-        return str;
-    }
-
-    let pad_right, pad_left;
-    if (padding % 2 == 0) {
-        pad_right = pad_left = padding / 2;
-    } else {
-        pad_right = padding / 2;
-        pad_left = padding / 2 + 1;
-    }
-
-    pad_right = " ".repeat(pad_right);
-    pad_left = " ".repeat(pad_left);
-    return pad_right + str + pad_left;
-}
+import { pad_center } from "./utils.js";
 
 const __Empty = Symbol("__Empty");
 export class Entry {
@@ -141,7 +124,6 @@ export class Matrix {
         this.#data[y][x] = value;
     }
 
-    // create a new matrix from this one, but with empty rows and columns removed
     without_empty_columns_and_rows() {
         const keep_rows = Array(this.#y).fill(false);
         const keep_cols = Array(this.#x).fill(false);

@@ -220,8 +220,12 @@
         caption-side: bottom;
     }
 
-    table tr {
-        border-bottom: 1px solid var(--border-color);
+    table td {
+        border: 1px solid var(--border-color);
+    }
+
+    table td, table th {
+        padding: 12px 10px;
     }
 
     table caption {
@@ -264,7 +268,4 @@
         border-left: 1px solid var(--border-color);
     }
 
-    table td, table th {
-        padding: 14px 12px;
-    }
 </style>

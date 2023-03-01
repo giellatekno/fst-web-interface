@@ -10,8 +10,8 @@
 
     const personsboyd_table = Table.from_format(
         `
-     -|   Indicative    |Conditional|Imperative | Potential |
-     -|Present|Preterite|Present    |           | Present   |
+     -|   Indicative    |Conditional|Imperative | Potential | x
+     -|Present|Preterite|Present    |           | Present   | x
    Sg1|
    Sg2|
    Sg3|
@@ -26,7 +26,6 @@ ConNeg|
         "Personsbøyd",
     );
 
-    /*
     const gerundium_table = Table.from_format(
         `
         Infinitive                  |
@@ -42,9 +41,8 @@ ConNeg|
         Actio Ess                   | 
         Actio Com                   | 
         `,
-        { caption: "Gerundium" },
+        "Gerundium",
     );
-    */
 
     if (Array.isArray(api_data)) {
         for (const [line, res] of api_data) {
@@ -92,6 +90,4 @@ ConNeg|
 
 <ParadigmTable table={personsboyd_table} />
 
-<!--
 <ParadigmTable table={gerundium_table} />
--->

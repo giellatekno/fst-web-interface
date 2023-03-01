@@ -159,6 +159,11 @@ export function strip({ characters = " \t\n", from_beginning = true, from_end = 
 
 export const strip_whitespace = strip({ characters: " \t\n" });
 
+
+// currying wrapper for string splitting
+export const split = (separator = " ") => (str) => String.prototype.split.call(str, separator);
+
+
 export function *range(...args) {
     let start = 0, stop = null, step = 1;
     switch (args.length) {
