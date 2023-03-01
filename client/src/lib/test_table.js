@@ -1,7 +1,7 @@
 import { Table, group_by_length, reverse_spans } from "./table.js";
 import { is_equal } from "./utils.js";
 
-/*
+///*
 const _fmt = `
 -| Indicative | Conditional | Imperative | Potential | 
 -| Prs | Prt  |  something  |     D      |         E |
@@ -23,7 +23,7 @@ const t_without = t.without_empty_columns_and_rows();
 console.log(t_without.as_console_str({ show_caption: false }));
 //*/
 
-///*
+/*
 const _fmt = `
 a | b | c | d
 `;

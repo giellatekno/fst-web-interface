@@ -198,7 +198,7 @@ export class Table {
 
     static from_format(format, caption = null) {
         const groups = group_by_length(format);
-        let row_headers, column_headers;
+        let row_headers, column_header_lines, column_headers;
 
         if (groups.length === 1) {
             const first_line = groups[0][0];
