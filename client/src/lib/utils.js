@@ -39,6 +39,12 @@ export function _typeof(obj) {
     return obj.constructor.name;
 }
 
+export function type(obj) {
+    if (obj === undefined) return undefined;
+    if (obj === null) return null;
+    return Object.getPrototypeOf(obj).constructor;
+}
+
 export function is_primitive(obj) {
     if (obj === null || obj === undefined) return true;
     switch (obj.constructor) {

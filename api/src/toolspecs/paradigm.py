@@ -238,7 +238,7 @@ def find_poses_from_analyses(analyses):
 
                 return out
             case (True, _):
-                # derivation, compound or not we don't care
+                # is derivation, compound can be anything (true or false)
                 pass
 
     return out
@@ -250,29 +250,32 @@ PARADIGM_FILES = defaultdict(dict)
 
 
 def on_startup(lang, extra_files):
-    """for all languages, find which paradigm modes they can do (if any), and
+    """for all languages, find which paradigm sizes they can do (if any), and
     pre-generate the tags (for all langs, for all modes)"""
-    PARADIGM_MODES = {"min": "minimal", "standard": "standard", "full": "full"}
+    PARADIGM_SIZES = {"min": "minimal", "standard": "standard", "full": "full"}
     files = extra_files[lang]
-    for abbr, mode in PARADIGM_MODES.items():
-        gramfile = files.get(f"paradigm_{abbr}.txt")
+    for abbreviation, size in PARADIGM_SIZES.items():
+        gramfile = files.get(f"paradigm_{abbreviation}.txt")
         tagfile = files.get("korpustags.txt")
 
         if gramfile and tagfile:
-            logger.info(f"generating taglist for {lang} {mode}")
-            PARADIGM_FILES[lang][abbr] = generate_taglist(gramfile, tagfile)
+            logger.info(f"generating taglist for {lang} {size}")
+            PARADIGM_FILES[lang][abbreviation] = generate_taglist(gramfile, tagfile)
 
 
-async def generate_paradigm(analyses, lang, query_params={}):
+async def generate_paradigm(analyses, lang, query_params=None):
+    if query_params is None:
+        query_params = {}
+
     pos = query_params.get("pos", "Any")
     size = query_params.get("size", "standard")
 
     # fast path: specific pos was given
     if pos != "Any":
         try:
-            paradigmfile = PARADIGM_FILES[lang][size][pos]
-        except KeyError:
-            return {"error": "lang, size or pos not found"}
+            paradigmfile = PARADIGM_FILES[lang][size.name][pos]
+        except KeyError as e:
+            return {"error": f"lang, size or pos not found ({e})"}
 
         return await call_para(analyses, lang, paradigmfile)
 

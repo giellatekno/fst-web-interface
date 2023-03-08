@@ -14,5 +14,8 @@
     "svelte-intl-precompile": "^0.12.0",
     "svelte-loading-spinners": "^0.3.4",
     "vite": "^3.2.3"
+  },
+  "dependencies": {
+    "@giellatekno/tablelib": "link:/home/anders/projects/jstablelib/"
   }
 }

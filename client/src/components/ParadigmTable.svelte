@@ -1,8 +1,15 @@
 <script>
-    import { Pulse } from "svelte-loading-spinners";
-    import { lang } from "../lib/stores.js";
+    //import { Pulse } from "svelte-loading-spinners";
+    //import { lang } from "../lib/stores.js";
 
     export let table;
+
+    table = table.without_empty_rows_and_columns();
+
+    // tag til språk finnes her:
+    // url: https://giellalt.uit.no/lang/sme/docu-mini-smi-grammartags.html
+    // NDS: neahtta/configs/language_specific_rules/user_friendly_tags/sme_to_nob.relabel
+    // neahttadigisanit/src/neahtta/configs/language_specific_rules/user_friendly_tags/sme_to_nob.relabel
 
     const TAG_TO_ENGLISH = {
         Inf: "Infinitive",
@@ -10,21 +17,9 @@
         Cond: "Conditional",
         Imprt: "Imperative",
     };
-
-
-    console.log(table.as_console_str());
-    table = table.without_empty_columns_and_rows();
-    console.log(table.as_console_str());
-
-    /*
-    function show(obj, key) {
-        const res = obj[key];
-        return res === undefined ? "-" : res;
-    }
-    */
 </script>
 
-{#if table}
+{#if table.is_not_empty()}
     <table>
         {#if table.caption}
             <caption>{table.caption}</caption>
@@ -36,21 +31,21 @@
                         <th></th>
                     {/if}
                     {#each column_row as { text, span }}
-                        {#if text.trim() !== "-"}
-                            <th colspan={span}>{text}</th>
-                        {/if}
+                        <th colspan={span}>
+                            {#if text.trim() !== "(-)"}{text}{/if}
+                        </th>
                     {/each}
                 </tr>
             {/each}
         </thead>
         <tbody>
-            {#each table.data.rows as row, i}
+            {#each table.data.raw_data as row, i}
                 <tr>
                     {#if table.row_headers[i]}
                         <th>{table.row_headers[i]}</th>
                     {/if}
                     {#each row as col, i}
-                        <td>{col}</td>
+                        <td>{#if col.is_empty()}-{:else}{col}{/if}</td>
                     {/each}
                 </tr>
             {/each}
@@ -212,7 +207,7 @@
 
 <style>
     table {
-        --border-color: rgb(150, 150, 150);
+        --border-color: rgb(180, 180, 180);
         display: inline-block;
         border: 1px solid black;
         border-radius: 4px;
@@ -221,15 +216,21 @@
     }
 
     table td {
+        background-color: rgb(253, 253, 248);
         border: 1px solid var(--border-color);
     }
 
+    table th {
+        background-color: #f9f2e6;
+        border-left: 1px solid black;
+    }
+
     table td, table th {
-        padding: 12px 10px;
+        padding: 10px 8px;
     }
 
     table caption {
-        padding: 0.5em;
+        padding: 0.4em;
         font-weight: bold;
     }
 
@@ -245,7 +246,7 @@
     /* TEMP END */
 
     table thead tr:last-of-type {
-        border-bottom: 2px solid black;
+        border-bottom: 2px solid rgb(80, 80, 80);
     }
 
     table colgroup col.ind {
