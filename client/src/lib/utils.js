@@ -5,6 +5,28 @@ export function only_on_enter(fn) {
     }
 }
 
+export function throttle_time(duration) {
+    return function(fn) {
+        let timer = null;
+        let next_func = () => null;
+
+        return function(...args) {
+            if (timer) {
+                next_func = fn.bind(null, ...args);
+                return;
+            } else {
+                timer = window.setTimeout(() => {
+                    timer = null;
+                    next_func();
+                    next_func = null;
+                }, duration);
+
+                return fn(...args);
+            }
+        }
+    };
+}
+
 export function *enumerate(list, start = 0) {
     for (let i = start; i < list.length; i++) {
         yield [i, list[i]];

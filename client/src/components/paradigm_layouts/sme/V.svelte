@@ -1,4 +1,5 @@
 <script>
+    import { throttle_time } from "./../../../lib/utils.js";
     import ParadigmTable from "../../ParadigmTable.svelte";
     import { Table } from "@giellatekno/tablelib";
 
@@ -136,14 +137,44 @@
 
         return [ null, -1, -1 ];
     }
+
+    const all_rows = [0, 1, 2, 3, 4, 5, 6];
+    let persons_tables = [personsboyd_table];
+    let screen_width = document.body.clientWidth;
+    function on_resize(_ev) {
+        screen_width = document.body.clientWidth;
+
+        if (screen_width > 800) {
+            persons_tables = [personsboyd_table];
+        } else if (screen_width > 500) {
+            persons_tables = [
+                personsboyd_table.slice(all_rows, [0, 1, 2]),
+                personsboyd_table.slice(all_rows, [3, 4]),
+            ];
+        } else {
+            persons_tables = [
+                personsboyd_table.slice(all_rows, [0]),
+                personsboyd_table.slice(all_rows, [1]),
+                personsboyd_table.slice(all_rows, [2]),
+                personsboyd_table.slice(all_rows, [3]),
+                personsboyd_table.slice(all_rows, [4]),
+            ];
+        }
+    }
 </script>
+
+<svelte:window on:resize={throttle_time(2000)(on_resize)} />
 
 <h2>Verb: {infinitive}</h2>
 
 {#if error}
     <p>Noe har gått galt</p>
 {:else}
-    <ParadigmTable table={personsboyd_table} />
+    {#key persons_tables}
+        {#each persons_tables as pt}
+            <ParadigmTable table={pt} />
+        {/each}
+    {/key}
     <ParadigmTable table={gerundium_table} />
     <ParadigmTable table={other_table} />
 {/if}

@@ -19,6 +19,31 @@
     };
 </script>
 
+<!--
+{#if table.is_not_empty()}
+    <div class="table">
+        {#each table.column_headers as column_header_row}
+            {#if table.row_headers}<div></div>{/if}
+            {#each column_header_row as { text, span }}
+                <div class="th">
+                    {#if text.trim() !== "(-)"}{text}{/if}
+                </div>
+            {/each}
+        {/each}
+
+        {#each table.data.raw_data as row, i}
+            {#if table.row_headers[i]}
+                <div class="th">{table.row_headers[i]}</div>
+            {/if}
+
+            {#each row as col}
+                <div class="field">{#if col.is_empty()}-{:else}{col}{/if}</div>
+            {/each}
+        {/each}
+    </div>
+{/if}
+-->
+
 {#if table.is_not_empty()}
     <table>
         {#if table.caption}
@@ -217,12 +242,12 @@
 
     table td {
         background-color: rgb(253, 253, 248);
-        border: 1px solid var(--border-color);
+        /*border: 1px solid var(--border-color);*/
     }
 
     table th {
         background-color: #f9f2e6;
-        border-left: 1px solid black;
+        /*border-left: 1px solid black;*/
     }
 
     table td, table th {
@@ -241,7 +266,7 @@
 
     /* TEMP */
     table th {
-        border: 1px solid var(--border-color);
+        /*border: 1px solid var(--border-color);*/
     }
     /* TEMP END */
 
@@ -269,4 +294,29 @@
         border-left: 1px solid var(--border-color);
     }
 
+
+
+
+
+
+    div.table {
+        display: grid;
+        grid-template-rows: repeat(5, 1fr);
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    @media screen and (max-width: 800px) {
+        div.table {
+            grid-template-rows: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    div.table > div.field {
+        /*border: 1px solid gray;*/
+    }
+
+    div.table > div.th {
+        font-weight: bold;
+    }
 </style>

@@ -29,7 +29,6 @@
     $: update_data(input, pos, $lang, size);
 
     async function update_data(input, pos, lang, size) {
-        console.log("update_data() called. size=", size);
         if (!input) {
             api_data = null;
             paradigm_component = null;
@@ -38,7 +37,6 @@
 
         pos = poses[pos];
         api_data = await paradigm(lang, input, pos, paradigm_sizes[size]);
-        console.log("api_data should be updated");
 
         if (api_data === null) {
             paradigm_component = null;
