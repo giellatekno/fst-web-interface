@@ -11,6 +11,7 @@ from makefun import with_signature
 
 from .toolset import tools
 
+T = TypeVar("T")
 description = """
 fst-api is the api that executes the model language applications,
 for use with the fst-web-interface SPA website.
@@ -41,7 +42,6 @@ async def add_process_time_header(request, call_next):
     return response
 
 
-T = TypeVar("T")
 class ErrorResponse(BaseModel):
     input: str
     error: str

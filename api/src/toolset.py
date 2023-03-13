@@ -16,12 +16,16 @@ from .util import noop
 from . import toolspecs
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
+if __name__ == "__main__":
+    # if run as a script, disable logging
+    logging.disable(logging.ERROR)
+else:
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
 DETECTED_GTLANGS = list(p.name[5:] for p in GTLANGS.glob("lang-*"))
 
@@ -60,6 +64,7 @@ class Tool:
         self.query_params = spec_dict.get("query_params", {})
         self.extra_files = spec_dict.get("extra_files", {})
         self.pipelines = spec_dict["pipeline"]
+        self.needed_gt_files = {}
         self.resolve_pipelines()
 
         # this technically returns available files
@@ -109,6 +114,7 @@ class Tool:
 
         for lang, pipeline in self.pipelines.items():
             assert lang != "*", "\"*\" still exists in pipeline"
+            self.needed_gt_files[lang] = set()
             new_pipeline = []
 
             for program in pipeline:
@@ -124,6 +130,7 @@ class Tool:
                         continue
 
                     pp = entry.p
+                    self.needed_gt_files[lang].add(pp)
                     resolved_path = GTLANGS / f"lang-{lang}" / pp
                     if resolved_path.is_file():
                         new_program.append(str(resolved_path))
@@ -317,3 +324,22 @@ for name, spec in inspect.getmembers(toolspecs):
         tools.add(spec)
 
 tools.collect_repos_info()
+
+if __name__ == "__main__":
+    # dict of lang -> set of file paths
+    # needed = {lang: set() for lang in LANGS}
+    import json
+
+    class MyEncoder(json.JSONEncoder):
+        def default(self, o):
+            """ For sets: return a list, which can be serialized. """
+            if isinstance(o, set):
+                return list(o)
+            return super().default(o)
+
+    got = defaultdict(set)
+    for name, tool in tools.tools.items():
+        for lang, needed_files in tool.needed_gt_files.items():
+            got[lang] |= needed_files
+
+    print(json.dumps(got, indent=4, cls=MyEncoder))
