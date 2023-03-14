@@ -1,6 +1,19 @@
+function determine_api_url() {
+    // TODO remove
+    console.log("forcing azure api url");
+    return "http://fst-api-test.norwayeast.azurecontainer.io:8000/";
+
+    const url = new URL(window.location.href);
+    if (url.hostname === "localhost") {
+        return "http://localhost:8000/";
+    } else {
+        return "http://fst-api-test.norwayeast.azurecontainer.io:8000/";
+    }
+}
+
 const API_URLS = {
     divvun: "https://api-giellalt.uit.no/",
-    local: "http://localhost:8000/",
+    local: determine_api_url(),
 };
 
 const service_unavailable = new Response(null, {
