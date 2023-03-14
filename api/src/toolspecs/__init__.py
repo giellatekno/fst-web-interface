@@ -4,6 +4,7 @@
 import importlib as __importlib
 import pkgutil as __pkgutil
 
+
 def __import_submodules(package, recursive=True):
     """ Import all submodules of a module, recursively, including subpackages
 
@@ -18,7 +19,9 @@ def __import_submodules(package, recursive=True):
         full_name = package.__name__ + '.' + name
         results[full_name] = __importlib.import_module(full_name)
         if recursive and is_pkg:
-            results.update(import_submodules(full_name))
+            results.update(__import_submodules(full_name))
+
     return results
+
 
 __import_submodules(__name__)
