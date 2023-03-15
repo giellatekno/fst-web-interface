@@ -2,7 +2,7 @@
     import { onMount } from "svelte";
     import example_img from "../assets/language.svg";
     import spellcheck_img from "../assets/spellcheck.svg";
-    import hyphenation_img from "../assets/hyphenation.svg";
+    import hyphenate_img from "../assets/hyphenation.svg";
     import num_img from "../assets/num.svg";
     import ipa_img from "../assets/ipa.svg";
     import { t } from "svelte-intl-precompile";
@@ -40,9 +40,9 @@
 
     const IMAGES = {
         spellcheck: spellcheck_img,
-        hyphenation: hyphenation_img,
+        hyphenate: hyphenate_img,
         num: num_img,
-        transcription: ipa_img,
+        transcribe: ipa_img,
     }
 
     let show_date_relative = false;
@@ -140,7 +140,7 @@
     div.tools-wrapper {
         display: grid;
         grid-template-columns: repeat(2, max-content);
-        grid-gap: 17px;
+        grid-gap: 12px;
         /*width: calc(100vw - 68px);*/
     }
 
@@ -158,11 +158,10 @@
             'img img title title title'
             'img img desc desc desc';
         grid-template-columns: 35px 35px repeat(3, max-content);
-        background-color: #f2ecb7;
-        border: 1px solid #d5b867;
-        border-radius: 4px;
+        background-color: #f7f2c9;
+        border: 1px solid #e6bd4c;
         padding: 4px 12px;
-        box-shadow: 2px 2px 4px 0px rgba(121, 121, 89, 0.44);
+        box-shadow: 1px 2px 4px 0px rgba(20, 17, 38, 0.18);
         transition:
             background-color ease-out 0.25s;
     }
@@ -194,7 +193,7 @@
         justify-self: start;
         align-self: end;
         grid-area: title;
-        font-size: 1.6em;
+        font-size: 1.5em;
         font-weight: 500;
         font-variant: small-caps;
         margin-bottom: 6px;

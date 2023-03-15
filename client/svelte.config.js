@@ -1,28 +1,24 @@
 import precompileIntl from "svelte-intl-precompile/sveltekit-plugin";
 
-const print = console.log;
-
-print("hey");
-
 function compile_locales() {
     let _ws;
 
     function configureServer({ config, ws, watcher, moduleGraph }) {
-        print(config);
+        //console.log(config);
         _ws = ws;
         watcher.on("change", file => {
-            print("file changed");
+            console.log("file changed");
             ws.send({ type: "message", message: "file changed" });
         });
     }
 
     function resolveId(source, importer) {
         _ws.send({ type: "message", message: "hey there" });
-        print("hey there!");
+        console.log("hey there!");
     }
 
     function load(id) {
-        print(id);
+        console.log(id);
         // returns something
     }
     function transform(content, id) {

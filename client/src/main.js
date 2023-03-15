@@ -7,7 +7,7 @@ import {
 } from "./lib/stores.js";
 
 const app = new App({
-    target: document.getElementById('app'),
+    target: document.getElementById('app')
 });
 
 window.addEventListener("click", function(ev) {

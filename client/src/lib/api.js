@@ -1,8 +1,4 @@
 function determine_api_url() {
-    // TODO remove
-    console.log("forcing azure api url");
-    return "http://fst-api-test.norwayeast.azurecontainer.io:8000/";
-
     const url = new URL(window.location.href);
     if (url.hostname === "localhost") {
         return "http://localhost:8000/";
@@ -81,6 +77,23 @@ async function apicall(
         }
         return result;
     }
+}
+
+export async function version() {
+    const which = API_URLS.local;
+    const is_local = new URL(which).hostname === "localhost";
+    let ver;
+
+    try {
+        ver = await apicall("version", { api: "local" });
+        if (ver === service_unavailable) {
+            ver = null;
+        }
+    } catch (e) {
+        ver = null;
+    }
+
+    return [is_local, ver];
 }
 
 export async function spell(lang, word) {

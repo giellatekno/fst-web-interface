@@ -14,7 +14,10 @@
     import Search from "../components/Search.svelte";
     import {
         capabilities,
+        version,
     } from "../lib/api.js";
+
+    const client_version = "0.0.1";
 
     let search = "";
     let show_sami = false;
@@ -22,11 +25,17 @@
     let show_others = false;
     let langs_in_api = [];
 
+    let api_str = "";
+
     $: visible_langs = filter_langs(search, show_sami, show_uralic, show_others);
 
     onMount(async () => {
         const cap = await capabilities();
         langs_in_api = Object.keys(cap);
+        let [is_local, ver] = await version();
+        const where = is_local ? "local " : "";
+        ver = ver === null ? "(unavailable)" : `v${ver}`;
+        api_str = `${where}${ver}`;
     });
 
     function filter_langs(search, show_sami, show_uralic, show_others) {
@@ -152,6 +161,19 @@
             {/each}
         </div>
     </div>
+
+    <div style="margin-top: 2em;">
+        <p class="langmodel-info">
+            <code>
+                Kildekode <a href="https://github.com/giellatekno/fst-web-interface"
+                   rel="external">
+                    github.com/giellatekno/fst-web-interface
+                </a>
+                &mdash;
+                versjoner: client v{client_version}, api {api_str}
+            </code>
+        </p>
+    </div>
 </main>
 
 <style>
@@ -236,5 +258,13 @@
     span.language {
         font-size: 20px;
         padding: 6px;
+    }
+
+    p.langmodel-info {
+        display: inline;
+        font-size: 0.85em;
+        padding: 8px 10px;
+        border: 2px solid #d9d914;
+        background-color: #f4f49c;
     }
 </style>

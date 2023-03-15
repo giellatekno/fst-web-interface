@@ -91,11 +91,11 @@ export const tools = [
     "dependency",
     "disambiguate",
     "generate",
-    "hyphenation",
+    "hyphenate",
     "num",
     "paradigm",
     "spellcheck",
-    "transcription",
+    "transcribe",
     //"ortography",
     //"stedsnavnsordbok",
     //"tallordsgenerator",
@@ -109,11 +109,11 @@ for (const lang of langs) {
     if (dependency_langs.has(lang)) tools_for[lang].push("dependency");
     if (disambiguate_langs.has(lang)) tools_for[lang].push("disambiguate");
     if (generation_langs.has(lang)) tools_for[lang].push("generate");
-    if (hyphenation_langs.has(lang)) tools_for[lang].push("hyphenation");
+    if (hyphenation_langs.has(lang)) tools_for[lang].push("hyphenate");
     if (paradigm_langs.has(lang)) tools_for[lang].push("paradigm");
     //if (spellcheck_langs.has(lang)) tools_for[lang].push("spellcheck");
     if (num_langs.has(lang)) tools_for[lang].push("num");
-    if (transcription_langs.has(lang)) tools_for[lang].push("transcription");
+    if (transcription_langs.has(lang)) tools_for[lang].push("transcribe");
 }
 
 

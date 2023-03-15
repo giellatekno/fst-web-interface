@@ -16,6 +16,8 @@
 
     import { lang, tool } from "./lib/stores.js";
 
+    let showing_info = false;
+
     // React to any changes in lang or tool,
     // and update the currenly showing component
     $: current_component = determine_component(
@@ -38,9 +40,9 @@
                 return Disambiguate;
             case "dependency":
                 return Dependency;
-            case "hyphenation":
+            case "hyphenate":
                 return Hyphenation;
-            case "transcription":
+            case "transcribe":
                 return Transcription;
             case "spellcheck":
                 return Spellcheck;
@@ -50,6 +52,8 @@
                 return Num;
       }
   }
+
+    function toggle_showing_info() { showing_info = !showing_info; }
 </script>
 
 <main>
@@ -74,15 +78,16 @@
 
 
 <style>
+    main {
+        width: 800px;
+    }
+
     header {
         /*height: 44px;*/
         display: flex;
         align-items: center;
         margin-top: 6px;
         margin-left: 6px;
-    }
-    div {
-        /*margin-left: 34px;*/
     }
 
     /*

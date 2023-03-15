@@ -11,6 +11,8 @@ from makefun import with_signature
 
 from .toolset import tools
 
+VERSION = "0.0.1-dev"
+
 T = TypeVar("T")
 description = """
 fst-api is the api that executes the model language applications,
@@ -19,7 +21,7 @@ for use with the fst-web-interface SPA website.
 
 app = FastAPI(
     title="fst-api",
-    version="0.0.1-dev",
+    version=VERSION,
     description=description,
 )
 
@@ -55,6 +57,11 @@ class OkResponse(GenericModel, Generic[T]):
 class LangCapabilities(BaseModel):
     tools: list[str]
     repo_info: dict[str, str]
+
+
+@app.get("/version", summary="version of the api")
+async def handle_version():
+    return {"result": VERSION}
 
 
 @app.get(
