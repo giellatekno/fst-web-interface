@@ -311,13 +311,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    Deployment
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -386,13 +379,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    Deployment
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -425,7 +411,7 @@ switch between them. It's basically for Python what <a href="https://github.com/
 <p>To run the development server, navigate to the folder after cloning,
 and install the dependencies.</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/giellatekno/fst-web-interface
-<span class="nb">cd</span><span class="w"> </span>fst-web-interface
+<span class="nb">cd</span><span class="w"> </span>fst-web-interface/client
 npm<span class="w"> </span>install
 npm<span class="w"> </span>run<span class="w"> </span>dev
 </code></pre></div>
@@ -453,14 +439,6 @@ are first-time-only required steps.</p>
 <p>The javascript frontend framework in this project is Svelte.
 Read about it at <a href="https://svelte.dev/">svelte.dev</a>.</p>
 <p>The API framework is FastAPI. Read about it at <a href="https://fastapi.tiangolo.com/">fastapi.tiangolo.com</a>.</p>
-<h2 id="deployment">Deployment</h2>
-<p>At this point, how we do deployment for this project is yet to be
-determined.</p>
-<p>The Svelte app builds to static html/css/js, and can be served by any
-web server. But keep in mind that it is a SPA, and as such, all requests
-for "children" routes should all resolve to index.html.</p>
-<p>For the API, there are numerous options, including containerized type
-setups, documented on the FastAPI website.</p>
 
 
 
