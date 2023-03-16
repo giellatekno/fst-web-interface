@@ -11,6 +11,7 @@
 
 {#if error}
     <p>Noe har gått galt</p>
+    <p>{JSON.stringify(api_data)}</p>
 {:else}
     {#each api_data as d}
         <p>{d}</p>

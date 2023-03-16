@@ -329,7 +329,7 @@ def parse_args():
         type=argparse.FileType("r"),
         help=(
             "Required. Path to json file describing which gt files are "
-            "needed for which language"
+            "needed for which language. Use toolspec.py to rebuild it."
         ),
     )
     parser.add_argument(
@@ -381,9 +381,7 @@ if __name__ == "__main__":
     args = parse_args()
 
     ret = asyncio.run(main(args))
-    if ret is None:
-        ret = 0
-    if ret > 0 and not args.verbose:
+    if isinstance(ret, int) and ret > 0 and not args.verbose:
         print("run again with -v for verbose output")
 
     raise SystemExit(ret)
