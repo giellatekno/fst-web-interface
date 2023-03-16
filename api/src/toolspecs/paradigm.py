@@ -164,22 +164,28 @@ query_params = {
 #   TODO: fallback files.... (tagfile = korpustags.LANG.txt (or if that doesn't exist): korpustags.txt)
 extra_files = {
     "sma": {
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sma.txt"),
         "paradigm_min.txt": PartialPath("test/data/paradigm_min.sma.txt"),
         "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sma.txt"),
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sma.txt"),
         "korpustags.txt": PartialPath("test/data/korpustags.sma.txt"),
     },
     "sme": {
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sme.txt"),
         "paradigm_min.txt": PartialPath("test/data/paradigm_min.sme.txt"),
         "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sme.txt"),
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sme.txt"),
         "korpustags.txt": PartialPath("test/data/korpustags.sme.txt"),
+    },
+    "smj": {
+        "paradigm_min.txt": PartialPath("test/data/paradigm_min.smj.txt"),
+        "paradigm_standard.txt": PartialPath("test/data/paradigm.smj.txt"),
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.smj.txt"),
+        "korpustags.txt": PartialPath("test/data/korpustags.smj.txt"),
     },
     "nob": {
         # TODO these files are copied from sme, just to have some test data!
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.nob.txt"),
         "paradigm_min.txt": PartialPath("test/data/paradigm_min.nob.txt"),
         "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.nob.txt"),
+        "paradigm_full.txt": PartialPath("test/data/paradigm_full.nob.txt"),
         "korpustags.txt": PartialPath("test/data/korpustags.nob.txt"),
     },
     "*": {
