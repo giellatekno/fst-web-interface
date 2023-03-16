@@ -4,6 +4,7 @@
     import { paradigm } from "../lib/api.js";
     import WordInput from "../components/WordInput.svelte";
     import RadioGroup from "../components/RadioGroup.svelte";
+    import FallbackParadigmLayout from "../components/paradigm_layouts/Fallback.svelte";
 
     $: usage = $t(`usage.lang.${$lang}`);
 
@@ -14,7 +15,7 @@
         Any: "Any",
         Noun: "N",
         Verb: "V",
-        Adjective: "Adj",
+        Adjective: "A",
         Adverb: "Adv",
         Pronoun: "Pron",
     };
@@ -51,9 +52,8 @@
                 const module = await import(path);
                 paradigm_component = module.default;
             } catch (e) {
-                console.error(`cannot import dynamic module from path ${path}`);
-                console.error(e);
-                return;
+                console.log(`no module for (${lang},${pos}), showing fallback`);
+                paradigm_component = FallbackParadigmLayout;
             }
         }
     }

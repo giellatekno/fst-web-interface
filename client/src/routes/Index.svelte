@@ -182,7 +182,7 @@
     }
 
     main > h1 {
-        margin-top: 0.2em;
+        margin: 0.2em 0;
     }
 
     a {
@@ -208,6 +208,7 @@
     div.filters {
         display: flex;
         font-variant: small-caps;
+        margin-top: 8px;
     }
 
     div.filters > span.header {
