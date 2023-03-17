@@ -39,11 +39,11 @@ LANGS = [
 DOCKERFILE_compiler = """
 FROM ubuntu:20.04
 RUN apt-get update
-RUN apt-get install locales
-RUN locale-gen en_US.UTF-8
-RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
-ENV LANG=en_US
-ENV LC_ALL=en_US.UTF-8
+#RUN apt-get install locales
+#RUN locale-gen en_US.UTF-8
+#RUN update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+#ENV LANG=en_US
+#ENV LC_ALL=en_US.UTF-8
 ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Oslo"
 
 #RUN apt-get -y install curl bc
@@ -90,14 +90,14 @@ RUN git log -n 1 --format=format:"%h %cI" > REPO_INFO
 
 DOCKERFILE_make_lang = """
 FROM fst-lang-source-{lang}
-ENV LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
+#ENV LANG="en_US.UTF-8" LC_ALL="en_US.UTF-8"
 WORKDIR /progs/lang-{lang}
 #RUN autoreconf -i
 RUN ./autogen.sh
 RUN ./configure --enable-fst-hyphenator --enable-spellers --enable-tokenisers --enable-phonetic --enable-tts
-#RUN make -j
+RUN make -j
 # does it fail to build because parallel?
-RUN make
+#RUN make
 #RUN tar -czf lang-{lang}.tar.gz \
 #        REPO_INFO \
 #        tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst \

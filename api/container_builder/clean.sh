@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# a list of all "fst-*" images
+# remove all stopped containers
+docker container prune -f
+
+# get a list of all "fst-*" images
 IMAGES=`docker images fst-* | sed 1d | cut -f1 -d" "`
 
-echo ${IMAGES}
 if [[ ! -z "${IMAGES}" ]]; then
     docker image rm ${IMAGES}
 fi

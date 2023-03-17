@@ -27,33 +27,38 @@ async def run_docker_build(image_tag, input, verbose=False, print=print):
 
     proc = await asyncio.create_subprocess_shell(
             f"docker build -t {image_tag} -",
-            limit=4096, stdin=PIPE, stdout=PIPE)
+            limit=4096, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
     # prevent deadlock
     # see https://stackoverflow.com/questions/57730010/python-asyncio-subprocess-write-stdin-and-read-stdout-stderr-continuously
-    _, line1 = await asyncio.gather(
-        _write(proc.stdin, input),
-        _read(proc.stdout)
-    )
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(_write(proc.stdin, input))
+        tg.create_task(_read(proc.stderr))
 
-    lookfor = bytes(f"Successfully tagged {image_tag}", encoding="utf-8")
-
-    if line1.startswith(lookfor):
-        print("done")
-        return True
-
-    print(line1.decode("utf-8"))
-
+    retrieved_lines = []
     while True:
-        line = await proc.stdout.readline()
-        if line.startswith(lookfor):
-            print("done")
-            return image_tag
-        elif line == b"":
-            print("Error: unexpected EOF")
-            return False
+        #line = await proc.stdout.readline()
+        #print(f"{line=}")
+        errline = await proc.stderr.readline()
+        if errline == b"":
+            print("no more lines on stderr")
+            return True
+        errline = errline.decode("utf-8").strip()
+        if "naming to" in errline:
+            print(f"all done, image tagged {image_tag}")
+            return True
         else:
-            print(line.decode("utf-8").strip())
+            print(errline)
+        #if line.startswith(lookfor):
+        #    print("done")
+        #    return image_tag
+        #if line == b"":
+        #    # are we done?
+        #    print(retrieved_lines)
+        #    print("Are we done?")
+        #    return False
+        #else:
+        #    pass#print(line.decode("utf-8").strip())
 
 
 async def worker(q, r, verbose=False):
@@ -62,17 +67,14 @@ async def worker(q, r, verbose=False):
     (id, function, print_function). The worker calls the async function
     'function', with keyword argument 'print' = print_function, and puts
     the result of the call back on a return queue 'r' as (id, result)."""
-    while True:
-        try:
-            idx, f, print_fn = q.get_nowait()
-        except asyncio.QueueEmpty:
-            break
+    while not q.empty():
+        idx, fn_tup, print_fn = q.get_nowait()
 
-        f, *args = f
+        fn, *args = fn_tup
 
-        res = await f(*args, verbose=verbose, print=print_fn)
+        result = await fn(*args, verbose=verbose, print=print_fn)
 
-        r.put_nowait([idx, res])
+        r.put_nowait([idx, result])
         q.task_done()
 
 
@@ -97,26 +99,29 @@ async def run_assignments(*assignments, verbose=False):
         print(name + "...(waiting)")
 
     r = asyncio.Queue()
-    workers = [
-        asyncio.create_task(worker(q, r, verbose))
-        for _ in range(cpu_count())
-    ]
-
     try:
-        await asyncio.gather(*workers)
-    except asyncio.CancelledError as e:
-        print("cancelled.", e)
+        async with asyncio.TaskGroup() as tg:
+            for _ in range(cpu_count()):
+                tg.create_task(worker(q, r, verbose))
+    except asyncio.exceptions.CancelledError:
+        print("Cancelled")
+
+    # workers = [
+    #     asyncio.create_task(worker(q, r, verbose))
+    #     for _ in range(cpu_count())
+    # ]
+
+    # try:
+    #     await asyncio.gather(*workers)
+    # except asyncio.CancelledError as e:
+    #     print("cancelled.", e)
 
     results = [None for _ in range(n)]
-    while True:
-        try:
-            res = r.get_nowait()
-        except asyncio.QueueEmpty:
-            break
-
-        idx, result = res
+    while not r.empty():
+        idx, result = r.get_nowait()
         results[idx] = result
 
+    print(f"{results=}")
     return results if len(results) > 1 else results[0]
 
 
@@ -124,8 +129,8 @@ def logit(n, title, s):
     """Go n lines back, erase the line, print a string, and go back
     down again"""
     s = s.strip()
-    if s.startswith("--->"):
-        return
+    #if s.startswith("--->"):
+    #    return
     avail = COLUMNS - len(title)
     if len(s) > avail:
         s = s[:avail - 3] + "..."
