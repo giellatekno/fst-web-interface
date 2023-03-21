@@ -26,6 +26,3 @@ check-have-image:
 		echo forrest docker image does not exist, run make image; \
 		exit 1; \
 	fi
-
-printvar:
-	echo $(have-image)
