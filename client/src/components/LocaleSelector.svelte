@@ -113,6 +113,7 @@
         margin-left: 0.4em;
     }
     div.fullscreen {
+        z-index: 20;
         color: white;
         background-color: rgba(40, 40, 40, 0.95);
         padding: 18px;
