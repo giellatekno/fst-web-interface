@@ -9,7 +9,7 @@ run: check-have-image
 	docker run --rm -it forrest /bin/bash
 
 gtuit-run: check-gt-home check-have-image
-	docker run --rm -it -v $(GTHOME):/home/main forrest
+	docker run --rm -it -v $(GTHOME):/home/main -p 8888:8888 forrest
 
 clean:
 	-docker image rm forrest
