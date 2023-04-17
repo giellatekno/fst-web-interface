@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from ..util import PartialPath
+
+from ..langmodel_file import GENERATOR_GT_NORM_HFSTOL
 
 summary = "generate"
 description = """
@@ -10,11 +11,13 @@ Generates normative wordforms from lemma + morphological tags.
 The output structure is parsed and sent as json.
 """
 
+
 class Response(BaseModel):
     input: str
     not_found: str | None
     found: str | None
     error: str | None
+
 
 def pipeline_stdout_to_json(stdout) -> Response:
     splits = stdout.strip().split("\t")
@@ -30,11 +33,12 @@ def pipeline_stdout_to_json(stdout) -> Response:
             out["found"] = result
     return out
 
+
 pipeline = [
     [
         "hfst-lookup",
         "-q",
-        PartialPath("src/generator-gt-norm.hfstol"),
+        GENERATOR_GT_NORM_HFSTOL,
     ],
     pipeline_stdout_to_json
 ]

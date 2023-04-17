@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from ..util import PartialPath
+from ..langmodel_file import TOKENISER_DISAMB_GT_DESC_PMHFST
+from ..langmodel_file import ANALYSER_GT_DESC_HFSTOL
 
 summary = "analyze"
 description = """
@@ -63,17 +64,12 @@ pipeline = [
     [
         "hfst-tokenize",
         "-q",
-        PartialPath(
-            # --enable-tokenisers
-            "tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst",
-        ),
+        TOKENISER_DISAMB_GT_DESC_PMHFST,
     ],
     [
         "hfst-lookup",
         "-q",
-        PartialPath(
-            "src/analyser-gt-desc.hfstol",
-        ),
+        ANALYSER_GT_DESC_HFSTOL,
     ],
     pipeline_stdout_to_json
 ]

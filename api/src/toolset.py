@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from .config import GTLANGS
-from .util import PartialPath
 from .util import noop
+from .langmodel_file import LangmodelFile
 
 # this imports all toolspecs as a module with the name "toolspecs"
 from . import toolspecs
@@ -41,11 +41,17 @@ def get_repo_info(path):
     return {"hash": hash, "date": date}
 
 
-def flat(some_list):
-    out = []
-    for sublist in some_list:
-        out.extend(sublist)
-    return out
+def find_gt_file(GTLANGS, lang, langmodel_file):
+    """Given the GTLANGS path, a language code, and a PartialPath,
+    return the path of where the file specified by the partialpath
+    was found, or, if it was not found, return None."""
+    # so, check GTLANGS, but also /usr/share/giella/{lang}
+    # also check /usr/share/giella/{lang} ?
+    for base in (GTLANGS, Path("/usr/share/giella")):
+        for lang_part in (f"lang-{lang}", lang):
+            path = langmodel_file.resolve_path(base / lang_part)
+            if path.is_file():
+                return path
 
 
 class Tool:
@@ -125,19 +131,16 @@ class Tool:
 
                 new_program = []
                 for entry in program:
-                    if not isinstance(entry, PartialPath):
+                    if not isinstance(entry, LangmodelFile):
                         new_program.append(entry)
                         continue
 
-                    pp = entry.p
-                    self.needed_gt_files[lang].add(pp)
-                    resolved_path = GTLANGS / f"lang-{lang}" / pp
-                    if resolved_path.is_file():
-                        new_program.append(str(resolved_path))
+                    self.needed_gt_files[lang].add(entry.name)
+                    found_path = find_gt_file(GTLANGS, lang, entry)
+                    if found_path:
+                        new_program.append(str(found_path))
                     else:
-                        #logger.warn(f"lang-{lang} wants file {pp}, but"
-                        #            f" {resolved_path} does not exist")
-                        disabled_langs[lang].add(pp)
+                        disabled_langs[lang].add(entry.name)
                         new_program = None
                         break
                 if new_program is not None:
@@ -167,7 +170,10 @@ class Tool:
         if not self.pipelines:
             self.response_model = None
 
-        last_step = next(iter(self.pipelines.values()))[-1]
+        try:
+            last_step = next(iter(self.pipelines.values()))[-1]
+        except StopIteration:
+            print("self.pipelines", self.name, self.pipelines)
 
         if isinstance(last_step, list):
             self.response_model = str
@@ -215,8 +221,8 @@ class Tool:
 
             updated = {}
             for entry, path in self.extra_files[lang].items():
-                if isinstance(path, PartialPath):
-                    path = p / path.p
+                if isinstance(path, LangmodelFile):
+                    path = path.resolve_path(p, lang)
 
                 if path.is_file():
                     updated[entry] = path
@@ -230,7 +236,7 @@ class Tool:
                 self.langs.add(lang)
 
         for lang, files in disabled_langs.items():
-            logger.error(
+            logger.warn(
                 f"({self.name}, {lang}) disabled due to missing extra files "
                 f" {', '.join(files)}"
             )

@@ -1,4 +1,4 @@
-from ..util import PartialPath
+from ..langmodel_file import TXT2IPA_COMPOSE_HFST
 
 summary = "transcribe"
 description = """
@@ -27,11 +27,7 @@ pipeline = [
     [
         "hfst-lookup",
         "-q",
-
-        # built with: ./configure --enable-phonetic --enable-tts
-        PartialPath(
-            "src/phonetics/txt2ipa.compose.hfst"
-        )
+        TXT2IPA_COMPOSE_HFST,
     ],
     pipeline_stdout_to_json
 ]

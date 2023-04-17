@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from ..util import PartialPath
+from ..langmodel_file import TOKENISER_DISAMB_GT_DESC_PMHFST
+from ..langmodel_file import DISAMBIGUATOR_CG3
 
 summary = "disambiguate"
 description = """
@@ -63,16 +64,12 @@ pipeline = [
     [
         "hfst-tokenize",
         "-cg",
-        PartialPath(
-            "tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst"
-        ),
+        TOKENISER_DISAMB_GT_DESC_PMHFST,
     ],
     [
         "vislcg3",
         "-g",
-        PartialPath(
-            "src/cg3/disambiguator.cg3"
-        ),
+        DISAMBIGUATOR_CG3,
     ],
     pipeline_stdout_to_json
 ]

@@ -5,7 +5,13 @@ from subprocess import PIPE
 import logging
 import enum
 
-from ..util import PartialPath
+from ..langmodel_file import TOKENISER_DISAMB_GT_DESC_PMHFST
+from ..langmodel_file import ANALYSER_GT_DESC_HFSTOL
+from ..langmodel_file import PARADIGM_MIN_TXT
+from ..langmodel_file import PARADIGM_STANDARD_TXT
+from ..langmodel_file import PARADIGM_FULL_TXT
+from ..langmodel_file import KORPUSTAGS_TXT
+from ..langmodel_file import GENERATOR_GT_NORM_HFSTOL
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -164,32 +170,32 @@ query_params = {
 #   TODO: fallback files.... (tagfile = korpustags.LANG.txt (or if that doesn't exist): korpustags.txt)
 extra_files = {
     "sma": {
-        "paradigm_min.txt": PartialPath("test/data/paradigm_min.sma.txt"),
-        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sma.txt"),
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sma.txt"),
-        "korpustags.txt": PartialPath("test/data/korpustags.sma.txt"),
+        "paradigm_min.txt": PARADIGM_MIN_TXT,
+        "paradigm_standard.txt": PARADIGM_STANDARD_TXT,
+        "paradigm_full.txt": PARADIGM_FULL_TXT,
+        "korpustags.txt": KORPUSTAGS_TXT,
     },
     "sme": {
-        "paradigm_min.txt": PartialPath("test/data/paradigm_min.sme.txt"),
-        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.sme.txt"),
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.sme.txt"),
-        "korpustags.txt": PartialPath("test/data/korpustags.sme.txt"),
+        "paradigm_min.txt": PARADIGM_MIN_TXT,
+        "paradigm_standard.txt": PARADIGM_STANDARD_TXT,
+        "paradigm_full.txt": PARADIGM_FULL_TXT,
+        "korpustags.txt": KORPUSTAGS_TXT,
     },
     "smj": {
-        "paradigm_min.txt": PartialPath("test/data/paradigm_min.smj.txt"),
-        "paradigm_standard.txt": PartialPath("test/data/paradigm.smj.txt"),
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.smj.txt"),
-        "korpustags.txt": PartialPath("test/data/korpustags.smj.txt"),
+        "paradigm_min.txt": PARADIGM_MIN_TXT,
+        "paradigm_standard.txt": PARADIGM_STANDARD_TXT,
+        "paradigm_full.txt": PARADIGM_FULL_TXT,
+        "korpustags.txt": KORPUSTAGS_TXT,
     },
-    "nob": {
-        # TODO these files are copied from sme, just to have some test data!
-        "paradigm_min.txt": PartialPath("test/data/paradigm_min.nob.txt"),
-        "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.nob.txt"),
-        "paradigm_full.txt": PartialPath("test/data/paradigm_full.nob.txt"),
-        "korpustags.txt": PartialPath("test/data/korpustags.nob.txt"),
-    },
+    # "nob": {
+    #     # TODO these files are copied from sme, just to have some test data!
+    #     "paradigm_min.txt": PartialPath("test/data/paradigm_min.nob.txt"),
+    #     "paradigm_standard.txt": PartialPath("test/data/paradigm_standard.nob.txt"),
+    #     "paradigm_full.txt": PartialPath("test/data/paradigm_full.nob.txt"),
+    #     "korpustags.txt": PartialPath("test/data/korpustags.nob.txt"),
+    # },
     "*": {
-        "generator-gt-norm.hfstol": PartialPath("src/generator-gt-norm.hfstol"),
+        "generator-gt-norm.hfstol": GENERATOR_GT_NORM_HFSTOL,
     }
 }
 
@@ -358,12 +364,12 @@ pipeline = [
     [
         "hfst-tokenize",
         "-q", "--beam=0",
-        PartialPath("tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst"),
+        TOKENISER_DISAMB_GT_DESC_PMHFST,
     ],
     [
         "hfst-lookup",
         "-q", "--beam=0",
-        PartialPath("src/analyser-gt-desc.hfstol"),
+        ANALYSER_GT_DESC_HFSTOL,
     ],
     generate_paradigm,
     # pipeline_stdout_to_json,

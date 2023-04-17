@@ -1,5 +1,7 @@
 from pydantic import BaseModel
-from ..util import PartialPath
+from ..langmodel_file import (
+    TRANSCRIPTOR_NUMBERS_DIGIT2TEXT_FILTERED_LOOKUP_HFSTOL
+)
 
 summary = "digit2text"
 description = """
@@ -13,7 +15,7 @@ The output structure is parsed and sent as json.
 
 # Cannot be named "Response" (fastapi or something gets confused)
 class ResponseOut(BaseModel):
-    number: int
+    number: str
     answers: list
 
 
@@ -40,9 +42,7 @@ def pipeline_stdout_to_json(stdout) -> ResponseOut:
 pipeline = [
     [
         "hfst-lookup",
-        PartialPath(
-            "src/transcriptions/transcriptor-numbers-digit2text.filtered.lookup.hfstol"
-        ),
+        TRANSCRIPTOR_NUMBERS_DIGIT2TEXT_FILTERED_LOOKUP_HFSTOL
     ],
     pipeline_stdout_to_json
 ]

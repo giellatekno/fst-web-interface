@@ -4,6 +4,7 @@ import inspect
 from typing import Union, TypeVar, Generic
 
 from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -15,7 +16,7 @@ VERSION = "0.0.1-dev"
 
 T = TypeVar("T")
 description = """
-fst-api is the api that executes the model language applications,
+fst-api is a web api that executes various language model pipelines,
 for use with the fst-web-interface SPA website.
 """
 
@@ -23,6 +24,11 @@ app = FastAPI(
     title="fst-api",
     version=VERSION,
     description=description,
+    contact={
+        "name": "Giellatekno",
+        "url": "https://giellatekno.uit.no",
+        "email": "giellatekno@uit.no",
+    }
 )
 
 app.add_middleware(
@@ -72,6 +78,27 @@ async def handle_version():
 )
 async def handle_capabilities():
     return {"result": tools.capabilities()}
+
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    return """
+    <html><head><title>fst-api</title></head>
+    <body style="display:flex;justify-content:center">
+        <div style="display: flex; flex-direction: column;">
+        <h3>fst-api</h3>
+        <p>&nbsp;&nbsp;Giellatekno, UiT</p>
+        <p>This is the root. Nothing to see here.</p>
+        <p>explore the api using either</p>
+        <div>
+            <a href="/docs">/docs</a>
+            or
+            <a href="/redoc">/redoc</a>
+        </div>
+        </div>
+    </body>
+    </html>
+    """
 
 
 @app.get(

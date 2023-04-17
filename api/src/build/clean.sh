@@ -1,5 +1,7 @@
 #!/bin/bash
 
+rm -rf build_artifacts
+
 # remove all stopped containers
 docker container prune -f
 

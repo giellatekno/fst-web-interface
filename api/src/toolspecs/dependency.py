@@ -1,6 +1,9 @@
 from pydantic import BaseModel
-from ..util import PartialPath
 import re
+from ..langmodel_file import TOKENISER_DISAMB_GT_DESC_PMHFST
+from ..langmodel_file import DEPENDENCY_CG3
+from ..langmodel_file import DISAMBIGUATOR_CG3
+from ..langmodel_file import KORP_CG3
 
 summary = "dependency"
 description = """
@@ -77,32 +80,22 @@ with_korp = [
     [
         "hfst-tokenize",
         "-cg",
-
-        # built with: ./configure --enable-tokenisers
-        PartialPath(
-            "tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst"
-        ),
+        TOKENISER_DISAMB_GT_DESC_PMHFST,
     ],
     [
         "vislcg3",
         "-g",
-        PartialPath(
-            "src/cg3/disambiguator.cg3"
-        ),
+        DISAMBIGUATOR_CG3,
     ],
     [
         "vislcg3",
         "-g",
-        PartialPath(
-            "src/cg3/korp.cg3"
-        ),
+        KORP_CG3,
     ],
     [
         "vislcg3",
         "-g",
-        PartialPath(
-            "src/cg3/dependency.cg3"
-        ),
+        DEPENDENCY_CG3,
     ],
     pipeline_stdout_to_json
 ]
@@ -123,25 +116,17 @@ pipeline = {
             # note: -L for nicer output (doesn't separate by ":", and does
             # not do anything with the commas, but we might want to)
             "-cgL",
-
-            # built with: ./configure --enable-tokenisers
-            PartialPath(
-                "tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst"
-            ),
+            TOKENISER_DISAMB_GT_DESC_PMHFST,
         ],
         [
             "vislcg3",
             "-g",
-            PartialPath(
-                "src/cg3/disambiguator.cg3"
-            ),
+            DISAMBIGUATOR_CG3,
         ],
         [
             "vislcg3",
             "-g",
-            PartialPath(
-                "src/cg3/dependency.cg3"
-            ),
+            DEPENDENCY_CG3,
         ],
         pipeline_stdout_to_json
     ]

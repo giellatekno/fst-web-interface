@@ -1,4 +1,4 @@
-from ..util import PartialPath
+from ..langmodel_file import HYPHENATOR_GT_DESC_HFSTOL
 
 summary = "hyphenate"
 description = """
@@ -32,10 +32,7 @@ pipeline = [
     [
         "hfst-lookup",
         "-q",
-        PartialPath(
-            # --enable-fst-hyphenator
-            "tools/hyphenators/hyphenator-gt-desc.hfstol"
-        )
+        HYPHENATOR_GT_DESC_HFSTOL,
     ],
     pipeline_stdout_to_json
 ]

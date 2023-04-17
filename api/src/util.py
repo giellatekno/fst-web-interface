@@ -28,3 +28,29 @@ class PartialPath:
 
 def noop(*args, **kwargs):
     pass
+
+
+def flat(some_list):
+    out = []
+
+    for element in some_list:
+        if isinstance(element, (tuple, list)):
+            out.extend(element)
+        else:
+            out.append(element)
+
+    return out
+
+
+def test_flat():
+    a = [[1, 2], [3, 4]]
+    B = flat(a)
+    assert B == [1, 2, 3, 4]
+
+    a = [1, 2, [3, 4]]
+    b = flat(a)
+    assert b == [1, 2, 3, 4]
+
+
+if __name__ == "__main__":
+    test_flat()
