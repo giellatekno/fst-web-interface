@@ -65,7 +65,8 @@ def pipeline_stdout_to_json(output) -> list[ResponseLine]:
         for line in lines.split("\n"):
             line = line.strip()
             item_match = ITEM.match(line)
-            defs.append(item_match.groupdict())
+            if item_match:
+                defs.append(item_match.groupdict())
 
         out.append({
             "word": word,
