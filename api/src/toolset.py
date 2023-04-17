@@ -169,11 +169,9 @@ class Tool:
         that's not really needed."""
         if not self.pipelines:
             self.response_model = None
+            return
 
-        try:
-            last_step = next(iter(self.pipelines.values()))[-1]
-        except StopIteration:
-            print("self.pipelines", self.name, self.pipelines)
+        last_step = next(iter(self.pipelines.values()))[-1]
 
         if isinstance(last_step, list):
             self.response_model = str

@@ -31,7 +31,7 @@ from build.docker_wrapper import docker_create, docker_rm_container
 from build.docker_wrapper import docker_cp_from_image
 # from .docker_wrapper import docker_image_rm
 from build.run_many import Job, run_jobs
-from langmodel_file import langmodel_files
+from src.langmodel_file import langmodel_files
 
 
 def noop(*_args, **_kwargs): pass
@@ -99,15 +99,16 @@ RUN curl https://apertium.projectjj.com/apt/install-nightly.sh | bash
 
 DOCKERFILE_compiler = """
 FROM apertium-nightly-base
-RUN apt-get update
 ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Oslo"
 
 # dont have: cmake libtool wget antiword wv python3-pip (and all other pythons I assume)
 
 # RUN apt-get -y install bc curl git autoconf automake cmake libtool wget antiword wv python3-pip python3-bs4 python3-lxml python3-html5lib python3-feedparser python3-yaml python3-tidylib
-RUN apt-get -y install bc git autoconf automake cmake libtool wget antiword python3-pip python3-bs4 python3-lxml python3-html5lib python3-feedparser python3-yaml python3-tidylib gawk
-RUN apt-get install -y icu-devtools
-RUN apt-get -yf install cg3 hfst
+RUN apt-get-update && \
+    apt-get -y install bc git autoconf automake cmake libtool \
+    wget antiword python3-pip python3-bs4 python3-lxml python3-html5lib \
+    python3-feedparser python3-yaml python3-tidylib gawk icu-devtools \
+    cg3 hfst
 #RUN apt-get install apertium-all-dev
 
 RUN mkdir -p /progs
@@ -200,8 +201,10 @@ def DOCKERFILE_app(state):
 
         RUN mkdir /app
         WORKDIR /app
+        #COPY ./ /app
         RUN git clone --depth 1 https://github.com/giellatekno/fst-web-interface
         WORKDIR /app/fst-web-interface/api
+        #WORKDIR /app
         RUN pip install -r requirements.deploy.txt
 
         ENV WEB_CONCURRENCY=4
@@ -302,7 +305,7 @@ async def make_fst_lang_models(state):
                         files_to_copy=opts["file_list"],
                     ),
                     tag=f"fst-lang-{lang}",
-                    log_to_file=f"log_compile_model_{lang}.txt",
+                    disable_cache=state.args.no_docker_cache,
                 )
             )
             for lang, opts in state.langs_to_compile.items()
@@ -336,9 +339,20 @@ async def make_fst_app_image(state):
         Job(
             id="fst-app",
             title="Make image: fst-app",
-            coro=partial(docker_build, dockerfile=dockerfile, tag="fst-app"),
+            coro=partial(
+                docker_build,
+                dockerfile=dockerfile,
+                tag="fst-app",
+                disable_cache=state.args.no_docker_cache,
+            )
         )
     ])
+
+    job = results[0]
+
+    if job.exception is not None:
+        sio = job.exception.args[0]
+        print(sio.getvalue())
 
     state.have_app = results[0].status == "done"
 
@@ -468,7 +482,6 @@ async def make_apertium_nightly_langmodels(state):
                     docker_build,
                     dockerfile=apertium_nightly_sources_dockerfile,
                     tag="apertium-nightly-all-sources",
-                    log_to_file="all_sources_log.txt",
                 )
             )
         ]
@@ -535,6 +548,14 @@ def parse_args():
             "Required. Path to json file describing which gt files are "
             "needed for which language. Use toolspec.py to rebuild it."
         ),
+    )
+    parser.add_argument(
+        "--no-docker-cache",
+        action="store_true",
+        help=(
+            "Do not use the docker cache. Everything will be built from "
+            "scratch"
+        )
     )
     parser.add_argument(
         "--refetch-nightly-lists",

@@ -8,6 +8,7 @@ from subprocess import PIPE
 from string import ascii_letters
 from random import choices
 from pathlib import Path
+from io import StringIO
 # from multiprocessing import cpu_count
 # from os import get_terminal_size
 
@@ -111,7 +112,7 @@ def is_error_line(line):
     return False
 
 
-async def docker_build(dockerfile, tag=None, log_to_file=None):
+async def docker_build(dockerfile, tag=None, disable_cache=False):
     """Run `docker build` with the Dockerfile given in the string `dockerfile`,
     and, if tag is a string, tag the image with `tag`.
     Returns a 2-tuple of (ok, tag)."""
@@ -121,14 +122,14 @@ async def docker_build(dockerfile, tag=None, log_to_file=None):
     cmd = "docker build"
     if isinstance(tag, str):
         cmd += f" -t {tag}"
+    if disable_cache:
+        cmd += " --no-cache"
     cmd += " -"
 
     proc = await asyncio.create_subprocess_shell(
             cmd, limit=4096, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
-    log = None
-    if log_to_file is not None:
-        log = open(f"logs/{log_to_file}", "w")
+    log = StringIO()
 
     # prevent deadlock
     # see https://stackoverflow.com/questions/57730010/python-asyncio-subprocess-write-stdin-and-read-stdout-stderr-continuously
@@ -138,14 +139,12 @@ async def docker_build(dockerfile, tag=None, log_to_file=None):
 
     while True:
         line = (await proc.stderr.readline()).strip().decode("utf-8")
-        if log:
-            log.write(line + "\n")
-            log.flush()
+        log.write(line + "\n")
         if is_done_line(line):
             return
         elif is_error_line(line):
-            builtin_print(line)
-            raise Exception("error in docker build")
+            print(line)
+            raise Exception(log)
         else:
             print(line)
 
