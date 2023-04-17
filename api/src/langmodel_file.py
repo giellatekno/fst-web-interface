@@ -54,7 +54,6 @@ class LangmodelFile:
             self.name, self.path, self.requires_build, list(self.buildflags))
 
 
-
 TOKENISER_DISAMB_GT_DESC_PMHFST = LangmodelFile(
     name="tokeniser-disamb-gt-desc.pmhfst",
     path="tools/tokenisers/tokeniser-disamb-gt-desc.pmhfst",

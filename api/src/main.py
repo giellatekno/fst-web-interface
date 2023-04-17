@@ -178,3 +178,7 @@ for name, tool in tools.tools.items():
         summary=tool.summary,
         description=tool.description,
     )
+
+print("Available tools per language:")
+for lang, tool in tools.tools.items():
+    print(f"{lang}: {', '.join(tool.langs)}")
