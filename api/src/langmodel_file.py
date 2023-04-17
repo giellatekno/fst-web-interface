@@ -37,17 +37,27 @@ class LangmodelFile:
             " }"
         )
 
-    def resolve_path(self, basepath, lang=None):
+    def find_on_system(self, basepaths, lang=None):
+        """Attempt to locate the file on ths system. For every location in
+        `basepaths`, the `name` and `path` is checked. Returns the path of
+        the file on the system if it is found, or None otherwise."""
         if callable(self.path):
             if lang is None:
                 raise Exception(
                     "LangModelFile.resolve_path(): self.path is callable, "
                     "but no `lang` argument was passed to resolve it"
                 )
-            else:
-                return Path(basepath) / Path(self.path(lang))
+            p = Path(self.path(lang))
         else:
-            return Path(basepath) / Path(self.path)
+            p = Path(self.path)
+
+        for base in basepaths:
+            a = Path(base) / p
+            if a.is_file():
+                return a
+            b = Path(base) / self.name
+            if b.is_file():
+                return b
 
     def copy(self):
         return LangmodelFile(

@@ -136,17 +136,6 @@ RUN ./configure
 """
 
 
-def DOCKERFILE_clone_lang(lang):
-    return dedent(f"""
-        FROM fst-compiler
-        ENV GIELLA_LIBS=/progs
-        WORKDIR /progs
-        RUN git clone --depth 1 https://github.com/giellalt/lang-{lang}
-        WORKDIR /progs/lang-{lang}
-        RUN git log -n 1 --format=format:"%h %cI" > REPO_INFO
-    """).strip()
-
-
 def DOCKERFILE_make_lang(lang, compile_flags, files_to_copy):
     compile_flags = " ".join(f"--{flag}" for flag in compile_flags)
     files_to_copy = " ".join(files_to_copy)
@@ -160,47 +149,6 @@ def DOCKERFILE_make_lang(lang, compile_flags, files_to_copy):
         RUN ./configure {compile_flags}
         RUN make
         RUN tar -czf lang-{lang}.tar.gz {files_to_copy}
-    """).strip()
-
-
-def DOCKERFILE_app(state):
-    copy_statements = ""
-
-    if not state.args.no_nightly:
-        copy_statements += "COPY --from=apertium-nightly-all-sources /usr/share/giella /usr/share/giella\n"
-
-    if not state.args.no_compile:
-        copy_statements += "COPY --from=fst-compiled-langmodel-files /progs/lang-* /progs/\n"
-
-    # copy_statements = dedent(f"""
-    #     COPY --from=fst-lang-{lang} /progs/lang-{lang}/lang-{lang}.tar.gz /progs/lang-{lang}/lang-{lang}.tar.gz
-    #     WORKDIR /progs/lang-{lang}
-    #     RUN tar -xzf lang-{lang}.tar.gz && rm lang-{lang}.tar.gz
-    # """)
-
-    return dedent(f"""
-        FROM python:3.11
-        RUN apt-get update
-        ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Oslo"
-        RUN apt-get -y install curl
-        RUN curl https://apertium.projectjj.com/apt/install-nightly.sh | bash
-        RUN apt-get -yf install cg3 hfst
-
-        {copy_statements}
-
-        RUN mkdir /app
-        WORKDIR /app
-        COPY --from=default . /app
-        #RUN git clone --depth 1 https://github.com/giellatekno/fst-web-interface
-        #WORKDIR /app/fst-web-interface/api
-        #WORKDIR /app
-        RUN pip install -r requirements.deploy.txt
-
-        ENV WEB_CONCURRENCY=4
-        ENV GTLANGS=/progs
-
-        EXPOSE 8000
-        CMD ["gunicorn", "src.main:app", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
     """).strip()
 
 
@@ -235,8 +183,7 @@ async def make_fst_compiler_image(state):
         return
 
     if not state.langs_to_compile:
-        # nothing to do!
-        print("Notice: skipping step: make fst compiler, due to no langs needs to be compiled")
+        print("Note: skipping step: make fst compiler (no langs to compile)")
         return
 
     results = await run_jobs([
@@ -259,13 +206,22 @@ async def make_fst_lang_sources(state):
     if not state.have_compiler:
         return
 
+    dockerfile = dedent("""
+        FROM fst-compiler
+        ENV GIELLA_LIBS=/progs
+        WORKDIR /progs
+        RUN git clone --depth 1 https://github.com/giellalt/lang-{lang}
+        WORKDIR /progs/lang-{lang}
+        RUN git log -n 1 --format=format:"%h %cI" > REPO_INFO
+    """).strip()
+
     results = await run_jobs([
         Job(
             id=lang,
             title=f"Make image: fst-lang-source-{lang}",
             coro=partial(
                 docker_build,
-                dockerfile=DOCKERFILE_clone_lang(lang),
+                dockerfile=dockerfile.format(lang=lang),
                 tag=f"fst-lang-source-{lang}",
                 disable_cache=state.args.no_docker_cache,
             )
@@ -324,7 +280,38 @@ async def make_fst_app_image(state):
         print("Succeeded with languages:", ", ".join(state.succeeded_langs))
         print("Failed languages:", ", ".join(state.failed_langs))
 
-    dockerfile = DOCKERFILE_app(state)
+    copy_statements = ""
+
+    if not state.args.no_nightly:
+        copy_statements += "COPY --from=apertium-nightly-all-sources /usr/share/giella /usr/share/giella\n"
+
+    if not state.args.no_compile:
+        copy_statements += "COPY --from=fst-compiled-langmodel-files /progs/lang-* /progs/\n"
+
+    dockerfile = dedent(f"""
+        FROM python:3.11
+        RUN apt-get update
+        ENV DEBIAN_FRONTEND="noninteractive" TZ="Europe/Oslo"
+        RUN apt-get -y install curl
+        RUN curl https://apertium.projectjj.com/apt/install-nightly.sh | bash
+        RUN apt-get -yf install cg3 hfst
+
+        {copy_statements}
+
+        RUN mkdir /app
+        WORKDIR /app
+        COPY --from=local . /app
+        #RUN git clone --depth 1 https://github.com/giellatekno/fst-web-interface
+        #WORKDIR /app/fst-web-interface/api
+        #WORKDIR /app
+        RUN pip install -r requirements.deploy.txt
+
+        ENV WEB_CONCURRENCY=4
+        ENV GTLANGS=/progs
+
+        EXPOSE 8000
+        CMD ["gunicorn", "src.main:app", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+    """).strip()
 
     results = await run_jobs([
         Job(
@@ -335,7 +322,7 @@ async def make_fst_app_image(state):
                 dockerfile=dockerfile,
                 tag="fst-app",
                 disable_cache=state.args.no_docker_cache,
-                build_context=True,
+                build_context={"local": Path(".").resolve()},
             )
         )
     ])

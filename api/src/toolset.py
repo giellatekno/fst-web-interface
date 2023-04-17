@@ -41,17 +41,18 @@ def get_repo_info(path):
     return {"hash": hash, "date": date}
 
 
-def find_gt_file(GTLANGS, lang, langmodel_file):
+def find_gt_file(langmodel_file, lang):
     """Given the GTLANGS path, a language code, and a PartialPath,
     return the path of where the file specified by the partialpath
     was found, or, if it was not found, return None."""
     # so, check GTLANGS, but also /usr/share/giella/{lang}
     # also check /usr/share/giella/{lang} ?
-    for base in (GTLANGS, Path("/usr/share/giella")):
-        for lang_part in (f"lang-{lang}", lang):
-            path = langmodel_file.resolve_path(base / lang_part)
-            if path.is_file():
-                return path
+    folders_to_check = [
+        GTLANGS / f"lang-{lang}",
+        GTLANGS / lang,
+        f"/usr/share/giella/{lang}",
+    ]
+    return langmodel_file.find_on_system(folders_to_check, lang=lang)
 
 
 class Tool:
@@ -136,7 +137,7 @@ class Tool:
                         continue
 
                     self.needed_gt_files[lang].add(entry.name)
-                    found_path = find_gt_file(GTLANGS, lang, entry)
+                    found_path = find_gt_file(entry, lang)
                     if found_path:
                         new_program.append(str(found_path))
                     else:
@@ -218,15 +219,14 @@ class Tool:
                 continue
 
             updated = {}
-            for entry, path in self.extra_files[lang].items():
-                if isinstance(path, LangmodelFile):
-                    path = path.resolve_path(p, lang)
-
-                if path.is_file():
-                    updated[entry] = path
-                else:
-                    disabled_langs[lang].add(str(path))
-                    updated[entry] = None
+            for name, entry in self.extra_files[lang].items():
+                if isinstance(entry, LangmodelFile):
+                    found_path = find_gt_file(entry, lang)
+                    if found_path:
+                        updated[name] = found_path
+                    else:
+                        disabled_langs[lang].add(name)
+                        updated[name] = None
 
             self.extra_files[lang] = updated
 

@@ -120,12 +120,9 @@ async def docker_build(dockerfile, tag=None, build_context=None, disable_cache=F
     dockerfile = dockerfile.strip().encode("utf-8")
 
     cmd = "docker build"
-    if build_context is not None:
-        cwd = str(Path(".").resolve())
-        cmd += f" --build-context default=\"{cwd}\""
-        builtin_print("---")
-        builtin_print(cmd)
-        builtin_print("---")
+    if isinstance(build_context, dict) and len(build_context) > 0:
+        cmd += " --build-context "
+        cmd += ",".join(f"{k}={v}" for k, v in build_context.items())
 
     if isinstance(tag, str):
         cmd += f" -t {tag}"

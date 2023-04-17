@@ -94,7 +94,6 @@ async def lifespan(app):
     print("Available tools per language:")
     for lang, tool in tools.tools.items():
         print(f"{lang}: {', '.join(tool.langs)}")
-        pass
 
     # yield marks the point where startup ends and shutdown begins
     # anything before yield happens on startup, anything after it happens
