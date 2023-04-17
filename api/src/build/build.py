@@ -162,15 +162,25 @@ def DOCKERFILE_make_lang(lang, compile_flags, files_to_copy):
     """).strip()
 
 
-def DOCKERFILE_app(langs):
+def DOCKERFILE_app(state):
     # for every lang, some files will be taken from the nightly image,
     # and some will be taken from language model we just compiled...
     copy_from_apertium_nightly = {}
 
-    for lang in langs:
-        copy_from_apertium_nightly = dedent(f"""
-            COPY --from=apertium-nightly-lang-{lang} /usr/share/giella/{lang} /usr/share/giella
-        """)
+    copy_statements = ""
+
+    # Why could I not just install nightly directly?
+    # ... Hmm, I need to download nightly first, to see which files needs to
+    # be compiled anyway, so I sort of already have it. Plus that would be
+    # a sequential process
+    if not state.args.no_nightly:
+        # only copy from nightly if we're actually downloading nightly
+        # it could be that we passed --no-nightly (to compile everything
+        # ourselves)
+        copy_statements += "COPY --from=apertium-nightly-all-sources /usr/share/giella /usr/share/giella\n"
+
+    if not state.args.no_compile:
+        copy_statements += "COPY --from=fst-compiled-langmodel-files /progs/lang-* /progs/"
 
     # copy_statements = dedent(f"""
     #     COPY --from=fst-lang-{lang} /progs/lang-{lang}/lang-{lang}.tar.gz /progs/lang-{lang}/lang-{lang}.tar.gz
@@ -320,7 +330,7 @@ async def make_fst_app_image(state):
         print("Succeeded with languages:", ", ".join(state.succeeded_langs))
         print("Failed languages:", ", ".join(state.failed_langs))
 
-    dockerfile = DOCKERFILE_app(state.args.successful_langs)
+    dockerfile = DOCKERFILE_app(state)
 
     results = await run_jobs([
         Job(
@@ -330,7 +340,7 @@ async def make_fst_app_image(state):
         )
     ])
 
-    state.have_app = results[0].state == "done"
+    state.have_app = results[0].status == "done"
 
 
 # async def read_nightly_langmodel_contents(state):
@@ -436,8 +446,11 @@ async def make_apertium_nightly_langmodels(state):
     # filter away the ones that didn't complete succesfully
     ok_langs = [job.id for job in results if job.status == "done"]
 
+    # Gather all nightly sources in one docker image, for easier transfer
+    # later on. (this is probably not necessary, but simplifies the dockerfile
+    # for the app later on)
     copy_statements = "\n".join(
-        "COPY --from=apertium-nightly-lang-{lang} /usr/share/giella/{lang} /usr/share/giella/"
+        f"COPY --from=apertium-nightly-lang-{lang} /usr/share/giella/{lang} /usr/share/giella/{lang}"
         for lang in ok_langs
     )
 
@@ -446,24 +459,20 @@ async def make_apertium_nightly_langmodels(state):
         {copy_statements}
     """)
 
-    await docker_build(dockerfile=apertium_nightly_sources_dockerfile, tag="apertium-nightly-all-sources")
-
-    # copy from apertium-nightly-lang-xxx to host machine
-    # jobs = [
-    #     Job(
-    #         id=lang,
-    #         title=f"Copying contents of apertium-nightly-lang-{lang} to host",
-    #         coro=partial(
-    #             docker_cp_from_image,
-    #             image=f"apertium-nightly-lang-{lang}",
-    #             source=f"/usr/share/giella/{lang}",
-    #             destination="./build_artifacts/usr/share/giella/",
-    #         )
-    #     )
-    #     for lang in ok_langs
-    # ]
-
-    # await run_jobs(jobs)
+    await run_jobs(
+        [
+            Job(
+                id="gather",
+                title="Gather all apertium nightly langmodel files into one image",
+                coro=partial(
+                    docker_build,
+                    dockerfile=apertium_nightly_sources_dockerfile,
+                    tag="apertium-nightly-all-sources",
+                    log_to_file="all_sources_log.txt",
+                )
+            )
+        ]
+    )
 
     # and finally read out the contents of the /usr/share/giella/LANG folder
     results = await run_jobs(
@@ -646,8 +655,8 @@ async def main(args):
     await make_fst_lang_sources(state)
     await make_fst_lang_models(state)
 
-    await extract_langmodel_files(state)
-    #await make_fst_app_image(state)
+    #await extract_langmodel_files(state)
+    await make_fst_app_image(state)
 
 
 if __name__ == "__main__":

@@ -103,6 +103,8 @@ def is_done_line(line):
 
 
 def is_error_line(line):
+    if line.startswith("ERROR"):
+        return True
     m = re.match(r"#\d+ ERROR", line)
     if m:
         return True
