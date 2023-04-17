@@ -112,7 +112,7 @@ def is_error_line(line):
     return False
 
 
-async def docker_build(dockerfile, tag=None, disable_cache=False):
+async def docker_build(dockerfile, tag=None, build_context=None, disable_cache=False):
     """Run `docker build` with the Dockerfile given in the string `dockerfile`,
     and, if tag is a string, tag the image with `tag`.
     Returns a 2-tuple of (ok, tag)."""
@@ -120,6 +120,13 @@ async def docker_build(dockerfile, tag=None, disable_cache=False):
     dockerfile = dockerfile.strip().encode("utf-8")
 
     cmd = "docker build"
+    if build_context is not None:
+        cwd = str(Path(".").resolve())
+        cmd += f" --build-context default=\"{cwd}\""
+        builtin_print("---")
+        builtin_print(cmd)
+        builtin_print("---")
+
     if isinstance(tag, str):
         cmd += f" -t {tag}"
     if disable_cache:

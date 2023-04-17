@@ -164,24 +164,13 @@ def DOCKERFILE_make_lang(lang, compile_flags, files_to_copy):
 
 
 def DOCKERFILE_app(state):
-    # for every lang, some files will be taken from the nightly image,
-    # and some will be taken from language model we just compiled...
-    copy_from_apertium_nightly = {}
-
     copy_statements = ""
 
-    # Why could I not just install nightly directly?
-    # ... Hmm, I need to download nightly first, to see which files needs to
-    # be compiled anyway, so I sort of already have it. Plus that would be
-    # a sequential process
     if not state.args.no_nightly:
-        # only copy from nightly if we're actually downloading nightly
-        # it could be that we passed --no-nightly (to compile everything
-        # ourselves)
         copy_statements += "COPY --from=apertium-nightly-all-sources /usr/share/giella /usr/share/giella\n"
 
     if not state.args.no_compile:
-        copy_statements += "COPY --from=fst-compiled-langmodel-files /progs/lang-* /progs/"
+        copy_statements += "COPY --from=fst-compiled-langmodel-files /progs/lang-* /progs/\n"
 
     # copy_statements = dedent(f"""
     #     COPY --from=fst-lang-{lang} /progs/lang-{lang}/lang-{lang}.tar.gz /progs/lang-{lang}/lang-{lang}.tar.gz
@@ -201,9 +190,9 @@ def DOCKERFILE_app(state):
 
         RUN mkdir /app
         WORKDIR /app
-        #COPY ./ /app
-        RUN git clone --depth 1 https://github.com/giellatekno/fst-web-interface
-        WORKDIR /app/fst-web-interface/api
+        COPY --from=default . /app
+        #RUN git clone --depth 1 https://github.com/giellatekno/fst-web-interface
+        #WORKDIR /app/fst-web-interface/api
         #WORKDIR /app
         RUN pip install -r requirements.deploy.txt
 
@@ -258,6 +247,7 @@ async def make_fst_compiler_image(state):
                 docker_build,
                 dockerfile=DOCKERFILE_compiler,
                 tag="fst-compiler",
+                disable_cache=state.args.no_docker_cache,
             ),
         )
     ])
@@ -277,6 +267,7 @@ async def make_fst_lang_sources(state):
                 docker_build,
                 dockerfile=DOCKERFILE_clone_lang(lang),
                 tag=f"fst-lang-source-{lang}",
+                disable_cache=state.args.no_docker_cache,
             )
         )
         for lang in state.langs_to_compile
@@ -344,6 +335,7 @@ async def make_fst_app_image(state):
                 dockerfile=dockerfile,
                 tag="fst-app",
                 disable_cache=state.args.no_docker_cache,
+                build_context=True,
             )
         )
     ])
@@ -357,54 +349,6 @@ async def make_fst_app_image(state):
     state.have_app = results[0].status == "done"
 
 
-# async def read_nightly_langmodel_contents(state):
-#     """Read out list of files in each apertium-nightly-lang-xxx."""
-#     if not state.apertium_langs:
-#         print("No apertium langmodels to read")
-#         return
-# 
-#     images = await docker_list_images("apertium-nightly-lang-*")
-# 
-#     repositories = []
-#     for image in images:
-#         name = image["Repository"][22:]
-#         if name == "":
-#             continue
-#         if name not in state.args.langs:
-#             continue
-#         repositories.append(name)
-# 
-#     results = await run_jobs(
-#         [
-#             Job(
-#                 id=lang,
-#                 title=f"Read contents from image: apertium-nightly-lang-{lang}",
-#                 coro=partial(
-#                     docker_run,
-#                     image=f"apertium-nightly-lang-{lang}",
-#                     cmd=f"cat /usr/share/giella/{lang}/CONTENTS.txt"
-#                 )
-#             )
-#             for lang in repositories
-#         ],
-#         cpu_bound=False,
-#     )
-# 
-#     contents = {}
-#     for job in results:
-#         if job.status == "done":
-#             lang = job.id
-#             contents[lang] = set(s.strip() for s in job.result.split())
-# 
-#     for lang, files_dict in state.langs.items():
-#         # xxx -> { file1: info1, file2: info2, ...}
-#         for ap_lang, contents_set in contents.items():
-#             for apertium_file in contents_set:
-#                 files_dict[ap_lang][apertium_file]
-# 
-#     state.apertium_nightly_contents = contents
-
-
 async def make_apertium_nightly_base(state):
     results = await run_jobs([
         Job(
@@ -414,6 +358,7 @@ async def make_apertium_nightly_base(state):
                 docker_build,
                 dockerfile=DOCKERFILE_apertium_nightly_base,
                 tag="apertium-nightly-base",
+                disable_cache=state.args.no_docker_cache,
             )
         )],
     )
@@ -450,6 +395,7 @@ async def make_apertium_nightly_langmodels(state):
                     docker_build,
                     dockerfile=dockerfile.format(lang=lang),
                     tag=f"apertium-nightly-lang-{lang}",
+                    disable_cache=state.args.no_docker_cache,
                 )
             )
             for lang in state.args.langs.keys()
@@ -482,6 +428,7 @@ async def make_apertium_nightly_langmodels(state):
                     docker_build,
                     dockerfile=apertium_nightly_sources_dockerfile,
                     tag="apertium-nightly-all-sources",
+                    disable_cache=state.args.no_docker_cache,
                 )
             )
         ]

@@ -2,6 +2,7 @@ from enum import StrEnum
 from time import time
 import inspect
 from typing import Union, TypeVar, Generic
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
@@ -20,6 +21,87 @@ fst-api is a web api that executes various language model pipelines,
 for use with the fst-web-interface SPA website.
 """
 
+
+def _generate_route_handler(tool):
+    if len(tool.langs) == 0:
+        return None
+    else:
+        Langs = StrEnum(tool.name + "Langs", tool.langs)
+
+        query_params = {}
+        for name, desc in tool.query_params.items():
+            query_params[name] = Query()
+
+        async def fn(lang: Langs, input: str):
+            pass
+
+        # extract the signature as we have it, and update it
+        signature = inspect.signature(fn)
+        new_signature = signature.replace(
+            parameters=(
+                *signature.parameters.values(),
+                *[
+                    inspect.Parameter(
+                        name,
+                        kind=inspect.Parameter.KEYWORD_ONLY,
+                        default=Query(
+                            default=..., description=param["description"]
+                        ),
+                        annotation=param["type"],
+                    )
+                    for name, param in tool.query_params.items()
+                ]
+            ),
+        )
+
+        # finally re-make the function, now with the apporopriate signature
+        @with_signature(new_signature, func_name="handler")
+        async def handler(*args, **kwargs):
+            # here we must also do some tricks to get the actual parameters
+            actual_query_params = {name: kwargs[name] for name in query_params}
+            lang = kwargs["lang"]
+            input = kwargs["input"]
+            resp = await tool.run_pipeline(
+                    lang, input, query_params=actual_query_params)
+            return resp
+
+    return handler
+
+
+@asynccontextmanager
+async def lifespan(app):
+    # Dynamically add routes for all tools defined in toolspecs/
+
+    for name, tool in tools.tools.items():
+        url = f"/{name}/"
+        url += "{lang}/{input}"
+
+        route_handler = _generate_route_handler(tool)
+        if route_handler is None:
+            continue
+
+        app.add_api_route(
+            url,
+            route_handler,
+            response_model=Union[
+                OkResponse[tool.response_model],
+                ErrorResponse,
+            ],
+            summary=tool.summary,
+            description=tool.description,
+        )
+
+    print("Available tools per language:")
+    for lang, tool in tools.tools.items():
+        print(f"{lang}: {', '.join(tool.langs)}")
+        pass
+
+    # yield marks the point where startup ends and shutdown begins
+    # anything before yield happens on startup, anything after it happens
+    # on shutdown
+    yield
+
+
 app = FastAPI(
     title="fst-api",
     version=VERSION,
@@ -28,7 +110,8 @@ app = FastAPI(
         "name": "Giellatekno",
         "url": "https://giellatekno.uit.no",
         "email": "giellatekno@uit.no",
-    }
+    },
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -111,74 +194,3 @@ async def handle_capabilities_for_lang(lang: str):
     return tools.capabilities()[lang]
 
 
-def _generate_route_handler(tool):
-    if len(tool.langs) == 0:
-        return None
-    else:
-        Langs = StrEnum(tool.name + "Langs", tool.langs)
-
-        query_params = {}
-        for name, desc in tool.query_params.items():
-            query_params[name] = Query()
-
-        async def fn(lang: Langs, input: str):
-            pass
-
-        # extract the signature as we have it, and update it
-        signature = inspect.signature(fn)
-        new_signature = signature.replace(
-            parameters=(
-                *signature.parameters.values(),
-                *[
-                    inspect.Parameter(
-                        name,
-                        kind=inspect.Parameter.KEYWORD_ONLY,
-                        default=Query(
-                            default=..., description=param["description"]
-                        ),
-                        annotation=param["type"],
-                    )
-                    for name, param in tool.query_params.items()
-                ]
-            ),
-        )
-
-        # finally re-make the function, now with the apporopriate signature
-        @with_signature(new_signature, func_name="handler")
-        async def handler(*args, **kwargs):
-            # here we must also do some tricks to get the actual parameters
-            actual_query_params = {name: kwargs[name] for name in query_params}
-            lang = kwargs["lang"]
-            input = kwargs["input"]
-            resp = await tool.run_pipeline(
-                    lang, input, query_params=actual_query_params)
-            return resp
-
-    return handler
-
-
-# Dynamically add routes for all tools defined in toolspecs/
-
-
-for name, tool in tools.tools.items():
-    url = f"/{name}/"
-    url += "{lang}/{input}"
-
-    route_handler = _generate_route_handler(tool)
-    if route_handler is None:
-        continue
-
-    app.add_api_route(
-        url,
-        route_handler,
-        response_model=Union[
-            OkResponse[tool.response_model],
-            ErrorResponse,
-        ],
-        summary=tool.summary,
-        description=tool.description,
-    )
-
-print("Available tools per language:")
-for lang, tool in tools.tools.items():
-    print(f"{lang}: {', '.join(tool.langs)}")
